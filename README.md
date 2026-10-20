@@ -11,7 +11,8 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Move from assembled anatomy to a spaced inventory of every visible piece.
 - Search anatomical names and source identifiers.
 - Isolate a selected structure and read its details.
-- Use compact controls and detail panels on mobile.
+- Work from a systems panel on the left, a find-and-inspect panel on the right, and expand the viewer to full screen.
+- Switch between light and dark themes; on phones the viewer stacks above both panels.
 
 ## Run locally
 

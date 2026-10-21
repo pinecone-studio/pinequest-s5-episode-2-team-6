@@ -1,6 +1,6 @@
 /** Original educational entries for non-skeletal structures in the 3D atlas:
  *  suprahyoid muscles, intervertebral disks, knee-joint structures, and teeth.
- *  Further-reading links point to Anatomy Standard; copy and images are not reused. */
+ *  Overviews are original; links also key the Anatomy Standard figures and term lists shown beside them (app/anatomy-standard.ts). */
 
 export type StructureGroup = 'Muscles' | 'Joints' | 'Teeth';
 

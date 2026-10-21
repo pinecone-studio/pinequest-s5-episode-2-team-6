@@ -59,6 +59,6 @@ Import this repository into Vercel as a Vite project. The included `vercel.json`
 
 ## License
 
-Original application code is released under the [MIT License](LICENSE). **The anatomy data has its own licenses**: BodyParts3D geometry is CC BY 4.0 and the Z-Anatomy supplement is CC BY-SA 4.0. Preserve the attribution when redistributing it. Third-party dependencies retain their respective licenses.
+Original application code is released under the [MIT License](LICENSE). **The anatomy data has its own licenses**: BodyParts3D geometry is CC BY 4.0, the Z-Anatomy supplement is CC BY-SA 4.0, and the Anatomy Standard illustrations and term lists shown in the detail panel are CC BY-NC 4.0 (non-commercial use only; refresh them with `node scripts/import-anatomy-standard.mjs`). Preserve the attribution when redistributing it. Third-party dependencies retain their respective licenses.
 
 Issues and pull requests are welcome. Please include reproduction steps and browser/device details for interaction problems.

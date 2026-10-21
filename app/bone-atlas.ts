@@ -1,5 +1,5 @@
 /** Original educational bone entries for the 3D atlas.
- *  Further-reading links point to Anatomy Standard; copy and images are not reused. */
+ *  Overviews are original; links also key the Anatomy Standard figures and term lists shown beside them (app/anatomy-standard.ts). */
 
 export type BoneRegion =
   | 'cranium'
@@ -26,7 +26,7 @@ export interface BoneAtlasEntry {
   matchers: string[];
 }
 
-const AS = 'https://www.anatomystandard.com/ossa-et-juncturae/cranium/os-occipitale.html';
+const AS = 'https://www.anatomystandard.com/ossa-et-juncturae';
 
 export const BONE_ATLAS: BoneAtlasEntry[] = [
   {
@@ -118,7 +118,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Foramen obturatum', english: 'Obturator foramen'},
       {latin: 'Tuber ischiadicum', english: 'Ischial tuberosity'},
     ],
-    anatomyStandardUrl: `${AS}/extremitas-inferior/pelvis.html`,
+    anatomyStandardUrl: `${AS}/extremitas-inferior/os-coxae.html`,
     matchers: ['hip bone'],
   },
   {
@@ -137,7 +137,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Facies dorsalis', english: 'Dorsal surface'},
       {latin: 'Canales sacralis', english: 'Sacral canal'},
     ],
-    anatomyStandardUrl: `${AS}/extremitas-inferior/pelvis.html`,
+    anatomyStandardUrl: `${AS}/columna-vertebralis/sacrum.html`,
     matchers: ['sacrum'],
   },
   {
@@ -254,7 +254,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Angulus sterni', english: 'Sternal angle'},
       {latin: 'Incisura clavicularis', english: 'Clavicular notch'},
     ],
-    anatomyStandardUrl: `${AS}/thorax/cavea-thoracis.html`,
+    anatomyStandardUrl: `${AS}/thorax/sternum.html`,
     matchers: ['body of sternum', 'manubrium', 'xiphoid'],
   },
   {
@@ -273,7 +273,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Sulcus costae', english: 'Costal groove'},
       {latin: 'Cartilago costalis', english: 'Costal cartilage'},
     ],
-    anatomyStandardUrl: `${AS}/thorax/cavea-thoracis.html`,
+    anatomyStandardUrl: `${AS}/thorax/costae.html`,
     matchers: ['costal cartilage', 'rib'],
   },
   {
@@ -294,6 +294,22 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
     ],
     anatomyStandardUrl: `${AS}/columna-vertebralis/vertebra-cervicalis-typica.html`,
     matchers: ['cervical vertebra'],
+  },
+  {
+    id: 'vertebra-prominens',
+    title: 'Seventh cervical vertebra',
+    latin: 'Vertebra prominens (C7)',
+    region: 'vertebral column',
+    overview:
+      'C7 bridges the cervical and thoracic spine. Its long, usually undivided spinous process is the first bump easily felt at the base of the neck, a common landmark for counting vertebrae. The transverse foramina are small and often carry only veins.',
+    terms: [
+      {latin: 'Processus spinosus', english: 'Spinous process'},
+      {latin: 'Foramen transversarium', english: 'Transverse foramen'},
+      {latin: 'Processus transversus', english: 'Transverse process'},
+      {latin: 'Corpus vertebrae', english: 'Vertebral body'},
+    ],
+    anatomyStandardUrl: `${AS}/columna-vertebralis/c7.html`,
+    matchers: ['seventh cervical vertebra'],
   },
   {
     id: 'atlas',
@@ -362,7 +378,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Processus articularis inferior', english: 'Inferior articular process'},
       {latin: 'Foramen vertebrale', english: 'Vertebral foramen'},
     ],
-    anatomyStandardUrl: `${AS}/columna-vertebralis/vertebra-lumbalis.html`,
+    anatomyStandardUrl: `${AS}/columna-vertebralis/vertebra-lumbalis-typica.html`,
     matchers: ['lumbar vertebra'],
   },
   {
@@ -500,7 +516,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Processus alveolaris', english: 'Alveolar process'},
       {latin: 'Sinus maxillaris', english: 'Maxillary sinus'},
     ],
-    anatomyStandardUrl: `${AS}/cranium/ossa-viscerocranii.html`,
+    anatomyStandardUrl: `${AS}/cranium/maxilla.html`,
     matchers: ['maxilla'],
   },
   {
@@ -516,7 +532,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Processus temporalis', english: 'Temporal process'},
       {latin: 'Processus frontalis', english: 'Frontal process'},
     ],
-    anatomyStandardUrl: `${AS}/cranium/ossa-viscerocranii.html`,
+    anatomyStandardUrl: `${AS}/cranium/os-zygomaticum.html`,
     matchers: ['zygomatic'],
   },
   {
@@ -531,7 +547,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Margo superior', english: 'Superior border'},
       {latin: 'Margo lateralis', english: 'Lateral border'},
     ],
-    anatomyStandardUrl: `${AS}/cranium/ossa-viscerocranii.html`,
+    anatomyStandardUrl: `${AS}/cranium/os-nasale.html`,
     matchers: ['nasal bone'],
   },
   {
@@ -578,7 +594,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Lamina perpendicularis', english: 'Perpendicular plate'},
       {latin: 'Processus pyramidalis', english: 'Pyramidal process'},
     ],
-    anatomyStandardUrl: `${AS}/cranium/ossa-viscerocranii.html`,
+    anatomyStandardUrl: `${AS}/cranium/os-palatinum.html`,
     matchers: ['palatine'],
   },
   {
@@ -593,7 +609,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Sulcus vomeris', english: 'Groove of vomer'},
       {latin: 'Lamina vomeris', english: 'Plate of vomer'},
     ],
-    anatomyStandardUrl: `${AS}/cranium/ossa-viscerocranii.html`,
+    anatomyStandardUrl: `${AS}/cranium/vomer.html`,
     matchers: ['vomer'],
   },
   {
@@ -624,7 +640,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Facies articularis talaris', english: 'Talar articular surfaces'},
       {latin: 'Facies articularis cuboidea', english: 'Cuboid articular surface'},
     ],
-    anatomyStandardUrl: `${AS}/extremitas-inferior/calcaneus.html`,
+    anatomyStandardUrl: `${AS}/extremitas-inferior/ossa-tarsi.html`,
     matchers: ['calcaneus'],
   },
   {
@@ -640,7 +656,7 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Caput tali', english: 'Head of talus'},
       {latin: 'Trochlea tali', english: 'Trochlea of talus'},
     ],
-    anatomyStandardUrl: `${AS}/extremitas-inferior/talus.html`,
+    anatomyStandardUrl: `${AS}/extremitas-inferior/ossa-tarsi.html`,
     matchers: ['talus'],
   },
   {
@@ -686,8 +702,25 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
       {latin: 'Phalanx distalis', english: 'Distal phalanx'},
       {latin: 'Basis / corpus / caput', english: 'Base / shaft / head'},
     ],
-    anatomyStandardUrl: `${AS}/extremitas-superior/ossa-digitorum-manus.html`,
+    anatomyStandardUrl: `${AS}/extremitas-superior/phalanges.html`,
     matchers: ['phalanx'],
+  },
+  {
+    id: 'phalanx-of-toe',
+    title: 'Phalanx of toe',
+    latin: 'Phalanx digiti pedis',
+    region: 'lower limb',
+    overview:
+      'The toe phalanges are shorter than those of the fingers, and the middle and distal phalanges of the lateral toes are often stubby or fused. The big toe has only two, the stout proximal phalanx taking much of the push-off load in walking.',
+    terms: [
+      {latin: 'Phalanx proximalis', english: 'Proximal phalanx'},
+      {latin: 'Phalanx media', english: 'Middle phalanx'},
+      {latin: 'Phalanx distalis', english: 'Distal phalanx'},
+      {latin: 'Tuberositas phalangis distalis', english: 'Tuberosity of distal phalanx'},
+    ],
+    anatomyStandardUrl: `${AS}/extremitas-inferior/phalanges.html`,
+    // Longer than 'phalanx' so toe bones resolve here before the hand entry.
+    matchers: ['big toe', 'second toe', 'third toe', 'fourth toe', 'little toe'],
   },
   {
     id: 'carpal',

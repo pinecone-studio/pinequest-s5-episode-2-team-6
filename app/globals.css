@@ -87,3 +87,89 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 
 @media(max-height:600px) and (orientation:landscape){body:has(.detail-sheet) .bottom-dock{left:12px;right:324px;width:auto;transform:none;max-width:none;margin:0}}
 .standard-figures{display:flex;flex-direction:column;gap:8px}.standard-figures h3{margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#5f6f7c}.standard-figure-open{position:relative;display:block;width:100%;padding:0!important;border-radius:10px;overflow:hidden;background:#fff!important;border:1px solid #18253614!important;cursor:zoom-in}.standard-figure-frame{position:relative;width:100%;max-height:60dvh;margin:0 auto}.standard-figure-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.standard-figure-zoom{position:absolute;right:8px;bottom:8px;color:#5f6f7c;background:#ffffffd9;border-radius:4px;padding:3px;box-sizing:content-box}.standard-figure-controls{display:flex;align-items:center;gap:4px}.standard-figure-toggle{margin-left:auto;font-size:12px}.standard-figure-caption{margin:0;font-size:12px;line-height:1.55;color:#5c6b78}.standard-figure-credit{margin:0;font-size:10px;line-height:1.5;color:#87929d}.standard-figure-credit a{color:#537a89}.standard-figure-dialog{max-width:min(960px,calc(100vw - 2rem))!important;width:100%;max-height:calc(100dvh - 2rem);overflow-y:auto;background:#fff}.standard-figure-dialog-body{background:#fff;display:flex;justify-content:center}.standard-figure-dialog-body .standard-figure-frame{max-height:none;width:min(100%,calc((100dvh - 15rem) * var(--fig-aspect,1)))}
+
+/* ROM / muscle contraction lab */
+.rom-panel{position:absolute;right:24px;top:88px;width:min(380px,calc(100vw - 28px));max-height:calc(100dvh - 170px);overflow:auto;border-radius:18px;padding:16px 16px 14px;z-index:25;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:#c5ced6 transparent;background:#fffffff5}
+.rom-header{display:flex;align-items:flex-start;gap:8px}
+.rom-title-block{min-width:0;flex:1}
+.rom-kicker{margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5f8f8a}
+.rom-title{margin:0;font-size:22px;font-weight:650;letter-spacing:-.04em;color:#1f2c38;line-height:1.15}
+.rom-subtitle{margin:6px 0 0;font-size:12.5px;line-height:1.45;color:#6b7885}
+.rom-close{margin-left:auto;flex-shrink:0}
+.rom-status{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;background:#edf2f3;color:#4d5d6b}
+.rom-status-dot{width:7px;height:7px;border-radius:50%;background:#8a97a3}
+.rom-status-starting .rom-status-dot,.rom-status-searching .rom-status-dot{background:#d0a14a;box-shadow:0 0 0 4px #d0a14a22}
+.rom-status-tracking{background:#e7f6f2;color:#21685f}
+.rom-status-tracking .rom-status-dot{background:#2f9d8a;box-shadow:0 0 0 4px #2f9d8a24;animation:romPulse 1.4s ease infinite}
+.rom-status-lost{background:#fff4e8;color:#9a6230}
+.rom-status-lost .rom-status-dot{background:#e09a45}
+.rom-steps{list-style:none;margin:0;padding:10px 12px;display:grid;gap:8px;border-radius:12px;background:#f4f7f8}
+.rom-steps li{display:flex;align-items:center;gap:10px;font-size:12.5px;color:#445463}
+.rom-steps em{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:700;background:#fff;color:#263b48;border:1px solid #18253614}
+.rom-side-toggle{display:flex;gap:4px;background:#edf0f2;border-radius:12px;padding:4px}
+.rom-side-toggle button{flex:1;min-height:40px;border-radius:9px;font-size:13px;font-weight:600;color:#697582}
+.rom-side-toggle button.active,.rom-side-toggle button[aria-pressed=true]{background:#fff;color:#1f2c38;box-shadow:0 1px 3px #18253614}
+.rom-video-wrap{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#243342,#1a2430);aspect-ratio:16/11;border:1px solid #18253614}
+.rom-video-wrap.is-live{box-shadow:0 0 0 2px #2f9d8a33}
+.rom-video-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.rom-canvas{display:block;width:100%;height:100%;object-fit:cover}
+.rom-video-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#d7e0e8;padding:20px;text-align:center}
+.rom-placeholder-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ffffff14;border:1px solid #ffffff18}
+.rom-video-placeholder strong{font-size:14px;font-weight:600;color:#fff}
+.rom-video-placeholder span{font-size:12px;line-height:1.4;color:#b7c4d0;max-width:220px}
+.rom-live-chip{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#101820cc;color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.rom-live-pulse{width:7px;height:7px;border-radius:50%;background:#ff5a5a;box-shadow:0 0 0 0 #ff5a5a88;animation:romPulse 1.2s ease infinite}
+.rom-actions{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+.rom-primary,.rom-secondary{min-height:44px;border-radius:12px;font-weight:650;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.rom-primary{background:#263b48;color:#fff!important;border:1px solid #263b48}
+.rom-primary:hover{background:#334e5e}
+.rom-primary-stop{background:#5d3a3a;border-color:#5d3a3a}
+.rom-primary-stop:hover{background:#6d4545}
+.rom-secondary{border:1px solid #18253618;background:#fff;color:#445463}
+.rom-error{margin:0;display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:12px;background:#fff1ef;color:#9a463c;font-size:12.5px;line-height:1.4}
+.rom-gauge-card{border-radius:14px;padding:14px;background:linear-gradient(180deg,#f7fafb,#f1f5f7);border:1px solid #18253610;display:flex;flex-direction:column;gap:10px}
+.rom-gauge-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rom-gauge-label{display:block;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:#6b7885;margin-bottom:4px}
+.rom-gauge-value{font-size:42px;font-weight:700;letter-spacing:-.05em;line-height:1;color:#1f2c38;font-variant-numeric:tabular-nums}
+.rom-gauge-value small{font-size:20px;margin-left:2px;color:#6b7885;font-weight:650}
+.rom-gauge-empty{color:#a0adb8}
+.rom-gauge-ring{position:relative;width:64px;height:64px;flex-shrink:0}
+.rom-gauge-ring svg{width:64px;height:64px;transform:rotate(-90deg);display:block}
+.rom-ring-track{fill:none;stroke:#d7e0e6;stroke-width:7}
+.rom-ring-value{fill:none;stroke:#2f9d8a;stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .18s ease}
+.rom-gauge-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#2f9d8a;pointer-events:none}
+.rom-range-track{position:relative;height:10px;border-radius:999px;background:#d9e2e8;overflow:hidden}
+.rom-range-fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#6ec4b4,#2f9d8a);border-radius:inherit;transition:width .15s ease}
+.rom-range-window{position:absolute;top:0;bottom:0;border-radius:inherit;background:#263b4822;box-shadow:inset 0 0 0 1px #263b4833}
+.rom-range-labels{display:flex;justify-content:space-between;font-size:10.5px;color:#7b8793}
+.rom-metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rom-metric-row span{display:block;font-size:10.5px;color:#7b8793;margin-bottom:3px}
+.rom-metric-row strong{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:#243444}
+.rom-muscles-card{border-radius:14px;padding:12px;border:1px solid #18253610;background:#fff;display:flex;flex-direction:column;gap:10px}
+.rom-muscles-card.is-active{border-color:#e7b4ae66;background:linear-gradient(180deg,#fff,#fff8f7)}
+.rom-muscles-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rom-muscles-head h3{margin:0;font-size:13px;font-weight:700;color:#243444}
+.rom-muscles-head span{font-size:10.5px;color:#87929d}
+.rom-muscle-card{display:grid;grid-template-columns:1fr 42px;grid-template-rows:auto auto;gap:4px 10px;align-items:center}
+.rom-muscle-meta{grid-column:1;min-width:0}
+.rom-muscle-meta strong{display:block;font-size:13px;font-weight:700;color:#2a3846}
+.rom-muscle-meta span{display:block;font-size:11px;color:#7b8793;margin-top:1px}
+.rom-muscle-bar{grid-column:1;height:8px;border-radius:999px;background:#edf1f4;overflow:hidden}
+.rom-muscle-bar>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f29a7d,#e23a2f);transition:width .15s ease}
+.rom-muscle-bar>i.antagonist{background:linear-gradient(90deg,#7eb8f0,#2f6de2)}
+.rom-muscle-card>em{grid-column:2;grid-row:1 / span 2;font-style:normal;font-size:15px;font-weight:750;font-variant-numeric:tabular-nums;text-align:right;color:#243444}
+.rom-muscles-idle{margin:0;font-size:12px;color:#87929d;line-height:1.4}
+.rom-disclaimer{margin:0;display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.45;color:#87929d}
+.rom-disclaimer svg{flex-shrink:0;margin-top:1px;color:#6aa39a}
+@keyframes romPulse{0%{box-shadow:0 0 0 0 #2f9d8a55}70%{box-shadow:0 0 0 8px #2f9d8a00}100%{box-shadow:0 0 0 0 #2f9d8a00}}
+@media(max-width:767px){
+ .rom-panel{left:12px;right:12px;top:max(100px,calc(env(safe-area-inset-top) + 84px));width:auto;max-height:calc(100dvh - 200px);z-index:40;padding:14px}
+ .rom-title{font-size:20px}
+ .rom-actions{grid-template-columns:1fr}
+ .rom-gauge-value{font-size:36px}
+ .top-actions span{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .rom-status-tracking .rom-status-dot,.rom-live-pulse{animation:none}
+ .rom-ring-value,.rom-range-fill,.rom-muscle-bar>i{transition:none}
+}

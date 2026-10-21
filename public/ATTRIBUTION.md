@@ -29,14 +29,15 @@ Adaptations: centimeters converted to meters and aligned to the BodyParts3D fram
 
 Z-Anatomy's inner ear (cochlea and vestibule) derives from "Anatomy of the Inner Ear" by the University of Dundee School of Medicine, CC BY-NC-SA 4.0. It is excluded by default; `scripts/import-zanatomy.mjs --include-nc` adds it for non-commercial use only.
 
-## Bone atlas educational reference
+## Anatomical educational reference (skeletal and non-skeletal)
 
-Skeletal overviews, Latin/English terminology lists, and further-reading deep links in this interface are original educational text written for the app. They are informed by standard anatomical nomenclature and point learners to matching regional pages on **Anatomy Standard** (Jānis Šavlovskis & Kristaps Raits):
+Structure overviews, Latin/English terminology lists, and further-reading deep links in this interface are original educational text written for the app. They are informed by standard anatomical nomenclature and point learners to matching regional pages on **Anatomy Standard** (Jānis Šavlovskis & Kristaps Raits):
 
 - Site: https://www.anatomystandard.com/
-- Skeleton section: https://www.anatomystandard.com/ossa-et-juncturae/
+- Skeleton and joint sections (bones, joints, teeth): https://www.anatomystandard.com/ossa-et-juncturae/
+- Muscle sections (masticatory and suprahyoid muscles): https://www.anatomystandard.com/musculi/
 
-Anatomy Standard illustrations and page copy are licensed CC BY-NC 4.0 by their authors. This project does **not** copy, host, or redistribute those images or their verbatim text. Links open their site for optional further study.
+Teeth are grouped in a dedicated dental system, and intervertebral disks, knee-joint structures, and the suprahyoid muscles carry their own reference entries in `app/structure-atlas.ts`, mirroring the bone entries in `app/bone-atlas.ts`. Anatomy Standard illustrations and page copy are licensed CC BY-NC 4.0 by their authors. This project does **not** copy, host, or redistribute those images or their verbatim text. Links open their site for optional further study.
 
 ## Historical assets (not included in the current release)
 

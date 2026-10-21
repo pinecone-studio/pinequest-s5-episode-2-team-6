@@ -26,7 +26,7 @@ export interface BoneAtlasEntry {
   matchers: string[];
 }
 
-const AS = 'https://www.anatomystandard.com/ossa-et-juncturae';
+const AS = 'https://www.anatomystandard.com/ossa-et-juncturae/cranium/os-occipitale.html';
 
 export const BONE_ATLAS: BoneAtlasEntry[] = [
   {

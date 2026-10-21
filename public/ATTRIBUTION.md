@@ -15,6 +15,20 @@ Source OBJ comments mention an older CC BY-SA 2.1 Japan license. The official cu
 
 BodyParts3D represents an adult male reference anatomy based on TARO MRI and anatomical illustration refinements. It is not a complete model of every possible human anatomical structure or variation. This interface is educational and is not a clinical tool.
 
+## Supplementary structures: Z-Anatomy
+
+Z-Anatomy, the libre 3D atlas of anatomy, licensed under CC Attribution-ShareAlike 4.0 International. Z-Anatomy builds on BodyParts3D (The Database Center for Life Science) and adapts the "Cranial Nerves and Foramina" model by the University of Dundee, CAHID (CC BY 4.0).
+
+- Source: https://github.com/LluisV/Z-Anatomy (FBX exports in `Resources/Models/FBX`)
+- Project: https://www.z-anatomy.com/
+- License: https://creativecommons.org/licenses/by-sa/4.0/
+
+Adapted structures (529 meshes, ids starting with `ZA`, chunks named `zanatomy-*.bin`): spinal cord, spinal dura, cauda equina, spinal nerve roots and ganglia, sympathetic trunk, brachial plexus and peripheral nerves of the limbs and trunk, cranial nerves, lymph nodes and palatine tonsils, thyroid and parathyroid glands, parotid glands and ducts, soft palate, pharynx, paranasal sinus and nasal mucosa, middle ear (tympanic membrane, malleus, incus, stapes, auditory tube), knee menisci and ligaments, and pelvic ligaments.
+
+Adaptations: centimeters converted to meters and aligned to the BodyParts3D frame using a scale and translation fitted to shared bones; coincident vertices welded, normals averaged and quantized; geometry simplified with a 0.2% per-structure relative error bound; display systems assigned for this interface. Structures already present in BodyParts3D were not duplicated. **These supplementary meshes remain under CC BY-SA 4.0**: share adaptations of them under the same license.
+
+Z-Anatomy's inner ear (cochlea and vestibule) derives from "Anatomy of the Inner Ear" by the University of Dundee School of Medicine, CC BY-NC-SA 4.0. It is excluded by default; `scripts/import-zanatomy.mjs --include-nc` adds it for non-commercial use only.
+
 ## Bone atlas educational reference
 
 Skeletal overviews, Latin/English terminology lists, and further-reading deep links in this interface are original educational text written for the app. They are informed by standard anatomical nomenclature and point learners to matching regional pages on **Anatomy Standard** (Jānis Šavlovskis & Kristaps Raits):

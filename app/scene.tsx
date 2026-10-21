@@ -8,6 +8,7 @@ import {decodeModelResponse} from './model-download';
 import {PointerTap} from './pointer-tap';
 import {SYSTEMS,type Atlas,type SceneState} from './anatomy';
 import {isDark,mixColor,type Appearance} from './appearance';
+import {BONE_FRAGMENT_BODY,BONE_FRAGMENT_HEADER,BONE_VERTEX_BODY,BONE_VERTEX_HEADER,computeCavity} from './bone-shading';
 interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
 export default function AnatomyScene({atlas,state,appearance,activations,onSelect,onProgress,onError}:Props){
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{});
@@ -58,7 +59,14 @@ export default function AnatomyScene({atlas,state,appearance,activations,onSelec
     shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.75);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.28, 0.22), partActivated * 0.85);');
-   };materials.push(m);return m;
+    if(system==='skeletal'){
+     shader.vertexShader=BONE_VERTEX_HEADER+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n'+BONE_VERTEX_BODY);
+     // After the selection and activation tints, so a selected bone keeps its surface detail.
+     shader.fragmentShader=BONE_FRAGMENT_HEADER+shader.fragmentShader.replace('partActivated * 0.85);','partActivated * 0.85);'+BONE_FRAGMENT_BODY);
+    }
+   };
+   // three.js caches programs by onBeforeCompile source, which is shared by every system; keep the bone shader distinct.
+   m.customProgramCacheKey=()=>system==='skeletal'?'anatomy-bone':'anatomy-part';materials.push(m);return m;
   };
   const mats=new Map(SYSTEMS.map(s=>[s.id,materialFor(s.id)]));
   // Floor tones follow the chosen backdrop so the horizon stays soft on light and dark backgrounds.
@@ -74,6 +82,8 @@ export default function AnatomyScene({atlas,state,appearance,activations,onSelec
     g.setAttribute('normal',new T.BufferAttribute(new Int16Array(buffer,p.normals,p.vertexCount*3),3,true));g.setIndex(new T.BufferAttribute(new Uint32Array(buffer,p.indices,p.indexCount),1));
     g.boundingBox=bounds[i].clone();g.computeBoundingSphere();const pick=new T.Mesh(g);pick.matrixAutoUpdate=false;pickers[i]=pick;geometries.push(g);
     g.setAttribute('partIndex',new T.BufferAttribute(new Float32Array(p.vertexCount).fill(i),1));
+    // Bones get curvature-based shading so fossae, grooves, and crests read like an anatomical illustration.
+    if(p.system==='skeletal')g.setAttribute('cavity',new T.BufferAttribute(computeCavity(g.attributes.position.array as Float32Array,g.attributes.normal.array as Int16Array,g.index!.array as Uint32Array),1));
     const list=groups.get(p.system)??[];list.push(g);groups.set(p.system,list);
    });
    groups.forEach((gs,system)=>{const geometry=mergeGeometries(gs,false);if(!geometry)throw new Error('Could not assemble anatomy geometry.');geometries.push(geometry);const mesh=new T.Mesh(geometry,mats.get(system as never));mesh.frustumCulled=false;scene.add(mesh);});

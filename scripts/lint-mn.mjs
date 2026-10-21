@@ -40,8 +40,26 @@ const englishWords = new Set(
     .split(' '),
 );
 
+/** Бүх quoted string (үг хэлбэртэй толь бичгийн утгуудыг оруулгаар). */
+function collectAllStrings(source) {
+  const out = [];
+  const pattern = /'((?:[^'\\]|\\.){4,})'/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) out.push(match[1]);
+  return out;
+}
+
 for (const file of files) {
   const source = readFileSync(join(DIR, file), 'utf8');
+
+  // Давхардсан тэмдэглэгээтэй үг: «сувгийн сув», «бүтэцтэй бүтэц» зэрэг
+  for (const text of collectAllStrings(source)) {
+    if (!/[А-Яа-яӨөҮү]/.test(text)) continue;
+    for (const m of text.matchAll(/([А-Яа-яӨөҮү]{3,})(ын|ийн|ны|гийн|тай|тэй|ы|ий)\s+\1(?![А-Яа-яӨөҮү])/g)) {
+      report(file, 'давхар тэмдэглэгээ', `«${m[1]}${m[2]} ${m[1]}»`);
+    }
+  }
+
   for (const text of collectProse(source)) {
     // Давхардсан үг (үнэхээр давхардсан эсвэл "хамраа хамраа" гэсэн зэрэгцээ ижил үг)
     const words = text.split(/\s+/);

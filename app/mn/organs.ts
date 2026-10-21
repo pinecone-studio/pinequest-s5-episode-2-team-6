@@ -1,9 +1,9 @@
 /**
  * Human Atlas — Монгол тайлбарын сан (гол эрхт ба системийн том бүтэцүүд).
  *
- * Эх сурвалж: `app/anatomy.ts` дахь `EXPLANATIONS` объектын англи тайлбарууд
- * болон `dist/models/atlas.json` дахь `concepts` массиваар баталгаажуулсан
- * бодит нэрсийн жагсаалт.
+ * Эх сурвалж: `dist/models/atlas.json` дахь `concepts` массиваар баталгаажуулсан
+ * бодит нэрсийн жагсаалт, мөн Wikipedia, StatPearls/NCBI, TeachMeAnatomy,
+ * Kenhub болон Anatomy Standard-ын хуудсууд.
  *
  * Ашиглалт:
  *   ORGAN_ENTRIES_MN['heart'] -> { latin: 'Cor', overview: '...' }

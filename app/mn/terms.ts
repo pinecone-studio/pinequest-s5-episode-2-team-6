@@ -96,7 +96,7 @@ export const LATIN_TERM_MN: Record<string, string> = {
   'canalis incisivus': 'шилүүлжүүр шүдний сув',
   'canalis infraorbitalis': 'нүдний доод сув',
   'canalis mandibulae': 'доод челюстийн сув',
-  'canalis musculotubarius': 'булчин-сувгийн сув',
+  'canalis musculotubarius': 'булчин-сувгийн суваг',
   'canalis n. facialis': 'цэцраг нервийн сув',
   'canalis nasolacrimalis': 'хамар-нударгайн сув',
   'canalis nervi facialis': 'цэцраг нервийн сув',

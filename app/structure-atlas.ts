@@ -26,6 +26,7 @@ const masticatory = 'https://www.anatomystandard.com/musculi/caput/mm-masticator
 const disks = 'https://www.anatomystandard.com/ossa-et-juncturae/columna-vertebralis/disci-intervertebrales.html';
 const knee = 'https://www.anatomystandard.com/ossa-et-juncturae/extremitas-inferior/art-genus.html';
 const teeth = 'https://www.anatomystandard.com/ossa-et-juncturae/cranium/dentes-permanentes.html';
+const pelvic = 'https://www.anatomystandard.com/ossa-et-juncturae/columna-vertebralis/art-lumbosacralis-et-sacrococcygea.html';
 
 export const STRUCTURE_ATLAS: StructureAtlasEntry[] = [
   {
@@ -227,6 +228,150 @@ export const STRUCTURE_ATLAS: StructureAtlasEntry[] = [
     matchers: ['articular capsule of knee joint'],
   },
   {
+    id: 'tibial-collateral-ligament',
+    title: 'Tibial collateral ligament',
+    latin: 'Ligamentum collaterale tibiale',
+    group: 'Joints',
+    overview:
+      'A broad, flat ligament over the medial side of the knee, running from the femoral epicondyle to the tibia. Its deep portion blends with the capsule and ties into the medial meniscus, so that meniscus moves whenever this ligament moves — one reason the medial side is the more often injured.',
+    terms: [
+      {latin: 'Ligamentum collaterale tibiale', english: 'Tibial (medial) collateral ligament'},
+      {latin: 'Pars profunda', english: 'Deep part, bound to the capsule'},
+      {latin: 'Pars superficialis', english: 'Superficial part'},
+      {latin: 'Epicondylus medialis femoris', english: 'Medial epicondyle of femur'},
+      {latin: 'Meniscus medialis', english: 'Firmly joined medial meniscus'},
+    ],
+    anatomyStandardUrl: knee,
+    matchers: ['tibial collateral ligament'],
+  },
+  {
+    id: 'fibular-collateral-ligament',
+    title: 'Fibular collateral ligament',
+    latin: 'Ligamentum collaterale fibulare',
+    group: 'Joints',
+    overview:
+      'A cord-like ligament from the lateral femoral epicondyle to the head of the fibula, staying clear of the capsule. The gap between it and the lateral meniscus is why that meniscus glides far more freely than its medial partner.',
+    terms: [
+      {latin: 'Ligamentum collaterale fibulare', english: 'Fibular (lateral) collateral ligament'},
+      {latin: 'Epicondylus lateralis femoris', english: 'Lateral epicondyle of femur'},
+      {latin: 'Caput fibulae', english: 'Head of fibula'},
+    ],
+    anatomyStandardUrl: knee,
+    matchers: ['fibular collateral ligament'],
+  },
+  {
+    id: 'oblique-popliteal-ligament',
+    title: 'Oblique popliteal ligament',
+    latin: 'Ligamentum popliteum obliquum',
+    group: 'Joints',
+    overview:
+      'A broad fibrous expansion sweeping obliquely across the back of the knee capsule, continuous with the tendon of the semimembranosus. That muscle tenses it during flexion — part of the deep goose-foot attachments it shares with the tendon.',
+    terms: [
+      {latin: 'Ligamentum popliteum obliquum', english: 'Oblique popliteal ligament'},
+      {latin: 'Tendo m. semimembranosi', english: 'Tendon of semimembranosus'},
+      {latin: 'Facies posterior capsulae', english: 'Posterior capsule'},
+    ],
+    anatomyStandardUrl: knee,
+    matchers: ['oblique popliteal ligament'],
+  },
+  {
+    id: 'arcuate-popliteal-ligament',
+    title: 'Arcuate popliteal ligament',
+    latin: 'Ligamentum popliteum arcuatum',
+    group: 'Joints',
+    overview:
+      'Fibers arching from the capsule to the head of the fibula, forming a fibrous tunnel — the hiatus through which the tendon of the popliteus passes into the joint, an unusual arrangement like the long head of the biceps tendon in the shoulder.',
+    terms: [
+      {latin: 'Ligamentum popliteum arcuatum', english: 'Arcuate popliteal ligament'},
+      {latin: 'Tendo m. poplitei', english: 'Tendon of the popliteus'},
+      {latin: 'Hiatus tendinis m. poplitei', english: 'Fibrous hiatus for the popliteus tendon'},
+      {latin: 'Caput fibulae', english: 'Head of fibula'},
+    ],
+    anatomyStandardUrl: knee,
+    matchers: ['arcuate popliteal ligament'],
+  },
+  {
+    id: 'sacroiliac-ligaments',
+    title: 'Sacroiliac ligaments',
+    latin: 'Ligamenta sacroiliaca',
+    group: 'Joints',
+    overview:
+      'The ligamentous complex binding the sacrum to the hip bones, acting like a suspension bridge that carries the weight of the trunk onto the legs and absorbs shocks from body movement. The anterior ligaments lie on the pelvic surface; the layered posterior ligaments are continuous with the deepest and strongest fibers — the interosseous sacroiliac ligaments — and further with the sacrotuberous ligament.',
+    terms: [
+      {latin: 'Ligamentum sacroiliacum anterius', english: 'Anterior sacroiliac ligament'},
+      {latin: 'Ligamentum sacroiliacum posterior', english: 'Posterior sacroiliac ligament'},
+      {latin: 'Ligamentum sacroiliacum interosseum', english: 'Interosseous sacroiliac ligament'},
+      {latin: 'Facies auricularis ossis sacri', english: 'Auricular surface of sacrum'},
+      {latin: 'Facies auricularis ilii', english: 'Auricular surface of ilium'},
+    ],
+    anatomyStandardUrl: pelvic,
+    matchers: ['anterior sacro-iliac ligament', 'interosseous sacro-iliac ligament', 'posterior sacro-iliac ligament'],
+  },
+  {
+    id: 'iliolumbar-ligament',
+    title: 'Iliolumbar ligament',
+    latin: 'Ligamentum iliolumbale',
+    group: 'Joints',
+    overview:
+      'A dense ligament connecting the costal processes of L5 — and partly L4 — to the iliac wings, continuous with the anterior sacroiliac ligaments. This extra lashing of the fifth lumbar level is a key difference from the vertebrae above and curtails lateral bending there.',
+    terms: [
+      {latin: 'Ligamentum iliolumbale', english: 'Iliolumbar ligament'},
+      {latin: 'Processus costiformis vertebrae lumbalis', english: 'Costal process of L5'},
+      {latin: 'Ala ossis ilii', english: 'Iliac wing'},
+    ],
+    anatomyStandardUrl: pelvic,
+    matchers: ['^iliolumbar ligament$'],
+  },
+  {
+    id: 'pubic-symphysis',
+    title: 'Pubic symphysis',
+    latin: 'Symphysis pubis',
+    group: 'Joints',
+    overview:
+      'A secondary cartilaginous joint uniting the two hip bones at the front, cushioned by a fibrocartilaginous interpubic disc that contains a cleft. Ligaments encircle it, the thickest above and below the disc — the superior and inferior pubic ligaments.',
+    terms: [
+      {latin: 'Symphysis pubis', english: 'Pubic symphysis'},
+      {latin: 'Discus interpubicus', english: 'Interpubic disc'},
+      {latin: 'Cleft of the interpubic disc', english: 'Cleft within the disc'},
+      {latin: 'Ligamentum pubicum superius', english: 'Superior pubic ligament'},
+      {latin: 'Ligamentum pubicum inferius', english: 'Inferior pubic ligament'},
+      {latin: 'Facies symphysialis ossis pubis', english: 'Symphysial surface of pubis'},
+    ],
+    anatomyStandardUrl: pelvic,
+    matchers: ['pubic symphysis', 'interpubic disc', 'superior pubic ligament', 'inferior pubic ligament'],
+  },
+  {
+    id: 'sacrotuberous-ligament',
+    title: 'Sacrotuberous ligament',
+    latin: 'Ligamentum sacrotuberale',
+    group: 'Joints',
+    overview:
+      'The most prominent ligament on the back of the pelvis, running from the ischial tuberosity to the sacrum, ilium, and coccyx and continuous with the posterior sacroiliac ligament. Working as a kinematic chain it helps transfer load from spine and sacrum through the hamstrings to the leg.',
+    terms: [
+      {latin: 'Ligamentum sacrotuberale', english: 'Sacrotuberous ligament'},
+      {latin: 'Tuber ischiadicum', english: 'Ischial tuberosity'},
+      {latin: 'Foramen ischiadicum minus', english: 'Lesser sciatic foramen'},
+    ],
+    anatomyStandardUrl: pelvic,
+    matchers: ['^sacrotuberous ligament$'],
+  },
+  {
+    id: 'sacrospinous-ligament',
+    title: 'Sacrospinous ligament',
+    latin: 'Ligamentum sacrospinale',
+    group: 'Joints',
+    overview:
+      'A small but architectural ligament from the ischial spine to the side of the sacrum and coccyx. With the sacrotuberous ligament it partitions the space beside the sacrum into the greater and lesser sciatic foramina, passages for muscles, nerves, and vessels.',
+    terms: [
+      {latin: 'Ligamentum sacrospinale', english: 'Sacrospinous ligament'},
+      {latin: 'Spina ischiadica', english: 'Ischial spine'},
+      {latin: 'Foramen ischiadicum majus', english: 'Greater sciatic foramen'},
+      {latin: 'Foramen ischiadicum minus', english: 'Lesser sciatic foramen'},
+    ],
+    anatomyStandardUrl: pelvic,
+    matchers: ['^sacrospinous ligament$'],
+  },
+  {
     id: 'permanent-tooth',
     title: 'Permanent tooth',
     latin: 'Dens permanens',
@@ -356,4 +501,4 @@ export function resolveStructureAtlas(name: string): StructureAtlasEntry | null 
 }
 
 /** Unused today; kept to document which sections the links draw on. */
-export const STRUCTURE_ATLAS_SECTIONS = {suprahyoid, masticatory, disks, knee, teeth};
+export const STRUCTURE_ATLAS_SECTIONS = {suprahyoid, masticatory, disks, knee, pelvic, teeth};

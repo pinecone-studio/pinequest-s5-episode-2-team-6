@@ -535,6 +535,38 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
     matchers: ['nasal bone'],
   },
   {
+    id: 'lacrimal-bone',
+    title: 'Lacrimal bone',
+    latin: 'Os lacrimale',
+    region: 'cranium',
+    overview:
+      'The smallest bone of the face, a thin scale in the front part of the medial orbital wall. Its lacrimal fossa houses the lacrimal sac and, with the hamulus and neighbors, helps roof the nasolacrimal canal that drains tears to the nose.',
+    terms: [
+      {latin: 'Facies orbitalis', english: 'Orbital surface'},
+      {latin: 'Fossa sacci lacrimalis', english: 'Fossa of the lacrimal sac'},
+      {latin: 'Hamulus lacrimalis', english: 'Lacrimal hamulus'},
+      {latin: 'Canalis nasolacrimalis', english: 'Nasolacrimal canal'},
+    ],
+    anatomyStandardUrl: `${AS}/cranium/os-lacrimale.html`,
+    matchers: ['lacrimal bone'],
+  },
+  {
+    id: 'inferior-nasal-concha',
+    title: 'Inferior nasal concha',
+    latin: 'Concha nasalis inferior',
+    region: 'cranium',
+    overview:
+      'A curved scroll of thin bone along the lateral wall of the nasal cavity, hanging free on its lower edge. Covered in mucosa, it swirls and conditions the airflow and helps roof the inferior nasal meatus.',
+    terms: [
+      {latin: 'Processus maxillaris', english: 'Maxillary process'},
+      {latin: 'Processus lacrimalis', english: 'Lacrimal process'},
+      {latin: 'Processus ethmoidalis', english: 'Ethmoidal process'},
+      {latin: 'Meatus nasi inferior', english: 'Inferior nasal meatus'},
+    ],
+    anatomyStandardUrl: `${AS}/cranium/concha-nasalis-inf.html`,
+    matchers: ['inferior nasal concha'],
+  },
+  {
     id: 'palatine',
     title: 'Palatine bone',
     latin: 'Os palatinum',

@@ -158,21 +158,21 @@ export default function RomPanel({
   const extensorPct = Math.round((activation?.antagonistLevel ?? 0) * 100);
 
   const statusCopy: Record<TrackStatus, string> = {
-    idle: 'Ready when you are',
-    starting: 'Starting camera…',
-    searching: `Show your ${side} arm`,
-    tracking: 'Tracking elbow',
-    lost: `Looking for your ${side} arm…`,
+    idle: 'Тэгээд бэлэн',
+    starting: 'Камер нээж байна…',
+    searching: `${side === 'left' ? 'Зүүн' : 'Баруун'} гараа харуулна уу`,
+    tracking: 'Өршүүдийг хянаж байна',
+    lost: `${side === 'left' ? 'Зүүн' : 'Баруун'} гарыг хайж байна…`,
   };
 
   return (
-    <section className="rom-panel glass" aria-label="Range of motion lab">
+    <section className="rom-panel glass" aria-label="Хөдөлгөөний хүрээний лаборатори">
       <header className="rom-header">
         <div className="rom-title-block">
-          <p className="rom-kicker">Live movement</p>
-          <h2 className="rom-title">Elbow ROM lab</h2>
+          <p className="rom-kicker">Амьд хөдөлгөөн</p>
+          <h2 className="rom-title">Өршүүдний ROM лаборатори</h2>
           <p className="rom-subtitle">
-            Bend your arm — see the angle and which muscles light up on the atlas.
+            Гараа нуцаавал өнцөг болон аль булчин эргэлж байгааг загвараар харна уу.
           </p>
         </div>
         <Button
@@ -182,7 +182,7 @@ export default function RomPanel({
             stop();
             onClose();
           }}
-          aria-label="Close ROM lab"
+          aria-label="ROM лаборатори хаах"
         >
           <X size={18} />
         </Button>
@@ -197,27 +197,27 @@ export default function RomPanel({
         <ol className="rom-steps">
           <li>
             <em>1</em>
-            <span>Pick left or right arm</span>
+            <span>Зүүн эсвэл баруун гараа сонгоно уу</span>
           </li>
           <li>
             <em>2</em>
-            <span>Start the camera</span>
+            <span>Камерыг нээнэ уу</span>
           </li>
           <li>
             <em>3</em>
-            <span>Flex and extend — watch the 3D body</span>
+            <span>Нуцааж, суллуулж 3D биеээ харна уу</span>
           </li>
         </ol>
       )}
 
-      <div className="rom-side-toggle" role="group" aria-label="Arm side">
+      <div className="rom-side-toggle" role="group" aria-label="Гарын тал">
         <Button
           variant="ghost"
           aria-pressed={side === 'left'}
           className={side === 'left' ? 'active' : ''}
           onClick={() => setSide('left')}
         >
-          Left arm
+          Зүүн гар
         </Button>
         <Button
           variant="ghost"
@@ -225,7 +225,7 @@ export default function RomPanel({
           className={side === 'right' ? 'active' : ''}
           onClick={() => setSide('right')}
         >
-          Right arm
+          Баруун гар
         </Button>
       </div>
 
@@ -237,14 +237,17 @@ export default function RomPanel({
             <div className="rom-placeholder-icon">
               <Camera size={22} />
             </div>
-            <strong>Camera preview</strong>
-            <span>Stand so your {side} elbow and wrist are visible</span>
+            <strong>Камерын харалцлага</strong>
+            <span>
+              {side === 'left' ? 'Зүүн' : 'Баруун'} өршүүд болон бударгай харагдах
+              байрлалд зогсоно уу
+            </span>
           </div>
         )}
         {running && (
           <div className="rom-live-chip">
             <span className="rom-live-pulse" />
-            Live
+            Шууд
           </div>
         )}
       </div>
@@ -253,12 +256,12 @@ export default function RomPanel({
         {!running ? (
           <Button className="rom-primary" onClick={start} disabled={busy}>
             <Camera size={18} />
-            {busy ? 'Starting…' : 'Start camera'}
+            {busy ? 'Нээж байна…' : 'Камер нээх'}
           </Button>
         ) : (
           <Button className="rom-primary rom-primary-stop" onClick={stop}>
             <CameraOff size={18} />
-            Stop
+            Зогсоох
           </Button>
         )}
         <Button
@@ -268,7 +271,7 @@ export default function RomPanel({
           onClick={() => setTracker(resetRomTracker(tracker.current))}
         >
           <RotateCcw size={16} />
-          Reset range
+          Хүрээ сэргээх
         </Button>
       </div>
 
@@ -282,7 +285,7 @@ export default function RomPanel({
       <div className="rom-gauge-card">
         <div className="rom-gauge-top">
           <div>
-            <span className="rom-gauge-label">Elbow flexion</span>
+            <span className="rom-gauge-label">Өршүүдний гуйлт</span>
             <div className="rom-gauge-value">
               {hasData ? (
                 <>
@@ -323,21 +326,21 @@ export default function RomPanel({
           )}
         </div>
         <div className="rom-range-labels">
-          <span>Extended 0°</span>
-          <span>Flexed {norm.max}°</span>
+          <span>Бүтэлтэй 0°</span>
+          <span>Нуцсан {norm.max}°</span>
         </div>
 
         <div className="rom-metric-row">
           <div>
-            <span>Your range</span>
+            <span>Таны хүрээ</span>
             <strong>{hasData ? `${romSpan.toFixed(0)}°` : '—'}</strong>
           </div>
           <div>
-            <span>Lowest</span>
+            <span>Хамгийн бага</span>
             <strong>{hasData ? `${tracker.min.toFixed(0)}°` : '—'}</strong>
           </div>
           <div>
-            <span>Highest</span>
+            <span>Хамгийн их</span>
             <strong>{hasData ? `${tracker.max.toFixed(0)}°` : '—'}</strong>
           </div>
         </div>
@@ -345,13 +348,13 @@ export default function RomPanel({
 
       <div className={`rom-muscles-card${activation ? ' is-active' : ''}`}>
         <div className="rom-muscles-head">
-          <h3>Muscle activity</h3>
-          <span>Shown in red on the 3D body</span>
+          <h3>Булчны үйл ажиллагаа</h3>
+          <span>3D биед улаангаар харагдана</span>
         </div>
 
         <div className="rom-muscle-card">
           <div className="rom-muscle-meta">
-            <strong>Bending</strong>
+            <strong>Нуцааж байна</strong>
             <span>Biceps · brachialis · brachioradialis</span>
           </div>
           <div className="rom-muscle-bar">
@@ -362,7 +365,7 @@ export default function RomPanel({
 
         <div className="rom-muscle-card">
           <div className="rom-muscle-meta">
-            <strong>Straightening</strong>
+            <strong>Буцаан суллуулж байна</strong>
             <span>Triceps</span>
           </div>
           <div className="rom-muscle-bar">
@@ -373,15 +376,15 @@ export default function RomPanel({
 
         {!activation && (
           <p className="rom-muscles-idle">
-            Start the camera and move your arm to light up these groups.
+            Камерыг нээж, гараа хөдөлгөөж эдгээр бүлгийг гэрэлтүүлнэ үү.
           </p>
         )}
       </div>
 
       <p className="rom-disclaimer">
         <CheckCircle2 size={13} />
-        Teaching demo only — not a clinical ROM or EMG measurement. Typical elbow
-        flexion reference ~{norm.min}–{norm.max}°.
+        Зөвхөн сурах зориулалттай жижиг харагдац — эмнэлгийн ROM эсвэл EMG хэмжилт
+        биш. Өршүүдний гуйлтын ердийн хүрээ ~{norm.min}–{norm.max}°.
       </p>
     </section>
   );

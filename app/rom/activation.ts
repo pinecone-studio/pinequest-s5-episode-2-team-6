@@ -62,6 +62,6 @@ export function computeElbowActivation(
 }
 
 export function protocolLabel(joint: RomJoint, protocol: RomProtocol): string {
-  if (joint === 'elbow' && protocol === 'flexion') return 'Elbow flexion';
+  if (joint === 'elbow' && protocol === 'flexion') return 'Өршүүдний гуйлт';
   return `${joint} ${protocol}`;
 }

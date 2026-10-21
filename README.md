@@ -28,10 +28,13 @@ Open http://localhost:3016. To build the static site, run `npm run build`; the o
 
 ```sh
 npm run check
+npm run lint:mn
 node scripts/validate-atlas.mjs
 node scripts/validate-interactions.mjs
 npm run build
 ```
+
+`npm run lint:mn` checks the Mongolian content in `app/mn/` for repeated words, number ranges written with an ASCII hyphen, stray English words, unbalanced parentheses, and missing sentence endings.
 
 Validation covers mesh buffers, names and concept membership, nonoverlapping exploded layouts at desktop and mobile aspect ratios, search and inspection contracts, and tap-versus-drag handling. Browser interaction checks have exercised selection, system controls, search, isolation, rotation, and 390×844, 320×568, and 844×390 layouts. Phone controls stay clear of the exploded inventory, and isolated structures fit the space above or beside the detail panel. Physical-device performance and real multitouch hardware have not been tested.
 
@@ -42,6 +45,27 @@ The current viewer uses **BodyParts3D 4.0**, an adult male reference anatomy, li
 Geometry is simplified for browser performance while retaining every source mesh; the 220 BodyParts3D bones keep their full source resolution. The packaged model contains 3,043,414 triangles and downloads approximately 42 MB of compressed geometry. Full credits, source links, and adaptation details are in [ATTRIBUTION.md](public/ATTRIBUTION.md).
 
 This is an educational explorer, not a diagnostic or surgical tool.
+
+## Монгол хэлээрх анагаадын тайлбар
+
+The viewer's structure names stay in their Latin or foreign form, while every explanation is written in Mongolian.
+
+| File | Contents |
+| --- | --- |
+| `app/mn/systems.ts` | The 16 anatomical systems: Mongolian names, Latin names, and detailed Mongolian overviews. |
+| `app/mn/organs.ts` | Curated organ entries (heart, liver, brain, lungs, kidneys, glands, vessels, valves, …) with their Latin name and a detailed Mongolian overview. |
+| `app/mn/bones.ts` | A detailed Mongolian overview for each of the 42 entries of `app/bone-atlas.ts`, keyed by atlas id. |
+| `app/mn/structures.ts` | A detailed Mongolian overview for each of the 27 entries of `app/structure-atlas.ts` (suprahyoid muscles, intervertebral discs, knee and pelvic ligaments, teeth). |
+| `app/mn/glossary.ts` | The English → Mongolian terminology lexicon used to name the remaining structures. |
+| `app/mn/terms.ts` | Latin term → Mongolian glossary used by the terminology list in the detail panel. |
+| `app/mn/index.ts` | The description engine: it names a structure in Mongolian, picks the curated entry when one exists, and otherwise composes a system- and region-aware explanation. |
+| `app/mn/README.md` | The shared style guide: terminology, Mongolian grammar rules, and the source list every entry follows. |
+
+`explanation()` in `app/anatomy.ts` now returns Mongolian text, so all 2,763 modeled pieces have an explanation: curated text for organs, bones, joints and teeth, and a generated description for every vessel, nerve, muscle and ligament.
+
+The search panel matches Mongolian names too, so typing "зүрх", "дундаж яс" or "лимфний зангиа" finds the matching structures alongside the English source names.
+
+Bone and joint figures come from [Anatomy Standard](https://www.anatomystandard.com/) (Jānis Šavlovskis & Kristaps Raits, CC BY-NC 4.0); the Latin terminology lists and the Mongolian explanations build on that reference.
 
 ## How it works
 

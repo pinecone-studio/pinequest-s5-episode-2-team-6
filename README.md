@@ -46,7 +46,7 @@ Geometry is simplified for browser performance while retaining every source mesh
 
 This is an educational explorer, not a diagnostic or surgical tool.
 
-## Монгол хэлээрх анагаадын тайлбар
+## Монгол хэлээрх анагааны тайлбар
 
 The viewer's structure names stay in their Latin or foreign form, while every explanation is written in Mongolian.
 

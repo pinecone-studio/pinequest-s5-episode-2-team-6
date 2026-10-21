@@ -1,6 +1,6 @@
 import {SYSTEMS,type SystemId} from './anatomy';
 export interface Appearance {background:string;colors:Record<SystemId,string>}
-export const BACKGROUNDS=[{name:'Studio',color:'#f2f3f3'},{name:'Warm',color:'#efe8de'},{name:'Mist',color:'#e2eaf0'},{name:'Slate',color:'#3a4551'},{name:'Midnight',color:'#11171e'},{name:'Black',color:'#000000'}];
+export const BACKGROUNDS=[{name:'Студи',color:'#f2f3f3'},{name:'Дулаан',color:'#efe8de'},{name:'Сүүг',color:'#e2eaf0'},{name:'Хөх сондгой',color:'#3a4551'},{name:'Шөнө',color:'#11171e'},{name:'Хар',color:'#000000'}];
 export const DEFAULT_APPEARANCE:Appearance={background:BACKGROUNDS[0].color,colors:Object.fromEntries(SYSTEMS.map(s=>[s.id,s.color])) as Record<SystemId,string>};
 const KEY='human-atlas-appearance',HEX=/^#[0-9a-f]{6}$/i;
 const hex=(value:unknown,fallback:string)=>typeof value==='string'&&HEX.test(value)?value.toLowerCase():fallback;

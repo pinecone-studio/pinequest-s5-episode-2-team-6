@@ -202,3 +202,13 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 @media(max-height:600px) and (orientation:landscape){.colors-panel{top:72px;left:auto;right:12px;width:320px;max-height:calc(100dvh - 90px)}}
 .on-dark .top-actions button{background:#fffffff0}
 @media(max-width:350px){h1{font-size:21px;gap:5px}}
+
+/* Монгол хэлээрх анагаадын тайлбар, нэр томьёо */
+.term-list li{grid-template-columns:1fr 1fr}
+.term-mn{grid-column:1/-1;color:#42606f;font-size:12px;line-height:1.55}
+.structure-title{text-transform:none}
+.structure-latin{line-height:1.5}
+.on-dark .term-mn{color:#a9bcc7}
+.search-result-name{display:flex;flex-direction:column;gap:2px;min-width:0}
+.search-result-name b{font-weight:500}
+.search-result-name em{font-style:normal;font-size:11px;color:#7b8792;text-transform:none}

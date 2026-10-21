@@ -172,7 +172,7 @@ export default function RomPanel({
           <p className="rom-kicker">Амьд хөдөлгөөн</p>
           <h2 className="rom-title">Өршүүдний ROM лаборатори</h2>
           <p className="rom-subtitle">
-            Гараа нуцаавал өнцөг болон аль булчин эргэлж байгааг загвараар харна уу.
+            Гараа махийлгавал өнцөг болон аль булчин эргэлж байгааг загвараар харна уу.
           </p>
         </div>
         <Button
@@ -205,7 +205,7 @@ export default function RomPanel({
           </li>
           <li>
             <em>3</em>
-            <span>Нуцааж, суллуулж 3D биеээ харна уу</span>
+            <span>Махийлгаж, тэнийлгэж 3D биеээ харна уу</span>
           </li>
         </ol>
       )}
@@ -285,7 +285,7 @@ export default function RomPanel({
       <div className="rom-gauge-card">
         <div className="rom-gauge-top">
           <div>
-            <span className="rom-gauge-label">Өршүүдний гуйлт</span>
+            <span className="rom-gauge-label">Өршүүдний махийлгал</span>
             <div className="rom-gauge-value">
               {hasData ? (
                 <>
@@ -326,8 +326,8 @@ export default function RomPanel({
           )}
         </div>
         <div className="rom-range-labels">
-          <span>Бүтэлтэй 0°</span>
-          <span>Нуцсан {norm.max}°</span>
+          <span>Тэнийлсэн 0°</span>
+          <span>Махийлсан {norm.max}°</span>
         </div>
 
         <div className="rom-metric-row">
@@ -354,7 +354,7 @@ export default function RomPanel({
 
         <div className="rom-muscle-card">
           <div className="rom-muscle-meta">
-            <strong>Нуцааж байна</strong>
+            <strong>Махийлгаж байна</strong>
             <span>Biceps · brachialis · brachioradialis</span>
           </div>
           <div className="rom-muscle-bar">
@@ -365,7 +365,7 @@ export default function RomPanel({
 
         <div className="rom-muscle-card">
           <div className="rom-muscle-meta">
-            <strong>Буцаан суллуулж байна</strong>
+            <strong>Тэнийлгэж байна</strong>
             <span>Triceps</span>
           </div>
           <div className="rom-muscle-bar">
@@ -384,7 +384,7 @@ export default function RomPanel({
       <p className="rom-disclaimer">
         <CheckCircle2 size={13} />
         Зөвхөн сурах зориулалттай жижиг харагдац — эмнэлгийн ROM эсвэл EMG хэмжилт
-        биш. Өршүүдний гуйлтын ердийн хүрээ ~{norm.min}–{norm.max}°.
+        биш. Өршүүдний махийлгалын ердийн хүрээ ~{norm.min}–{norm.max}°.
       </p>
     </section>
   );

@@ -12,8 +12,8 @@ import {SYSTEM_ENTRIES_MN} from './systems';
 
 /** Нэмэлт хатуу тогтмол нэр томьёонууд (token түвшний дүрэмээс давахгүй хослолууд). */
 const EXTRA_PHRASES: Record<string, string> = {
-  'anterior': 'урд',
-  'posterior': 'дахь',
+  'anterior': 'өмнөд',
+  'posterior': 'хойд',
   'aorta': 'хөв',
   'brachial plexus': 'мөрийн нерв сүлжээ',
   'cavernosum': 'хатуу бие',

@@ -24,7 +24,7 @@ export const JOINT_PROTOCOLS: Record<
 
 /** Approximate normative elbow flexion ROM (degrees) for UI reference only. */
 export const NORMATIVE_ROM: Record<RomJoint, {min: number; max: number; label: string}> = {
-  elbow: {min: 0, max: 145, label: 'Өршүүдний гуйлт (ойролцоох ердийн хүрээ)'},
+  elbow: {min: 0, max: 145, label: 'Өршүүдний махийлгал (ойролцоох ердийн хүрээ)'},
 };
 
 export function matchPartsForPatterns(

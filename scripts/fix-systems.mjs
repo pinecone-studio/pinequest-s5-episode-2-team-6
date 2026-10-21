@@ -15,6 +15,10 @@ const RULES=[
  ['skeletal',/^(inferior nasal concha|lacrimal bone)$/],
  ['connective',/^iliotibial tract$|^flexor retinaculum of wrist$/],
  ['digestive',/^gingiva of (upper|lower) jaw$/],
+  // Teeth are anchored in the jaws but are not bones; they form the dental apparatus.
+ ['dental',/ tooth$/],
+ // Intervertebral disks are fibrocartilaginous joints, not parts of bones.
+ ['connective',/^intervertebral disk/],
 ];
 const normalize=name=>name.toLowerCase().replace(/\b(left|right) /g,'').replace(/ +/g,' ').trim();
 const moved={};

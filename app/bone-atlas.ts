@@ -366,21 +366,6 @@ export const BONE_ATLAS: BoneAtlasEntry[] = [
     matchers: ['lumbar vertebra'],
   },
   {
-    id: 'intervertebral-disk',
-    title: 'Intervertebral disk',
-    latin: 'Discus intervertebralis',
-    region: 'vertebral column',
-    overview:
-      'Intervertebral disks cushion and join adjacent vertebral bodies. The outer anulus fibrosus surrounds a hydrated nucleus pulposus that distributes compressive load.',
-    terms: [
-      {latin: 'Anulus fibrosus', english: 'Anulus fibrosus'},
-      {latin: 'Nucleus pulposus', english: 'Nucleus pulposus'},
-      {latin: 'Discus intervertebralis', english: 'Intervertebral disk'},
-    ],
-    anatomyStandardUrl: `${AS}/columna-vertebralis/disci-intervertebrales.html`,
-    matchers: ['intervertebral disk'],
-  },
-  {
     id: 'frontal-bone',
     title: 'Frontal bone',
     latin: 'Os frontale',

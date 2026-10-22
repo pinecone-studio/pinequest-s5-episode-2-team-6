@@ -53,6 +53,22 @@ Geometry is merged into batches. Per-structure GPU textures control translation,
 
 The optional WebMCP tools expose anatomy search and inspection in compatible browsers. The visible interface works without them.
 
+## Usage counter
+
+The landing page keeps a small usage tally: visits, visitors that went past the first screen or pressed a call to action, and atlas opens. The numbers live in `localStorage` under `human-atlas-usage`, so nothing leaves the device and no cookies are set, and they are shown in the statistics panel of the landing page.
+
+Set `VITE_USAGE_ENDPOINT` to collect the same numbers on a server. The page then sends one `POST` per change (`visit`, `engage`, `open`, `depth`, `seconds`) and reads the running totals back with a `GET`:
+
+```json
+{"visits":128,"engaged":64,"opens":41,"seconds":3600,"depth":100,"last":1760000000000}
+```
+
+When the endpoint answers with totals, the landing page shows those numbers instead of the per device ones.
+
+## Screen sizes
+
+The landing page and the atlas are built for phones, tablets and desktops. The landing page stacks the copy under the body on a phone and on a portrait tablet, keeps the two column hero on a landscape tablet and on a desktop, and scales the big words so they never run off the screen. The atlas switches to the bottom dock and the sheet panels below 768 pixels and keeps the side panels above it. Checked at 320×568, 390×844, 768×1024, 820×1180, 1024×768, 1440×900 and 1920×1200.
+
 ## The assistant, tours and quiz
 
 The site is static and needs no API key, so "Ask AI" is answered locally by a deterministic engine that reads the same reference notes the interface shows: the structure and bone atlases, the innervation notes, and the system list. It can explain the selected structure, name the nerve that supplies it, highlight a named group such as the rotator cuff, rotate the model, switch the floating labels, or hand over to a tour or the quiz. Every reply is grounded in this atlas and lists the actions it performed.

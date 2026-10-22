@@ -23,6 +23,7 @@ import {AnchorChannel} from './anchor';
 import {MAX_PEEL,peelLayerName,peeledSystems} from './layers';
 import type {ActivationFrame} from './rom/activation';
 import {BACKGROUNDS,DEFAULT_APPEARANCE,isDark,loadAppearance,saveAppearance} from './appearance';
+import {trackEngaged,trackOpen} from './usage';
 const initial:SceneState={explode:0,visible:DEFAULT_VISIBLE,selected:[],isolate:false,view:'three-quarter',rotate:false,reset:0,labels:false,peel:0,slice:{on:false,depth:0.5,axis:'x'}};
 const DEFAULT_SLICE:SliceState={on:false,depth:0.5,axis:'x'};
 const ROM_VISIBLE:SystemId[]=['skeletal','muscular'];
@@ -36,6 +37,8 @@ export default function Home(){
  useEffect(()=>{const key=(e:KeyboardEvent)=>{const typing=e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement;if(typing||e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='/'){e.preventDefault();setPanel('search');setDetails(false);}else if(e.key==='a'||e.key==='A'){e.preventDefault();setPanel(null);setDetails(false);setChatOpen(open=>!open);}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[]);
  const [appearance,setAppearance]=useState(loadAppearance);
  useEffect(()=>{saveAppearance(appearance);document.querySelector('meta[name=theme-color]')?.setAttribute('content',appearance.background);},[appearance]);
+ // Opening the atlas and inspecting a structure are the two things worth counting.
+ useEffect(()=>{trackOpen();},[]);
  const parts=useMemo(()=>new Map(atlas?.parts.map(p=>[p.id,p])),[atlas]);
  const peeled=useMemo(()=>peeledSystems(state.peel??0),[state.peel]);
  const sliceState=state.slice??DEFAULT_SLICE;
@@ -60,9 +63,9 @@ export default function Home(){
   }
   return atlas.concepts.filter(c=>c.name.toLowerCase().includes(term)||c.id.toLowerCase().includes(term)).sort((a,b)=>a.name.length-b.name.length).slice(0,80);
  },[atlas,query]);
- const choose=(c:Concept)=>{setChosen(c);setState(s=>({...s,selected:c.elements,isolate:false,rotate:false}));setDetails(!chatOpen);setPanel(null);setCardDismissed(false);};
+ const choose=(c:Concept)=>{trackEngaged();setChosen(c);setState(s=>({...s,selected:c.elements,isolate:false,rotate:false}));setDetails(!chatOpen);setPanel(null);setCardDismissed(false);};
  useEffect(()=>{if(!atlas)return;return registerAtlasTools(atlas,c=>flushSync(()=>choose(c)));},[atlas]);
- const choosePart=(id:string)=>{const p=parts.get(id);if(!p)return;setChosen({id:p.conceptId,name:p.name,elements:[id]});setState(s=>({...s,selected:[id],isolate:false,rotate:false}));setDetails(!chatOpen);setPanel(null);setCardDismissed(false);};
+ const choosePart=(id:string)=>{const p=parts.get(id);if(!p)return;trackEngaged();setChosen({id:p.conceptId,name:p.name,elements:[id]});setState(s=>({...s,selected:[id],isolate:false,rotate:false}));setDetails(!chatOpen);setPanel(null);setCardDismissed(false);};
  const toggle=(id:SystemId)=>{setDetails(false);setState(s=>({...s,selected:[],isolate:false,visible:s.visible.includes(id)?s.visible.filter(x=>x!==id):[...s.visible,id]}));};
  const reset=()=>{setState(s=>({...initial,visible:DEFAULT_VISIBLE,reset:s.reset+1}));setChosen(null);setDetails(false);setPanel(null);};
  const setBackground=(background:string)=>setAppearance(a=>({...a,background}));

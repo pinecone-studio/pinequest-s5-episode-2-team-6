@@ -86,6 +86,14 @@
 .lp-glass dd{margin:0;font-size:12px;line-height:1.45;color:#15171c99}
 .lp-glass dd b{display:block;font-weight:500;color:var(--lp-ink)}
 
+/* Usage counter: how often the page was visited and how often it was really used */
+.lp-usage{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:14px 32px;padding-top:24px;border-top:1px solid var(--lp-line)}
+.lp-usage-label{font-family:var(--lp-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--lp-muted)}
+.lp-usage-list{display:flex;flex-wrap:wrap;gap:8px 34px;margin:0;padding:0;list-style:none}
+.lp-usage-list li{display:flex;align-items:baseline;gap:8px}
+.lp-usage-list b{font-size:clamp(20px,2vw,26px);font-weight:400;letter-spacing:-.03em;line-height:1}
+.lp-usage-list span{font-size:12px;color:var(--lp-muted)}
+
 /* Unlock */
 .lp-unlock{display:flex;align-items:center;justify-content:flex-end;min-height:120svh;padding:14vh var(--lp-pad)}
 .lp-unlock-copy{width:min(640px,50vw)}

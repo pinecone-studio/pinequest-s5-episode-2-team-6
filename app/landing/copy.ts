@@ -16,6 +16,7 @@ const en={
     {value:'16',label:'body systems',note:'each with its own color'},
     {value:'3.0M',label:'triangles of detail',note:'not a single mesh dropped'},
   ]},
+  usage:{label:'Usage counter',visits:'visits',engaged:'visitors who used it',opens:'atlas opens'},
   unlock:{lead:'Human Atlas unlocks a faster,',title:' smarter way to study anatomy',text:'Bring the textbook to life instantly. Cut through dense diagrams, skip the tab-switching and stay focused on the structure in front of you.',cta:'Launch now',features:[
     {title:'3D Atlas',text:'Rotate, peel back and explode the whole body.'},
     {title:'AI Assistant',text:'Ask which nerve supplies a muscle and watch it light up.'},
@@ -40,6 +41,7 @@ const mn:typeof en={
     {value:'16',label:'биеийн систем',note:'тус бүр өөрийн өнгөтэй'},
     {value:'3 сая',label:'нарийвчилсан гурвалжин',note:'нэг ч хэсэг хасагдаагүй'},
   ]},
+  usage:{label:'Ашиглалтын тоолуур',visits:'удаа үзсэн',engaged:'ашигласан зочид',opens:'удаа атлас нээсэн'},
   unlock:{lead:'Human Atlas анатомийг илүү хурдан,',title:' ухаалгаар судлах боломж олгоно',text:'Сурах бичгээ шууд амилуул. Ээдрээтэй зургуудаас салж, цонх хооронд үсрэхээ больж, өмнө чинь байгаа бүтцэдээ анхаарлаа төвлөрүүл.',cta:'Одоо эхлэх',features:[
     {title:'3D атлас',text:'Бүх биеийг эргүүлж, давхаргаар нь хуулж, задлан хар.'},
     {title:'AI туслах',text:'Булчинг ямар мэдрэл мэдрүүлдгийг асуугаад, тодрон гэрэлтэхийг хар.'},

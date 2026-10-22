@@ -64,6 +64,8 @@
 .lp-words-stage{position:sticky;top:0;height:100svh;overflow:hidden;pointer-events:none}
 .lp-word{position:absolute;inset:0;display:grid;place-items:center}
 .lp-word h2{display:flex;font-size:clamp(96px,17vw,260px);font-weight:400;line-height:1;letter-spacing:-.055em;perspective:700px;color:#17191ee6}
+/* A two-word phrase needs more horizontal room, so it sits a step smaller. */
+.lp-word h2.is-long{font-size:clamp(64px,11.5vw,184px)}
 .lp-word:nth-child(1) h2{translate:18vw 4vh}
 .lp-word:nth-child(3) h2{translate:0 -24vh}
 .lp-letter{display:inline-block;opacity:0;transform-origin:50% 85%;will-change:transform,opacity,filter}
@@ -130,6 +132,7 @@
  .lp-hero-actions{justify-content:flex-start}
  .lp .lp-scroll{display:none}
  .lp-word h2{font-size:27vw}
+ .lp-word h2.is-long{font-size:18.5vw}
  .lp-word:nth-child(1) h2{translate:0 -18vh}
  .lp-word:nth-child(3) h2{translate:0 -20vh}
  .lp-word-caption{right:var(--lp-pad);bottom:9vh;max-width:none}

@@ -89,7 +89,7 @@ export default function LandingPage(){
           <div className="lp-words-stage">
             {t.words.items.map((w,i)=>(
               <div className="lp-word" data-word={i} key={i}>
-                <h2 aria-label={w.word}>{[...w.word].map((c,j)=><span className="lp-letter" key={j} aria-hidden>{c}</span>)}</h2>
+                <h2 aria-label={w.word} className={w.word.length>8?'is-long':''}>{[...w.word].map((c,j)=><span className="lp-letter" key={j} aria-hidden>{c===' '?'\u00A0':c}</span>)}</h2>
                 <p className="lp-word-caption"><span>0{i+1}</span>{w.caption}</p>
               </div>
             ))}

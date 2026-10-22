@@ -137,12 +137,15 @@ export default function Figure({scroller,onReady}:{scroller:RefObject<HTMLElemen
    if(fade<.002&&uniforms.uFade.value<.002)return;
    uniforms.uFade.value=fade;uniforms.uGlass.value=current.glass;
    inner.forEach(m=>{m.visible=current.glass>.01;});
-   // Small screens keep the body centred under the stacked text.
-   const narrow=width<760,dist=current.dist*(narrow?Math.min(1.5,.72/Math.max(camera.aspect,.3)):1)+(1-intro)*.6;
+   // Small screens keep the body centred under the stacked text; a portrait tablet keeps it
+   // a little larger, because it has more height to work with.
+   const narrow=width<760,tablet=!narrow&&width<1100&&height>width;
+   const scale=narrow?Math.min(1.5,.72/Math.max(camera.aspect,.3)):tablet?Math.max(1.1,Math.min(1.45,.9/Math.max(camera.aspect,.4))):1;
+   const dist=current.dist*scale+(1-intro)*.6;
    body.rotation.set(0,current.yaw+Math.sin(time*.35)*.07+pointer.x*.14,current.roll+Math.sin(time*.27)*.012);
    const pitch=current.pitch+pointer.y*.04,y=current.y+Math.sin(time*.8)*.008;
    camera.position.set(0,y+Math.sin(pitch)*dist,Math.cos(pitch)*dist);camera.lookAt(0,y,0);
-   camera.setViewOffset(width,height,-current.x*(narrow?.2:1)*width,0,width,height);
+   camera.setViewOffset(width,height,-current.x*(narrow?.2:tablet?.3:1)*width,0,width,height);
    renderer.render(scene,camera);
   };
   const inner:T.Mesh[]=[];

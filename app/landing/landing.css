@@ -66,15 +66,18 @@
 .lp-word h2{display:flex;font-size:clamp(96px,17vw,260px);font-weight:400;line-height:1;letter-spacing:-.055em;perspective:700px;color:#17191ee6}
 /* A two-word phrase needs more horizontal room, so it sits a step smaller. */
 .lp-word h2.is-long{font-size:clamp(64px,11.5vw,184px)}
-.lp-word:nth-child(1) h2{translate:18vw 4vh}
+/* The first word leans right, but never so far that it runs off the screen. */
+.lp-word:nth-child(1) h2{translate:min(18vw,calc(50vw - 2.4em)) 4vh}
 .lp-word:nth-child(3) h2{translate:0 -24vh}
 .lp-letter{display:inline-block;opacity:0;transform-origin:50% 85%;will-change:transform,opacity,filter}
+/* A soft paper wash keeps the caption readable when the body sits behind it. */
+.lp-words-stage::after{content:'';position:absolute;left:0;bottom:0;width:min(620px,80%);height:34vh;z-index:-1;pointer-events:none;background:radial-gradient(115% 100% at 0% 100%,var(--lp-paper) 0%,rgb(236 238 239/.78) 40%,transparent 74%)}
 .lp-word-caption{position:absolute;left:var(--lp-pad);bottom:11vh;display:flex;gap:16px;max-width:330px;font-size:14px;line-height:1.55;color:var(--lp-muted);opacity:0}
 .lp-word-caption span{font-family:var(--lp-mono);font-size:11px;padding-top:3px;color:var(--lp-ink)}
 
 /* Glass panel with numbers */
 .lp-stats{display:grid;place-items:center;min-height:130svh;padding:12vh var(--lp-pad)}
-.lp-glass{display:flex;flex-direction:column;justify-content:space-between;gap:56px;width:100%;max-width:1280px;min-height:78svh;padding:clamp(24px,4vw,52px);border:1px solid #ffffff99;border-radius:6px;background:linear-gradient(115deg,rgb(150 226 240/.55),rgb(206 192 250/.45) 50%,rgb(255 186 212/.52));-webkit-backdrop-filter:blur(36px) saturate(1.5);backdrop-filter:blur(36px) saturate(1.5);box-shadow:0 30px 80px #2a2f4a14;opacity:0;transform:translateY(60px);transition:opacity 1s,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.lp-glass{display:flex;flex-direction:column;justify-content:space-between;gap:56px;width:100%;max-width:1280px;min-height:78svh;padding:clamp(24px,4vw,52px);border:1px solid #ffffff99;border-radius:6px;background:linear-gradient(115deg,rgb(150 226 240/.68),rgb(206 192 250/.6) 50%,rgb(255 186 212/.66));-webkit-backdrop-filter:blur(36px) saturate(1.5);backdrop-filter:blur(36px) saturate(1.5);box-shadow:0 30px 80px #2a2f4a14,inset 0 0 140px rgb(255 255 255/.3);opacity:0;transform:translateY(60px);transition:opacity 1s,transform 1.2s cubic-bezier(.2,.7,.2,1)}
 .lp-glass.is-in{opacity:1;transform:none}
 .lp-glass h2{max-width:15em;font-size:clamp(30px,3.9vw,58px);line-height:1.04}
 .lp-glass dl{display:grid;grid-template-columns:repeat(3,minmax(0,200px));justify-content:end;margin:0}
@@ -82,6 +85,14 @@
 .lp-glass dt{font-size:clamp(34px,4.2vw,64px);font-weight:300;letter-spacing:-.04em;line-height:1}
 .lp-glass dd{margin:0;font-size:12px;line-height:1.45;color:#15171c99}
 .lp-glass dd b{display:block;font-weight:500;color:var(--lp-ink)}
+
+/* Usage counter: how often the page was visited and how often it was really used */
+.lp-usage{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:14px 32px;padding-top:24px;border-top:1px solid var(--lp-line)}
+.lp-usage-label{font-family:var(--lp-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--lp-muted)}
+.lp-usage-list{display:flex;flex-wrap:wrap;gap:8px 34px;margin:0;padding:0;list-style:none}
+.lp-usage-list li{display:flex;align-items:baseline;gap:8px}
+.lp-usage-list b{font-size:clamp(20px,2vw,26px);font-weight:400;letter-spacing:-.03em;line-height:1}
+.lp-usage-list span{font-size:12px;color:var(--lp-muted)}
 
 /* Unlock */
 .lp-unlock{display:flex;align-items:center;justify-content:flex-end;min-height:120svh;padding:14vh var(--lp-pad)}
@@ -117,6 +128,20 @@
 .lp .lp-footer a{color:var(--lp-muted);transition:color .2s}
 .lp .lp-footer a:hover{color:var(--lp-ink)}
 
+/* Tablets in portrait: the body fills the width, so the copy stacks under it like on a phone. */
+@media(min-width:761px) and (max-width:1100px) and (orientation:portrait){
+ .lp-hero{align-items:flex-end;justify-content:flex-start;padding-bottom:76px}
+ .lp-hero::before{content:'';position:absolute;inset:34% 0 0;background:linear-gradient(transparent,var(--lp-paper) 62%);pointer-events:none}
+ .lp-hero-copy{width:min(620px,86%);text-align:left}
+ .lp-hero h1{font-size:clamp(38px,6.6vw,60px)}
+ .lp-hero-lead{margin-left:0}
+ .lp-hero-actions{justify-content:flex-start}
+ .lp-unlock{align-items:flex-end}
+ .lp-unlock-copy{width:min(620px,86%);padding:26px;border-radius:8px;background:rgb(236 238 239/.74);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+ .lp-glass{background:linear-gradient(115deg,rgb(150 226 240/.84),rgb(206 192 250/.8) 50%,rgb(255 186 212/.82))}
+ .lp-word:nth-child(1) h2{translate:min(12vw,calc(50vw - 2.4em)) 4vh}
+ .lp-word:nth-child(3) h2{translate:0 -18vh}
+}
 @media(max-width:760px){
  .lp-header{grid-template-columns:1fr auto;padding-block:14px}
  .lp-index{display:none}

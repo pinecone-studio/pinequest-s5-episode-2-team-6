@@ -53,7 +53,7 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
  .identity{left:max(16px,env(safe-area-inset-left));top:max(18px,env(safe-area-inset-top))}
  .top-actions{right:max(12px,env(safe-area-inset-right));gap:4px}
  .top-actions button,.top-actions .icon-button{width:44px;min-width:44px;height:44px;min-height:44px}
- .view-controls{top:max(112px,calc(env(safe-area-inset-top) + 94px));right:12px;left:12px;transform:none;flex-direction:row;justify-content:center;gap:2px;width:fit-content;max-width:calc(100% - 24px);margin-inline:auto;padding:4px;border-radius:12px}
+ .view-controls{top:max(158px,calc(env(safe-area-inset-top) + 140px));right:12px;left:12px;transform:none;flex-direction:row;justify-content:center;gap:2px;width:fit-content;max-width:calc(100% - 24px);margin-inline:auto;padding:4px;border-radius:12px}
  .view-controls button{width:44px;height:44px;flex-shrink:0}.view-controls i{width:1px;height:28px;margin:8px 4px}
  .bottom-dock{left:12px;right:12px;width:auto;transform:none;max-width:520px;margin-inline:auto}
  .dock-layers,.dock-reset{min-width:44px;min-height:48px}.dock-reset{padding-left:8px}.dock-layers{padding-right:8px}
@@ -210,3 +210,123 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 @media(max-height:600px) and (orientation:landscape){.colors-panel{top:72px;left:auto;right:12px;width:320px;max-height:calc(100dvh - 90px)}}
 .on-dark .top-actions button{background:#fffffff0}
 @media(max-width:350px){h1{font-size:21px;gap:5px}}
+
+/* Learning modes in the header, assistant chat, info card and dock tools. */
+.studio{--ai-width:min(372px,calc(100vw - 28px));--panel-radius:16px}
+.identity-tools{pointer-events:auto;display:flex;gap:8px;margin-top:12px}
+.identity-tools button{height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:#ffffffd9;font-size:12px;font-weight:500;color:#526170;gap:7px}
+.identity-tools button:hover{background:#fff}
+.identity-tools button.active{background:#263b48;border-color:#263b48;color:#fff}
+.on-dark .identity-tools button{background:#fffffff0}
+@media(max-width:767px){.identity-tools{margin-top:10px;gap:6px}.identity-tools button{height:38px;padding:0 10px;font-size:12px}}
+@media(max-width:350px){.identity-tools button span{display:none}.identity-tools button{width:40px;padding:0;justify-content:center}}
+
+.top-actions .ask-button{font-weight:600;color:#2f6b64;border-color:#2f9d8a3d;background:#f2faf8}
+.top-actions .ask-button.active{background:#2f9d8a;color:#fff;border-color:#2f9d8a}
+.top-actions .ask-button kbd{margin-left:14px}
+@media(max-width:767px){.top-actions .ask-button{width:38px;height:40px;padding:0;border-radius:9px}}
+
+/* Assistant chat panel */
+.ai-panel{position:absolute;right:24px;top:88px;width:var(--ai-width);max-height:calc(100dvh - 168px);border-radius:18px;padding:16px 16px 13px;z-index:28;display:flex;flex-direction:column;gap:11px;overflow:hidden;animation:aiSlide .26s ease}
+@keyframes aiSlide{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+.ai-header{display:flex;align-items:flex-start;gap:10px}
+.ai-title-block{min-width:0;flex:1}
+.ai-kicker{margin:0 0 3px;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#5f8f8a;display:flex;align-items:center;gap:5px}
+.ai-title{margin:0;font-size:21px;font-weight:650;letter-spacing:-.03em;color:#1f2c38;line-height:1.15}
+.ai-close{margin-left:auto;flex-shrink:0}
+.ai-selection{margin:0;display:flex;align-items:center;gap:7px;font-size:11.5px;color:#5b6a78;background:#f2f5f6;border:1px solid #18253610;border-radius:999px;padding:5px 11px;align-self:flex-start;max-width:100%}
+.ai-selection-dot{width:7px;height:7px;border-radius:50%;background:#b96760;flex-shrink:0}
+.ai-messages{display:flex;flex-direction:column;gap:9px;overflow-y:auto;overscroll-behavior:contain;min-height:110px;flex:1;padding-right:3px;scrollbar-width:thin;scrollbar-color:#c5ced6 transparent}
+.ai-message{max-width:90%;padding:9px 12px;border-radius:13px;font-size:13px;line-height:1.55}
+.ai-message p{margin:0}
+.ai-message-user{align-self:flex-end;background:#263b48;color:#fff;border-bottom-right-radius:4px}
+.ai-message-assistant{align-self:flex-start;background:#f1f4f6;border:1px solid #18253612;border-bottom-left-radius:4px;color:#2b3846}
+.ai-intro{align-self:stretch}
+.ai-intro p{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:#6b7885}
+.ai-prompts{display:flex;flex-wrap:wrap;gap:6px}
+.ai-prompt{height:auto;min-height:32px;padding:6px 11px;border-radius:999px;border:1px solid #1825361f;background:#fff;font-size:12px;color:#485866}
+.ai-prompt:hover{background:#f2f5f6}
+.ai-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ai-action-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;background:#eaf3f2;color:#2c655e;border:1px solid #2f9d8a33}
+.ai-composer{display:flex;align-items:center;gap:6px;background:#f7f9fa;border:1px solid #18253612;border-radius:11px;padding:4px 5px 4px 12px}
+.ai-composer input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:13px;color:#26313d;padding:6px 0}
+.ai-composer input::placeholder{color:#98a3ad}
+.ai-send{width:34px;height:34px;min-width:34px;border-radius:9px;background:#263b48;color:#fff!important;display:inline-flex;align-items:center;justify-content:center}
+.ai-send:disabled{opacity:.35}
+.ai-note{margin:0;font-size:10.5px;color:#8b959f;line-height:1.4}
+@media(max-width:767px){
+ .ai-panel{left:12px;right:12px;top:max(100px,calc(env(safe-area-inset-top) + 84px));width:auto;max-height:calc(100dvh - 210px);z-index:40;padding:14px}
+ .ai-title{font-size:19px}
+ .ai-composer input{font-size:16px}
+ .top-actions{gap:3px}
+ .top-actions button,.top-actions .icon-button{width:40px;min-width:40px;height:40px;min-height:40px}
+}
+
+/* Info card anchored to the tapped structure */
+.info-card{position:absolute;left:0;top:0;width:272px;max-width:calc(100vw - 24px);border-radius:14px;padding:13px 14px 12px;z-index:26;background:#fffffff7;backdrop-filter:blur(18px);border:1px solid #25384a17;box-shadow:0 18px 44px #2433441f;animation:cardFade .22s ease}
+@keyframes cardFade{from{opacity:0}to{opacity:1}}
+.info-card-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.info-card-title{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.info-card-title strong{font-size:15px;font-weight:600;color:#1f2c38;line-height:1.25}
+.info-card-latin{font-size:11.5px;font-style:italic;color:#5f6f7c}
+.info-card-system{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8b959f}
+.info-card-close{margin-left:auto;flex-shrink:0;width:26px;min-width:26px;height:26px;min-height:26px;padding:0}
+.info-card-line{margin:0 0 5px;font-size:12px;line-height:1.5;color:#3d4a57}
+.info-card-line b{font-weight:600;color:#1f2c38}
+.info-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid #18253612}
+.info-card-chip{height:28px;min-height:28px;padding:0 10px;border-radius:8px;border:1px solid #1825361f;background:#fff;font-size:11.5px;color:#4a5867}
+.info-card-chip:hover{background:#f2f5f6}
+.info-card-ask{height:28px;min-height:28px;padding:0 11px;border-radius:8px;background:#263b48;color:#fff!important;font-size:11.5px;font-weight:500;gap:6px}
+@media(max-width:767px){.info-card{width:min(272px,calc(100vw - 24px))}.info-card-ask{height:34px;min-height:34px}.info-card-chip{height:34px;min-height:34px}}
+
+/* Floating labels drawn inside the 3D scene */
+.label-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.floating-label{position:absolute;left:0;top:0;transform:translate(-50%,-150%);padding:2px 8px;border-radius:999px;background:#ffffffe0;border:1px solid #1825361f;font-size:11px;letter-spacing:.01em;color:#33414e;white-space:nowrap;box-shadow:0 2px 8px #2433441a}
+
+/* Guided tours and quiz */
+.learning-panel{position:absolute;left:30px;top:200px;width:306px;max-height:calc(100dvh - 350px);overflow-y:auto;overscroll-behavior:contain;border-radius:16px;padding:16px;z-index:26;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:#c5ced6 transparent;animation:aiSlideLeft .26s ease}
+@keyframes aiSlideLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+.learning-head{display:flex;align-items:flex-start;gap:8px}
+.learning-kicker{margin:0 0 3px;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#5f8f8a;display:flex;align-items:center;gap:5px}
+.learning-title{margin:0;font-size:20px;font-weight:650;letter-spacing:-.03em;color:#1f2c38;line-height:1.15}
+.tour-picker{display:flex;flex-wrap:wrap;gap:5px}
+.tour-chip{height:30px;min-height:30px;padding:0 11px;border-radius:999px;border:1px solid #1825361f;background:#fff;font-size:12px;color:#4a5867}
+.tour-chip.active{background:#263b48;border-color:#263b48;color:#fff}
+.tour-summary{margin:0;font-size:12.5px;line-height:1.5;color:#6b7885}
+.tour-step{border-radius:12px;background:#f4f7f8;padding:12px;display:flex;flex-direction:column;gap:6px}
+.tour-counter{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#6b7885}
+.tour-step h3{margin:0;font-size:16px;font-weight:650;color:#1f2c38}
+.tour-step p{margin:0;font-size:12.5px;line-height:1.55;color:#4a5867}
+.tour-show{align-self:flex-start;height:32px;min-height:32px;padding:0 11px;border-radius:8px;border:1px solid #1825361f;background:#fff;font-size:12px;color:#4a5867}
+.learning-actions{display:flex;gap:8px;justify-content:space-between}
+.learning-primary{background:#263b48;color:#fff!important;border:1px solid #263b48;border-radius:9px;font-weight:500;font-size:12.5px;min-height:38px;gap:6px}
+.learning-primary:hover{background:#334e5e}
+.learning-secondary{border:1px solid #1825361f;border-radius:9px;font-size:12.5px;color:#4a5867;min-height:38px;gap:6px}
+.learning-note{margin:0;font-size:10.5px;color:#8b959f;line-height:1.4}
+.quiz-meta{display:flex;justify-content:space-between;font-size:11px;color:#6b7885;letter-spacing:.02em}
+.quiz-prompt{margin:0;font-size:14.5px;line-height:1.45;font-weight:600;color:#1f2c38}
+.quiz-options{display:flex;flex-direction:column;gap:6px}
+.quiz-option{justify-content:space-between;height:auto;min-height:40px;padding:9px 12px;border-radius:10px;border:1px solid #1825361f;background:#fff;font-size:13px;line-height:1.4;text-align:left;white-space:normal;color:#3d4a57}
+.quiz-option:hover{background:#f2f5f6}
+.quiz-option.is-correct{background:#eaf3f2;border-color:#2f9d8a66;color:#265d56}
+.quiz-option.is-wrong{background:#fdeeec;border-color:#c56a5c66;color:#8d453a}
+.quiz-feedback p{margin:0 0 9px;font-size:12.5px;line-height:1.55;color:#4a5867}
+.quiz-result strong{display:block;font-size:34px;font-weight:700;letter-spacing:-.03em;color:#1f2c38;line-height:1}
+.quiz-result p{margin:8px 0 12px;font-size:12.5px;line-height:1.55;color:#6b7885}
+@media(max-width:767px){.learning-panel{left:12px;right:12px;top:auto;bottom:calc(146px + env(safe-area-inset-bottom));width:auto;max-height:min(62dvh,460px);z-index:40;padding:14px}}
+@media(max-height:600px) and (orientation:landscape){.learning-panel{top:12px;bottom:12px;left:12px;width:300px;max-height:none}}
+
+/* Dock tabs: explode, layers and cross-section share one dock. */
+.dock-body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dock-tabs{display:flex;gap:2px;background:#edf0f2;border-radius:9px;padding:3px}
+.dock-tabs button{flex:1;height:27px;min-height:27px;border-radius:6px;font-size:11px;font-weight:500;color:#697582;padding:0 6px}
+.dock-tabs button:hover{background:#ffffff80}
+.dock-tabs button.active{background:#fff;color:#233644;box-shadow:0 1px 3px #18253612}
+.slice-axis{display:flex;gap:6px}
+.slice-axis button{flex:1;height:28px;min-height:28px;border-radius:7px;font-size:11px;color:#5b6a78;background:#edf0f2}
+.slice-axis button.active{background:#263b48;color:#fff}
+@media(max-width:767px){.dock-tabs button{height:34px;min-height:34px;font-size:12px}.slice-axis button{height:34px;min-height:34px;font-size:11.5px}}
+.view-controls .aa-toggle{font-size:12px;font-weight:600;letter-spacing:.01em}
+.chat-open .view-controls{right:calc(24px + var(--ai-width) + 14px)}
+@media(max-width:1100px){.chat-open .view-controls{right:12px}}
+@media(prefers-reduced-motion:reduce){.ai-panel,.learning-panel{animation:none}}

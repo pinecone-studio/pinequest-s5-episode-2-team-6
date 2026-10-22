@@ -11,6 +11,9 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Move from assembled anatomy to a spaced inventory of every visible piece.
 - Search anatomical names and source identifiers.
 - Isolate a selected structure and read its details.
+- Ask the Atlas assistant about any structure and let it rotate or highlight the model.
+- Peel the body back layer by layer, or cut it open with the cross-section tool.
+- Follow a guided tour, take the quiz, and switch floating labels on.
 - Use compact controls and detail panels on mobile.
 
 ## Run locally
@@ -30,10 +33,11 @@ Open http://localhost:3016. To build the static site, run `npm run build`; the o
 npm run check
 node scripts/validate-atlas.mjs
 node scripts/validate-interactions.mjs
+node scripts/validate-assistant.mjs
 npm run build
 ```
 
-Validation covers mesh buffers, names and concept membership, nonoverlapping exploded layouts at desktop and mobile aspect ratios, search and inspection contracts, and tap-versus-drag handling. Browser interaction checks have exercised selection, system controls, search, isolation, rotation, and 390×844, 320×568, and 844×390 layouts. Phone controls stay clear of the exploded inventory, and isolated structures fit the space above or beside the detail panel. Physical-device performance and real multitouch hardware have not been tested.
+Validation covers mesh buffers, names and concept membership, nonoverlapping exploded layouts at desktop and mobile aspect ratios, search and inspection contracts, tap-versus-drag handling, assistant answers and the model actions they return, structure facts and innervation notes, layer peeling, and the tour and quiz content. Browser interaction checks have exercised selection, system controls, search, isolation, rotation, the assistant panel, layer peeling, cross-sections, floating labels, tours and the quiz, and 390×844, 320×568, and 844×390 layouts. Phone controls stay clear of the exploded inventory, and isolated structures fit the space above or beside the detail panel. Physical-device performance and real multitouch hardware have not been tested.
 
 ## Anatomy data
 
@@ -48,6 +52,10 @@ This is an educational explorer, not a diagnostic or surgical tool.
 Geometry is merged into batches. Per-structure GPU textures control translation, visibility, and selection, while component geometry supports accurate picking. Exploded layouts pack only the visible pieces. Rendering updates when the scene changes; orbit controls remain responsive without thousands of separate draw calls.
 
 The optional WebMCP tools expose anatomy search and inspection in compatible browsers. The visible interface works without them.
+
+## The assistant, tours and quiz
+
+The site is static and needs no API key, so "Ask AI" is answered locally by a deterministic engine that reads the same reference notes the interface shows: the structure and bone atlases, the innervation notes, and the system list. It can explain the selected structure, name the nerve that supplies it, highlight a named group such as the rotator cuff, rotate the model, switch the floating labels, or hand over to a tour or the quiz. Every reply is grounded in this atlas and lists the actions it performed.
 
 ## Rebuilding geometry
 

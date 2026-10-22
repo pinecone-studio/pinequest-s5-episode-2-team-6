@@ -193,6 +193,7 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 .color-swatch[aria-pressed=true],.color-swatch[data-active=true]{outline:2px solid #263b48;outline-offset:2px}
 .custom-swatch{background:conic-gradient(#e05252,#e0c652,#52e07a,#52b8e0,#7a52e0,#e052b8,#e05252)}
 .custom-swatch input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.colors-note{margin:8px 0 0;font-size:11px;line-height:1.5;color:#7c8793}
 .custom-swatch:focus-within{outline:2px solid #538d9a;outline-offset:2px}
 .color-list{display:flex;flex-direction:column;padding-bottom:6px}
 .color-row{display:flex;align-items:center;gap:11px;min-height:38px;font-size:13px;color:#394957;cursor:pointer;border-radius:8px;padding:0 4px}

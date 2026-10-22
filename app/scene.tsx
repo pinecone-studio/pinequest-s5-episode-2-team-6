@@ -69,11 +69,13 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
    for(const t of targets){const dx=Math.max(t.left-x,0,x-t.right),dy=Math.max(t.top-y,0,y-t.bottom),distance=Math.hypot(dx,dy);if(distance>radius)continue;const candidate=distance+Math.hypot(t.x-x,t.y-y)*.025;if(candidate<score){score=candidate;best=t.index;}}
    return best;
   };
+  // One uniform shared by every system material, so changing the highlight color repaints them all.
+  const highlight={value:new T.Color()};
   const materialFor=(system:string)=>{
    const m=new T.MeshStandardMaterial({color:SYSTEMS.find(s=>s.id===system)?.color??'#aebbb8',metalness:.08,roughness:.53,side:T.DoubleSide,transparent:system==='integumentary',opacity:system==='integumentary'?.1:1,depthWrite:system!=='integumentary'});
    m.customProgramCacheKey=()=>'rom-contract-v2';
    m.onBeforeCompile=shader=>{
-    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};
+    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};shader.uniforms.highlightColor=highlight;
     contractShaders.push(shader);
     // Muscular system gets a stronger educational contraction; others only tint.
     const contractScale=system==='muscular'?1:0.15;
@@ -94,20 +96,50 @@ float shorten = act * 0.055;
 // Belly swell (radial) + slight shortening along body-up for a contraction cue.
 transformed = partOrigin + vec3(delta.x * (1.0 + bulge), delta.y * (1.0 - shorten), delta.z * (1.0 + bulge));
 transformed += state.xyz;`);
-    shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
+    shader.fragmentShader='uniform vec3 highlightColor; varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);
+diffuseColor.rgb = mix(diffuseColor.rgb, highlightColor, partSelected * 0.85);
 float heat = partActivated;
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.2, 0.14), heat * 0.88);
 diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;`);
+    // A faint glow keeps the highlight visible on the shaded side too.
+    shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance += highlightColor * partSelected * 0.25;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
 roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    };materials.push(m);return m;
   };
   const mats=new Map(SYSTEMS.map(s=>[s.id,materialFor(s.id)]));
+  // See-through for buried selections: a second pass redraws the selected parts only where
+  // nearer tissue covers them (GreaterDepth), so a bone under muscle shows through with the
+  // covering tissue faded over it, while uncovered surfaces are left alone.
+  const xrayMaterial=new T.ShaderMaterial({
+   uniforms:{highlightColor:highlight},
+   vertexShader:`#include <clipping_planes_pars_vertex>
+varying vec3 vNormal;varying vec3 vView;
+void main(){
+ vec4 mvPosition=modelViewMatrix*vec4(position,1.);
+ vNormal=normalize(normalMatrix*normal);vView=-mvPosition.xyz;
+ gl_Position=projectionMatrix*mvPosition;
+ #include <clipping_planes_vertex>
+}`,
+   fragmentShader:`#include <clipping_planes_pars_fragment>
+uniform vec3 highlightColor;varying vec3 vNormal;varying vec3 vView;
+void main(){
+ #include <clipping_planes_fragment>
+ vec3 n=normalize(vNormal),v=normalize(vView);
+ float rim=pow(1.-abs(dot(n,v)),2.),diff=.6+.4*max(dot(n,normalize(vec3(-.3,.6,.75))),0.);
+ gl_FragColor=vec4(highlightColor*diff+rim*.3,.78+.2*rim);
+ #include <tonemapping_fragment>
+ #include <colorspace_fragment>
+}`,
+   transparent:true,depthWrite:false,depthFunc:T.GreaterDepth,clipping:true,
+   // Pulled slightly toward the camera so a part never counts as covering itself.
+   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-4,
+  });materials.push(xrayMaterial);
+  const xray=new T.Group();xray.renderOrder=20;scene.add(xray);let xrayKey='';
   // Floor tones follow the chosen backdrop so the horizon stays soft on light and dark backgrounds.
-  const paint=(a:Appearance)=>{const dark=isDark(a.background);renderer.setClearColor(a.background);ground.material.color.set(mixColor(a.background,'#000000',dark?.6:.12));ground.material.envMapIntensity=dark?0:1;platform.material.color.set(mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(dark?'#9aa6b2':'#8c969f');innerRing.material.color.set(dark?'#7d8a97':'#a4aeb8');mats.forEach((m,id)=>m.color.set(a.colors[id]));dirty=true;};
+  const paint=(a:Appearance)=>{const dark=isDark(a.background);renderer.setClearColor(a.background);ground.material.color.set(mixColor(a.background,'#000000',dark?.6:.12));ground.material.envMapIntensity=dark?0:1;platform.material.color.set(mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(dark?'#9aa6b2':'#8c969f');innerRing.material.color.set(dark?'#7d8a97':'#a4aeb8');mats.forEach((m,id)=>m.color.set(a.colors[id]));highlight.value.set(a.highlight);dirty=true;};
   let loaded=0;
   const loadChunk=async(ci:number)=>{
    const chunk=atlas.chunks[ci],compressed=!!chunk.gzip&&typeof DecompressionStream!=='undefined';const response=await fetch(compressed?chunk.gzip!:chunk.url,{signal:abort.signal});const buffer=await decodeModelResponse(response,chunk.bytes,compressed);if(disposed)return;
@@ -156,7 +188,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
     const cut=min+(max-min)*Math.max(0,Math.min(1,state.depth));
     clipPlane.normal.set(axis==='x'?-1:0,0,axis==='z'?-1:0);clipPlane.constant=-cut;
    }
-   if(on!==sliceApplied){mats.forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
+   if(on!==sliceApplied){[...mats.values(),xrayMaterial].forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
   };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
@@ -200,6 +232,11 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
      const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected?255:0;
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
+    // Isolation already removes everything in front, so the see-through pass only runs alongside other tissue.
+    const buried=s.isolate?[]:s.selected.map(id=>partIndex.get(id)).filter((i):i is number=>i!==undefined&&!!pickers[i]&&data[i*4+3]>.5);
+    const nextXray=buried.join(',');
+    if(nextXray!==xrayKey){xray.clear();for(const i of buried){const m=new T.Mesh(pickers[i]!.geometry,xrayMaterial);m.matrixAutoUpdate=false;m.frustumCulled=false;m.userData.part=i;xray.add(m);}xrayKey=nextXray;}
+    for(const m of xray.children){m.matrix.copy(pickers[m.userData.part as number]!.matrix);m.matrixWorldNeedsUpdate=true;}
    }
    if(look.current!==lastLook){paint(look.current);lastLook=look.current;}
    if(s.view!==lastView||s.reset!==lastReset){fit(s.view,amount);lastView=s.view;lastReset=s.reset;}

@@ -101,6 +101,8 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 .rom-status-starting .rom-status-dot,.rom-status-searching .rom-status-dot{background:#d0a14a;box-shadow:0 0 0 4px #d0a14a22}
 .rom-status-tracking{background:#e7f6f2;color:#21685f}
 .rom-status-tracking .rom-status-dot{background:#2f9d8a;box-shadow:0 0 0 4px #2f9d8a24;animation:romPulse 1.4s ease infinite}
+.rom-panel:has(.rom-video-wrap.is-flexing) .rom-status-tracking{background:#fff1ec;color:#a1442e}
+.rom-panel:has(.rom-video-wrap.is-flexing) .rom-status-tracking .rom-status-dot{background:#ff6b4a;box-shadow:0 0 0 4px #ff6b4a22}
 .rom-status-lost{background:#fff4e8;color:#9a6230}
 .rom-status-lost .rom-status-dot{background:#e09a45}
 .rom-steps{list-style:none;margin:0;padding:10px 12px;display:grid;gap:8px;border-radius:12px;background:#f4f7f8}
@@ -109,16 +111,19 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 .rom-side-toggle{display:flex;gap:4px;background:#edf0f2;border-radius:12px;padding:4px}
 .rom-side-toggle button{flex:1;min-height:40px;border-radius:9px;font-size:13px;font-weight:600;color:#697582}
 .rom-side-toggle button.active,.rom-side-toggle button[aria-pressed=true]{background:#fff;color:#1f2c38;box-shadow:0 1px 3px #18253614}
-.rom-video-wrap{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#243342,#1a2430);aspect-ratio:16/11;border:1px solid #18253614}
+.rom-video-wrap{position:relative;border-radius:14px;overflow:hidden;background:#101820;aspect-ratio:16/11;min-height:200px;border:1px solid #18253614;transition:box-shadow .2s ease,border-color .2s ease}
 .rom-video-wrap.is-live{box-shadow:0 0 0 2px #2f9d8a33}
-.rom-video-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.rom-canvas{display:block;width:100%;height:100%;object-fit:cover}
-.rom-video-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#d7e0e8;padding:20px;text-align:center}
+.rom-video-wrap.is-flexing{border-color:#ff6b4a88;box-shadow:0 0 0 2px #ff6b4a55,0 0 28px #ff6b4a33}
+.rom-video-src{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px}
+.rom-canvas{position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;object-fit:cover;background:#101820}
+.rom-video-placeholder{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#d7e0e8;padding:20px;text-align:center;background:linear-gradient(160deg,#243342,#1a2430)}
 .rom-placeholder-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ffffff14;border:1px solid #ffffff18}
 .rom-video-placeholder strong{font-size:14px;font-weight:600;color:#fff}
 .rom-video-placeholder span{font-size:12px;line-height:1.4;color:#b7c4d0;max-width:220px}
-.rom-live-chip{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#101820cc;color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.rom-live-chip{position:absolute;top:10px;left:10px;z-index:3;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#101820cc;color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .rom-live-pulse{width:7px;height:7px;border-radius:50%;background:#ff5a5a;box-shadow:0 0 0 0 #ff5a5a88;animation:romPulse 1.2s ease infinite}
+.rom-flex-chip{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border-radius:12px;background:linear-gradient(90deg,#3a1812ee,#5a2218ee);color:#ffe8e0;font-size:12.5px;font-weight:700;letter-spacing:.02em;box-shadow:0 6px 18px #00000040;animation:romFlexIn .22s ease}
+@keyframes romFlexIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .rom-actions{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
 .rom-primary,.rom-secondary{min-height:44px;border-radius:12px;font-weight:650;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .rom-primary{background:#263b48;color:#fff!important;border:1px solid #263b48}
@@ -147,13 +152,16 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 .rom-metric-row strong{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:#243444}
 .rom-muscles-card{border-radius:14px;padding:12px;border:1px solid #18253610;background:#fff;display:flex;flex-direction:column;gap:10px}
 .rom-muscles-card.is-active{border-color:#e7b4ae66;background:linear-gradient(180deg,#fff,#fff8f7)}
+.rom-muscles-card.phase-extension.is-active{border-color:#9db8e866;background:linear-gradient(180deg,#fff,#f5f8ff)}
 .rom-muscles-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .rom-muscles-head h3{margin:0;font-size:13px;font-weight:700;color:#243444}
 .rom-muscles-head span{font-size:10.5px;color:#87929d}
-.rom-muscle-card{display:grid;grid-template-columns:1fr 42px;grid-template-rows:auto auto;gap:4px 10px;align-items:center}
+.rom-muscle-card{display:grid;grid-template-columns:1fr 42px;grid-template-rows:auto auto;gap:4px 10px;align-items:center;padding:8px;margin:0 -8px;border-radius:10px;border:1px solid transparent}
+.rom-muscle-card.is-driving{background:#fff4f1;border-color:#e7b4ae88}
+.rom-muscles-card.phase-extension .rom-muscle-card.is-driving{background:#f0f5ff;border-color:#9db8e888}
 .rom-muscle-meta{grid-column:1;min-width:0}
 .rom-muscle-meta strong{display:block;font-size:13px;font-weight:700;color:#2a3846}
-.rom-muscle-meta span{display:block;font-size:11px;color:#7b8793;margin-top:1px}
+.rom-muscle-meta span{display:block;font-size:11px;color:#7b8793;margin-top:1px;line-height:1.35}
 .rom-muscle-bar{grid-column:1;height:8px;border-radius:999px;background:#edf1f4;overflow:hidden}
 .rom-muscle-bar>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f29a7d,#e23a2f);transition:width .15s ease}
 .rom-muscle-bar>i.antagonist{background:linear-gradient(90deg,#7eb8f0,#2f6de2)}
@@ -170,8 +178,8 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
  .top-actions span{display:none}
 }
 @media(prefers-reduced-motion:reduce){
- .rom-status-tracking .rom-status-dot,.rom-live-pulse{animation:none}
- .rom-ring-value,.rom-range-fill,.rom-muscle-bar>i{transition:none}
+ .rom-status-tracking .rom-status-dot,.rom-live-pulse,.rom-flex-chip{animation:none}
+ .rom-ring-value,.rom-range-fill,.rom-muscle-bar>i,.rom-video-wrap{transition:none}
 }
 
 /* Customer color controls: backdrop presets and per-system tints. */

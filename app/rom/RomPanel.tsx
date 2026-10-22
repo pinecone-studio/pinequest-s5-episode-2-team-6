@@ -139,7 +139,7 @@ export default function RomPanel({
         if (!elbow) {
           const next = timestampMs - lastSeen.current > 1400 ? 'lost' : 'searching';
           setStatus((prev) => {
-            if (prev !== next && next !== 'tracking') {
+            if (prev !== next) {
               filterRef.current = createAngleFilter();
               phaseRef.current = 'hold';
               pushAtlasFocus(sideRef.current);

@@ -7,8 +7,8 @@ const en={
   hero:{lines:['Redefining how','the body is learned','in 3D'],lead:'An interactive atlas of the human body. Rotate, peel back and explode 2,763 real structures, then ask the built-in assistant to explain what you see.',cta:'Open the 3D atlas',signup:'Create a free account',scroll:'Scroll to explore'},
   strip:'Built on open anatomy and the open web',
   words:{label:'What you can do',items:[
-    {word:'rotate',caption:'Orbit and zoom around 2,763 real structures from any angle.'},
-    {word:'peel',caption:'Strip back skin, muscle and bone one layer at a time to see what sits beneath.'},
+    {word:'anatomy',caption:'Orbit and zoom around 2,763 real structures from any angle.'},
+    {word:'systems',caption:'Strip back skin, muscle and bone one layer at a time to see what sits beneath.'},
     {word:'learn',caption:'Ask the assistant, take a quiz and read the Latin term beside every part.'},
   ]},
   stats:{title:'Every structure is a fusion of real data, clear names and careful detail',items:[
@@ -31,8 +31,8 @@ const mn:typeof en={
   hero:{lines:['Хүний биеийг','шинэ түвшинд','3D-ээр судал'],lead:'Хүний биеийн интерактив атлас. 2,763 бодит бүтцийг эргүүлж, давхарга давхаргаар нь хуулж, задлан хараад, харсан бүхнээ суурилуулсан туслахаас асуугаарай.',cta:'3D атлас нээх',signup:'Үнэгүй бүртгүүлэх',scroll:'Гүйлгэж үзэх'},
   strip:'Нээлттэй анатомийн өгөгдөл, нээлттэй вэб технологи дээр бүтээв',
   words:{label:'Юу хийж болох вэ',items:[
-    {word:'эргүүл',caption:'2,763 бодит бүтцийг хүссэн өнцгөөсөө эргүүлж, ойртуулж хар.'},
-    {word:'хуул',caption:'Арьс, булчин, ясыг давхарга бүрээр нь хуулж, доор нь юу байгааг хар.'},
+    {word:'анатоми',caption:'2,763 бодит бүтцийг хүссэн өнцгөөсөө эргүүлж, ойртуулж хар.'},
+    {word:'цогц систем',caption:'Арьс, булчин, ясыг давхарга бүрээр нь хуулж, доор нь юу байгааг хар.'},
     {word:'суралц',caption:'Туслахаас асууж, сорил өгч, хэсэг бүрийн латин нэрийг уншаарай.'},
   ]},
   stats:{title:'Бүтэц бүр бодит өгөгдөл, ойлгомжтой нэршил, нарийн нягт боловсруулалтын нэгдэл',items:[

@@ -6,10 +6,13 @@ import {mergeGeometries} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import {createExplosionLayout} from './explosion-layout';
 import {decodeModelResponse} from './model-download';
 import {PointerTap} from './pointer-tap';
-import {SYSTEMS,type Atlas,type SceneState} from './anatomy';
+import {SYSTEMS,type Atlas,type SceneState,type SystemId} from './anatomy';
 import {isDark,mixColor,type Appearance} from './appearance';
-interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
-export default function AnatomyScene({atlas,state,appearance,activations,onSelect,onProgress,onError}:Props){
+import {LANDMARKS} from './landmarks';
+import {peeledSystems} from './layers';
+import type {AnchorChannel} from './anchor';
+interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
+export default function AnatomyScene({atlas,state,appearance,activations,anchor,onSelect,onProgress,onError}:Props){
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{});
  latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};
  useEffect(()=>{
@@ -18,7 +21,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,onSelec
   const abort=new AbortController();
   let renderer:T.WebGLRenderer;
   try{renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});}catch{onError('This browser could not start the 3D viewer. Please try a browser with WebGL enabled.');return;}
-  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;el.appendChild(renderer.domElement);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.localClippingEnabled=true;el.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Interactive human anatomy. Drag to orbit, pinch or scroll to zoom, and tap a structure to inspect it.');
   const scene=new T.Scene(),camera=new T.PerspectiveCamera(34,1,.005,100),controls=new OrbitControls(camera,renderer.domElement);
   // Wheel and trackpad zoom toward the pointer instead of the orbit centre.
@@ -41,12 +44,24 @@ export default function AnatomyScene({atlas,state,appearance,activations,onSelec
   const smoothAct=new Float32Array(atlas.parts.length);
   const contractShaders:{uniforms:Record<string,T.IUniform>}[]=[];
   const offsets:T.Vector3[]=[],bounds=atlas.parts.map(p=>new T.Box3(new T.Vector3().fromArray(p.bounds[0]),new T.Vector3().fromArray(p.bounds[1])));
+  // Overall body extent drives the cross-section plane range.
+  const extent=new T.Box3();for(const box of bounds)extent.union(box);
+  const clipPlane=new T.Plane(new T.Vector3(-1,0,0),0);
+  let sliceApplied=false;
   let packingWidth=1,packingHeight=1;
   const markerPositions=new Float32Array(atlas.parts.length*3),markerGeometry=new T.BufferGeometry();markerGeometry.setAttribute('position',new T.BufferAttribute(markerPositions,3));
   const markerMaterial=new T.PointsMaterial({color:0x64748b,size:5,sizeAttenuation:false,transparent:true,opacity:.72,depthTest:false});
   markerMaterial.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (distance(gl_PointCoord, vec2(0.5)) > 0.5) discard;');};
   const markers=new T.Points(markerGeometry,markerMaterial);markers.frustumCulled=false;markers.renderOrder=10;markers.visible=false;scene.add(markers);
   const hover=document.createElement('div');hover.className='part-hover';hover.setAttribute('role','tooltip');hover.hidden=true;el.appendChild(hover);
+  // Floating labels live in the scene layer so orbiting never re-renders React.
+  const labelLayer=document.createElement('div');labelLayer.className='label-layer';el.appendChild(labelLayer);
+  const landmarks=LANDMARKS.map(name=>{
+   const concept=atlas.concepts.find(c=>c.name.toLowerCase()===name.toLowerCase());if(!concept)return null;
+   const indices=concept.elements.map(id=>atlas.parts.findIndex(p=>p.id===id)).filter(i=>i>=0);if(!indices.length)return null;
+   const node=document.createElement('span');node.className='floating-label';node.textContent=concept.name;node.hidden=true;labelLayer.appendChild(node);
+   return {name:concept.name,indices,node};
+  }).filter((item):item is {name:string;indices:number[];node:HTMLSpanElement}=>!!item);
   type Target={index:number;x:number;y:number;left:number;right:number;top:number;bottom:number};let targets:Target[]=[];
   const projected=new T.Vector3();
   const findTarget=(x:number,y:number,radius:number)=>{
@@ -129,12 +144,30 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    if(found<0&&amount>.45)found=findTarget(e.clientX-rect.left,e.clientY-rect.top,e.pointerType==='touch'?24:16);if(found>=0){hover.hidden=true;select.current(atlas.parts[found].id);}
   };
   renderer.domElement.addEventListener('pointerdown',down);renderer.domElement.addEventListener('pointermove',move);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
-  const clock=new T.Clock();let lastExtent=-1;
+  const clock=new T.Clock();let lastExtent=-1,lastSliceKey='',lastLabelKey='';
+  const partIndex=new Map(atlas.parts.map((p,i)=>[p.id,i]));
+  const labelPoint=new T.Vector3(),offsetVec=new T.Vector3();
+  // Cross-section: a single clipping plane walks through the body extent.
+  const applySlice=(slice:SceneState['slice'])=>{
+   const state=slice??{on:false,depth:0,axis:'x' as const};
+   const on=Boolean(state.on)&&state.depth>.001;
+   if(on){
+    const axis=state.axis==='z'?'z':'x',min=axis==='x'?extent.min.x:extent.min.z,max=axis==='x'?extent.max.x:extent.max.z;
+    const cut=min+(max-min)*Math.max(0,Math.min(1,state.depth));
+    clipPlane.normal.set(axis==='x'?-1:0,0,axis==='z'?-1:0);clipPlane.constant=-cut;
+   }
+   if(on!==sliceApplied){mats.forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
+  };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
-   const changed=lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate;
+   const changed=lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate||lastState?.peel!==s.peel;
    const moving=Math.abs(amount-s.explode)>.0001;
    if(moving){amount=T.MathUtils.damp(amount,s.explode,8,dt);dirty=true;}
+   const slice=s.slice??{on:false,depth:0,axis:'x'};
+   const sliceKey=`${slice.on?1:0}:${slice.depth.toFixed(3)}:${slice.axis}`;
+   if(sliceKey!==lastSliceKey){applySlice(slice);lastSliceKey=sliceKey;dirty=true;}
+   const labelKey=s.labels?'on':'off';
+   if(labelKey!==lastLabelKey){lastLabelKey=labelKey;dirty=true;}
    const activationMap=latestActivations.current;
    let contracting=false;
    // Ease activation so contraction/release reads as motion, not a hard snap.
@@ -154,8 +187,9 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
     activationTexture.needsUpdate=true;lastActivationKey='idle';dirty=true;
    }
    if(changed||moving||lastExtent<0){
-    const visible=new Set(s.visible),selection=new Set(s.selected);
-    const visibleParts=atlas.parts.filter(p=>s.isolate?selection.has(p.id):visible.has(p.system)||selection.has(p.id));
+    const visible=new Set(s.visible),selection=new Set(s.selected),peeled=peeledSystems(s.peel??0);
+    const shown=(p:{id:string;system:SystemId})=>s.isolate?selection.has(p.id):(!peeled.has(p.system)&&(visible.has(p.system)||selection.has(p.id)));
+    const visibleParts=atlas.parts.filter(shown);
     const nextLayoutKey=visibleParts.map(p=>p.id).join(',')+':'+camera.aspect.toFixed(3);
     if(nextLayoutKey!==layoutKey){const layout=createExplosionLayout(visibleParts,camera.aspect);packingWidth=layout.width;packingHeight=layout.height;atlas.parts.forEach((p,i)=>{const cell=layout.cells.get(p.id);offsets[i]=cell?new T.Vector3(cell.x,cell.y+.85,0):centers[i].clone();});layoutKey=nextLayoutKey;if(amount>.05&&!s.isolate)fit(s.view,Math.max(0,(amount-.3)/.7));}
 
@@ -163,7 +197,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
      const c=centers[i],destination=offsets[i];let dx=0,dy=0,dz=0;
      if(amount<=.45){const t=amount/.45;const group=SYSTEMS.findIndex(sys=>sys.id===p.system);const angle=group/SYSTEMS.length*Math.PI*2;dx=Math.sin(angle)*t*.48;dy=(c.y-.85)*t*.28;dz=Math.cos(angle)*t*.48;}
      else {const t=(amount-.45)/.55,group=SYSTEMS.findIndex(sys=>sys.id===p.system),angle=group/SYSTEMS.length*Math.PI*2;dx=T.MathUtils.lerp(Math.sin(angle)*.48,destination.x-c.x,t);dy=T.MathUtils.lerp((c.y-.85)*.28,destination.y-c.y,t);dz=T.MathUtils.lerp(Math.cos(angle)*.48,-c.z,t);}
-     const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:visible.has(p.system)||selected)?1:0],i*4);selectedData[i*4]=selected?255:0;
+     const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected?255:0;
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
@@ -178,11 +212,40 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
     lastIsolate=isolateKey;
    }
    controls.enableRotate=amount<.8;controls.mouseButtons.LEFT=amount<.8?T.MOUSE.ROTATE:T.MOUSE.PAN;controls.touches.ONE=amount<.8?T.TOUCH.ROTATE:T.TOUCH.PAN;ground.visible=platform.visible=ring.visible=innerRing.visible=amount<.5&&!s.isolate;markers.visible=amount>.75;controls.autoRotate=s.rotate&&!s.isolate&&amount<.4;controls.autoRotateSpeed=.65;controls.update();if(controls.autoRotate)dirty=true;
-   if(dirty){renderer.render(scene,camera);targets=[];if(amount>.45){const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);atlas.parts.forEach((p,i)=>{if(data[i*4+3]<.5||(hasSolid&&p.system==='integumentary'))return;let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;for(let corner=0;corner<8;corner++){projected.set(p.bounds[(corner&1)?1:0][0]+data[i*4],p.bounds[(corner&2)?1:0][1]+data[i*4+1],p.bounds[(corner&4)?1:0][2]+data[i*4+2]).project(camera);const x=(projected.x+1)*el.clientWidth/2,y=(1-projected.y)*el.clientHeight/2;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}projected.copy(centers[i]).add(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])).project(camera);if(projected.z< -1||projected.z>1)return;targets.push({index:i,x:(projected.x+1)*el.clientWidth/2,y:(1-projected.y)*el.clientHeight/2,left,right,top,bottom});});}dirty=false;}
+   if(dirty){renderer.render(scene,camera);targets=[];if(amount>.45){const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);atlas.parts.forEach((p,i)=>{if(data[i*4+3]<.5||(hasSolid&&p.system==='integumentary'))return;let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;for(let corner=0;corner<8;corner++){projected.set(p.bounds[(corner&1)?1:0][0]+data[i*4],p.bounds[(corner&2)?1:0][1]+data[i*4+1],p.bounds[(corner&4)?1:0][2]+data[i*4+2]).project(camera);const x=(projected.x+1)*el.clientWidth/2,y=(1-projected.y)*el.clientHeight/2;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}projected.copy(centers[i]).add(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])).project(camera);if(projected.z< -1||projected.z>1)return;targets.push({index:i,x:(projected.x+1)*el.clientWidth/2,y:(1-projected.y)*el.clientHeight/2,left,right,top,bottom});});}}
+   if(dirty){
+    // Floating labels and the info card anchor follow the model on screen.
+    const showLabels=Boolean(s.labels);
+    const placed:{x:number;y:number;w:number}[]=[];
+    for(const landmark of landmarks){
+     let placedOk=false,lx=0,ly=0;
+     for(const index of landmark.indices){
+      if(data[index*4+3]<.5)continue;
+      offsetVec.set(data[index*4],data[index*4+1],data[index*4+2]);labelPoint.copy(centers[index]).add(offsetVec).project(camera);
+      if(labelPoint.z< -1||labelPoint.z>1)continue;
+      lx=(labelPoint.x+1)*el.clientWidth/2;ly=(1-labelPoint.y)*el.clientHeight/2;placedOk=true;break;
+     }
+     // Skip labels that would sit on top of one another.
+     const width=Math.max(44,landmark.name.length*6+14);
+     const clear=!placed.some(item=>Math.abs(item.x-lx)<(item.w+width)/2+8&&Math.abs(item.y-ly)<22);
+     landmark.node.hidden=!showLabels||!placedOk||!clear;
+     if(showLabels&&placedOk&&clear){landmark.node.style.transform=`translate(${Math.round(lx)}px,${Math.round(ly)}px)`;placed.push({x:lx,y:ly,w:width});}
+    }
+    // The info card hangs off the selected structure.
+    let anchored=false,ax=0,ay=0;let anchorId:string|null=null;
+    for(const id of s.selected){
+     const index=partIndex.get(id);if(index===undefined||data[index*4+3]<.5)continue;
+     offsetVec.set(data[index*4],data[index*4+1],data[index*4+2]);labelPoint.copy(centers[index]).add(offsetVec).project(camera);
+     if(labelPoint.z< -1||labelPoint.z>1)continue;
+     ax=(labelPoint.x+1)*el.clientWidth/2;ay=(1-labelPoint.y)*el.clientHeight/2;anchorId=id;anchored=true;break;
+    }
+    anchor?.update(anchored?anchorId:null,ax,ay,anchored);
+    dirty=false;
+   }
 
   };animate();
   const contextLost=(e:Event)=>{e.preventDefault();onError('The 3D session was paused by your device. Reload to continue.');};renderer.domElement.addEventListener('webglcontextlost',contextLost);
-  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();centerTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();centerTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();labelLayer.remove();renderer.dispose();renderer.domElement.remove();};
  },[atlas]);
  return <div className="scene" ref={host}/>;
 }

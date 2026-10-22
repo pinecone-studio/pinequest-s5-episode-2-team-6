@@ -57,7 +57,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,onSelec
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5); vec4 state = texture2D(partState, stateUv); transformed += state.xyz; partVisible = state.w; partSelected = texture2D(selectionState, stateUv).r; partActivated = texture2D(activationState, stateUv).r;');
     shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
-    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.75);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.28, 0.22), partActivated * 0.85);');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.22, 0.16), partActivated * 0.92);\ndiffuseColor.rgb += vec3(0.18, 0.04, 0.02) * partActivated;');
    };materials.push(m);return m;
   };
   const mats=new Map(SYSTEMS.map(s=>[s.id,materialFor(s.id)]));

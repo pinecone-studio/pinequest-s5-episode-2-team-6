@@ -9,14 +9,28 @@ import {
   X,
 } from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {computeElbowActivation, type ActivationFrame} from './activation';
 import {
+  computeElbowActivation,
+  idleElbowActivation,
+  type ActivationFrame,
+  type ElbowPhase,
+} from './activation';
+import {
+  FLEXION_FEEDBACK_DEG,
+  createAngleFilter,
   createRomTracker,
   resetRomTracker,
+  updateAngleFilter,
   updateRomTracker,
+  type AngleFilter,
   type RomTracker,
 } from './joints';
-import {NORMATIVE_ROM, type RomSide} from './muscle-map';
+import {
+  ELBOW_EXTENSOR_LABEL,
+  ELBOW_FLEXOR_LABEL,
+  NORMATIVE_ROM,
+  type RomSide,
+} from './muscle-map';
 import {PoseSession} from './pose-session';
 
 interface Props {
@@ -40,12 +54,16 @@ export default function RomPanel({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<PoseSession | null>(null);
   const sideRef = useRef<RomSide>('right');
-  const prevAngle = useRef<number | null>(null);
-  const prevTime = useRef<number | null>(null);
+  const filterRef = useRef<AngleFilter>(createAngleFilter());
+  const phaseRef = useRef<ElbowPhase>('hold');
+  const levelsRef = useRef({agonist: 0.2, antagonist: 0.2});
   const lastSeen = useRef(0);
+  const lastUiPush = useRef(0);
+  const lastUiKey = useRef('');
 
   const [side, setSide] = useState<RomSide>('right');
   const [running, setRunning] = useState(false);
+  const [previewOn, setPreviewOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState<TrackStatus>('idle');
@@ -54,20 +72,43 @@ export default function RomPanel({
 
   sideRef.current = side;
 
+  const pushAtlasFocus = (nextSide: RomSide, live?: ActivationFrame | null) => {
+    const frame = live ?? idleElbowActivation(parts, nextSide);
+    setActivation(frame);
+    onActivation(frame);
+  };
+
   useEffect(() => {
     if (!open) {
       sessionRef.current?.stop();
       sessionRef.current = null;
       setRunning(false);
+      setPreviewOn(false);
       setBusy(false);
       setStatus('idle');
       setError('');
-      prevAngle.current = null;
-      prevTime.current = null;
+      filterRef.current = createAngleFilter();
+      phaseRef.current = 'hold';
+      levelsRef.current = {agonist: 0.2, antagonist: 0.2};
+      lastUiPush.current = 0;
+      lastUiKey.current = '';
+      setActivation(null);
       onActivation(null);
       onRomFocus(false);
+      return;
     }
-  }, [open, onActivation, onRomFocus]);
+    // Opening the lab frames the elbow on the atlas immediately.
+    onRomFocus(true);
+    pushAtlasFocus(side);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when panel opens
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    pushAtlasFocus(side);
+    // Side change while lab is open — re-frame the chosen arm on the atlas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [side, parts, open]);
 
   useEffect(
     () => () => {
@@ -83,52 +124,92 @@ export default function RomPanel({
     setError('');
     setStatus('starting');
     setTracker(createRomTracker(90));
-    prevAngle.current = null;
-    prevTime.current = null;
+    filterRef.current = createAngleFilter();
+    phaseRef.current = 'hold';
+    levelsRef.current = {agonist: 0.2, antagonist: 0.2};
+    lastUiPush.current = 0;
+    lastUiKey.current = '';
     onRomFocus(true);
+    pushAtlasFocus(sideRef.current);
     const session = new PoseSession(
       videoRef.current,
       canvasRef.current,
       () => sideRef.current,
       ({elbow, timestampMs}) => {
         if (!elbow) {
-          setStatus(timestampMs - lastSeen.current > 700 ? 'lost' : 'searching');
+          const next = timestampMs - lastSeen.current > 1400 ? 'lost' : 'searching';
+          setStatus((prev) => {
+            if (prev !== next && next !== 'tracking') {
+              filterRef.current = createAngleFilter();
+              phaseRef.current = 'hold';
+              pushAtlasFocus(sideRef.current);
+            }
+            return next;
+          });
           return;
         }
         lastSeen.current = timestampMs;
         setStatus('tracking');
-        setTracker((t) => updateRomTracker(t, elbow.angleDeg));
-        const dt =
-          prevTime.current == null
-            ? 0.016
-            : Math.max(0.008, (timestampMs - prevTime.current) / 1000);
+
+        const smoothed = updateAngleFilter(
+          filterRef.current,
+          elbow.angleDeg,
+          timestampMs,
+        );
+        filterRef.current = smoothed.filter;
+
         const frame = computeElbowActivation(
           parts,
           sideRef.current,
-          elbow.angleDeg,
-          prevAngle.current,
-          dt,
+          smoothed.angle,
+          smoothed.velocity,
+          phaseRef.current,
+          levelsRef.current,
         );
-        prevAngle.current = elbow.angleDeg;
-        prevTime.current = timestampMs;
+        phaseRef.current = frame.phase;
+        levelsRef.current = {
+          agonist: frame.agonistLevel,
+          antagonist: frame.antagonistLevel,
+        };
+
+        // Throttle UI/atlas pushes so landmark noise does not thrash React/Three.
+        const angleBucket = Math.round(smoothed.angle);
+        const levelBucket = `${Math.round(frame.agonistLevel * 8)}_${Math.round(frame.antagonistLevel * 8)}`;
+        const uiKey = `${frame.phase}:${angleBucket}:${levelBucket}:${sideRef.current}`;
+        const due = timestampMs - lastUiPush.current >= 80;
+        if (!due && uiKey === lastUiKey.current) return;
+        lastUiPush.current = timestampMs;
+        lastUiKey.current = uiKey;
+
+        setTracker((t) => updateRomTracker(t, smoothed.angle));
         setActivation(frame);
         onActivation(frame);
       },
       (message) => {
         setError(message);
         setRunning(false);
+        setPreviewOn(false);
         setBusy(false);
         setStatus('idle');
         onRomFocus(false);
         onActivation(null);
+      },
+      () => {
+        setPreviewOn(true);
+        setRunning(true);
+        setBusy(false);
+        setStatus('starting');
+        pushAtlasFocus(sideRef.current);
       },
     );
     sessionRef.current = session;
     await session.start();
     if (sessionRef.current === session) {
       setRunning(true);
+      setPreviewOn(true);
       setBusy(false);
       setStatus('searching');
+      pushAtlasFocus(sideRef.current);
     }
   };
 
@@ -136,13 +217,16 @@ export default function RomPanel({
     sessionRef.current?.stop();
     sessionRef.current = null;
     setRunning(false);
+    setPreviewOn(false);
     setBusy(false);
     setStatus('idle');
-    prevAngle.current = null;
-    prevTime.current = null;
-    setActivation(null);
-    onActivation(null);
-    onRomFocus(false);
+    filterRef.current = createAngleFilter();
+    phaseRef.current = 'hold';
+    levelsRef.current = {agonist: 0.2, antagonist: 0.2};
+    lastUiPush.current = 0;
+    lastUiKey.current = '';
+    // Keep atlas framed on the elbow while the lab stays open.
+    pushAtlasFocus(sideRef.current);
   };
 
   if (!open) return null;
@@ -156,12 +240,22 @@ export default function RomPanel({
   const maxPct = hasData ? Math.min(100, Math.max(0, (tracker.max / norm.max) * 100)) : 0;
   const flexorPct = Math.round((activation?.agonistLevel ?? 0) * 100);
   const extensorPct = Math.round((activation?.antagonistLevel ?? 0) * 100);
+  const phase = activation?.phase;
+  const flexionLive =
+    status === 'tracking' &&
+    hasData &&
+    (phase === 'flexion' || angle >= FLEXION_FEEDBACK_DEG);
+  const extensionLive = status === 'tracking' && phase === 'extension';
 
   const statusCopy: Record<TrackStatus, string> = {
     idle: 'Ready when you are',
     starting: 'Starting camera…',
     searching: `Show your ${side} arm`,
-    tracking: 'Tracking elbow',
+    tracking: extensionLive
+      ? 'Extension — triceps · anconeus'
+      : flexionLive
+        ? 'Flexion — biceps · brachialis · brachioradialis'
+        : 'Tracking elbow',
     lost: `Looking for your ${side} arm…`,
   };
 
@@ -172,7 +266,8 @@ export default function RomPanel({
           <p className="rom-kicker">Live movement</p>
           <h2 className="rom-title">Elbow ROM lab</h2>
           <p className="rom-subtitle">
-            Bend your arm — see the angle and which muscles light up on the atlas.
+            Elbow (humeroulnar / humeroradial): flex 0–145° and extend back — muscles
+            in use light up on the atlas.
           </p>
         </div>
         <Button
@@ -229,10 +324,12 @@ export default function RomPanel({
         </Button>
       </div>
 
-      <div className={`rom-video-wrap${running ? ' is-live' : ''}`}>
-        <video ref={videoRef} className="rom-video-hidden" playsInline muted />
+      <div
+        className={`rom-video-wrap${previewOn ? ' is-live' : ''}${flexionLive ? ' is-flexing' : ''}`}
+      >
+        <video ref={videoRef} className="rom-video-src" playsInline muted autoPlay />
         <canvas ref={canvasRef} className="rom-canvas" />
-        {!running && (
+        {!previewOn && (
           <div className="rom-video-placeholder">
             <div className="rom-placeholder-icon">
               <Camera size={22} />
@@ -241,10 +338,16 @@ export default function RomPanel({
             <span>Stand so your {side} elbow and wrist are visible</span>
           </div>
         )}
-        {running && (
+        {previewOn && (
           <div className="rom-live-chip">
             <span className="rom-live-pulse" />
             Live
+          </div>
+        )}
+        {flexionLive && (
+          <div className="rom-flex-chip" role="status">
+            <Sparkles size={13} />
+            Flexion · {angle.toFixed(0)}°
           </div>
         )}
       </div>
@@ -343,16 +446,26 @@ export default function RomPanel({
         </div>
       </div>
 
-      <div className={`rom-muscles-card${activation ? ' is-active' : ''}`}>
+      <div
+        className={`rom-muscles-card${activation ? ' is-active' : ''}${phase ? ` phase-${phase}` : ''}`}
+      >
         <div className="rom-muscles-head">
-          <h3>Muscle activity</h3>
-          <span>Shown in red on the 3D body</span>
+          <h3>Muscles in use</h3>
+          <span>
+            {phase === 'flexion'
+              ? 'Flexion highlighted'
+              : phase === 'extension'
+                ? 'Extension highlighted'
+                : 'Shown in red on the 3D body'}
+          </span>
         </div>
 
-        <div className="rom-muscle-card">
+        <div
+          className={`rom-muscle-card${phase === 'flexion' ? ' is-driving' : ''}`}
+        >
           <div className="rom-muscle-meta">
-            <strong>Bending</strong>
-            <span>Biceps · brachialis · brachioradialis</span>
+            <strong>Flexion · 0–145°</strong>
+            <span>{ELBOW_FLEXOR_LABEL}</span>
           </div>
           <div className="rom-muscle-bar">
             <i style={{width: `${flexorPct}%`}} />
@@ -360,10 +473,12 @@ export default function RomPanel({
           <em>{activation ? `${flexorPct}%` : '—'}</em>
         </div>
 
-        <div className="rom-muscle-card">
+        <div
+          className={`rom-muscle-card${phase === 'extension' ? ' is-driving' : ''}`}
+        >
           <div className="rom-muscle-meta">
-            <strong>Straightening</strong>
-            <span>Triceps</span>
+            <strong>Extension · 145–0°</strong>
+            <span>{ELBOW_EXTENSOR_LABEL}</span>
           </div>
           <div className="rom-muscle-bar">
             <i className="antagonist" style={{width: `${extensorPct}%`}} />
@@ -373,15 +488,15 @@ export default function RomPanel({
 
         {!activation && (
           <p className="rom-muscles-idle">
-            Start the camera and move your arm to light up these groups.
+            Start the camera and flex / extend — active muscles light up on the body.
           </p>
         )}
       </div>
 
       <p className="rom-disclaimer">
         <CheckCircle2 size={13} />
-        Teaching demo only — not a clinical ROM or EMG measurement. Typical elbow
-        flexion reference ~{norm.min}–{norm.max}°.
+        Teaching demo only — not a clinical ROM or EMG measurement. Normative elbow
+        flexion ~{norm.min}–{norm.max}°; hyperextension often ~5–10°.
       </p>
     </section>
   );

@@ -59,14 +59,27 @@ export default function Home(){
  const customized=appearance.background!==DEFAULT_APPEARANCE.background||SYSTEMS.some(s=>appearance.colors[s.id]!==s.color);
  const openPanel=(next:'layers'|'search'|'colors')=>{setDetails(false);setRomOpen(false);setPanel(p=>p===next?null:next);};
  const romParts=useMemo(()=>atlas?.parts.map(p=>({id:p.id,name:p.name}))??[],[atlas]);
- const onActivation=useCallback((frame:ActivationFrame|null)=>{setActivations(frame?.byPartId??{});},[]);
+ const onActivation=useCallback((frame:ActivationFrame|null)=>{
+  setActivations(frame?.byPartId??{});
+  if(!romOpen)return;
+  if(!frame){
+   setState(s=>({...s,selected:[],isolate:false}));
+   return;
+  }
+  // Isolate elbow muscles + arm bones on the atlas; tint intensity comes from byPartId.
+  const ids=frame.focusIds.length?frame.focusIds:[...frame.agonistIds,...frame.antagonistIds];
+  setState(s=>{
+   const same=s.isolate&&s.selected.length===ids.length&&ids.every((id,i)=>s.selected[i]===id);
+   return same?s:{...s,selected:ids,isolate:ids.length>0,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view};
+  });
+ },[romOpen]);
  const onRomFocus=useCallback((active:boolean)=>{
-  if(active){setDetails(false);setPanel(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,isolate:false,rotate:false,selected:[]}));setChosen(null);}
-  else {setActivations({});}
+  if(active){setDetails(false);setPanel(null);setChosen(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view,reset:s.reset+1}));}
+  else {setActivations({});setState(s=>({...s,selected:[],isolate:false}));}
  },[]);
  const openRom=()=>{setDetails(false);setPanel(null);setAbout(false);setRomOpen(true);};
  return <main className={`studio ${isDark(appearance.background)?'on-dark':''}`}>
-  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={{...state,inspectorOpen:details&&selectedParts.length>0}} activations={activations} onSelect={choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
+  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} onSelect={choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
   <header className="identity"><div className="eyebrow"><span className="status-dot"/> INTERACTIVE ANATOMY</div><h1>Human Atlas<Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{atlas?atlas.parts.length.toLocaleString():'2,763'} modeled pieces <span>·</span> BodyParts3D + Z-Anatomy</div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label="Open ROM muscle lab"><PersonStanding size={18}/><span>ROM lab</span></Button><Button variant="ghost" className={panel==='search'?'active':''} onClick={()=>openPanel('search')} aria-label="Search anatomy"><Search size={18}/><span>Find a structure</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label="About this atlas" onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>

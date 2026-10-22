@@ -20,7 +20,7 @@ export default function LoginPage(){
     try{
       // TODO: энд жинхэнэ нэвтрэлтийн дуудлага орно (Clerk, Supabase г.м.)
       await new Promise(r=>setTimeout(r,500));
-      navigate('/');
+      navigate('/atlas');
     }catch{
       setError('Нэвтрэхэд алдаа гарлаа. Дахин оролдоно уу.');
     }finally{

@@ -5,6 +5,7 @@ import {figureData} from './figure-data';
 import ParticleLogo from './particles';
 import {useLandingMotion} from './motion';
 import {COPY,LANGS,loadLang,saveLang} from './copy';
+import {startTimer,trackDepth,trackEngaged,trackVisit,useUsage} from '../usage';
 import './landing.css';
 
 // three.js and the body arrive after the text; a soft blue placeholder holds their spot until then.
@@ -30,9 +31,27 @@ export default function LandingPage(){
   const [lang,setLang]=useState(loadLang);
   const [figureReady,setFigureReady]=useState(false);
   const t=COPY[lang];
+  const {usage,totals}=useUsage();
+  const counter=totals??usage;
+  // Any call to action counts as the visitor using the page.
+  const engage=()=>trackEngaged();
   useLandingMotion(root,lang);
   useEffect(()=>{saveLang(lang);document.documentElement.lang=lang;},[lang]);
   useEffect(()=>{figureData().catch(()=>{});},[]);
+  // Count the visit, bank the time on the page and follow how far the visitor scrolls.
+  useEffect(()=>{trackVisit();return startTimer();},[]);
+  useEffect(()=>{
+    const el=root.current!;
+    let last=0;
+    const onScroll=()=>{
+      const max=el.scrollHeight-el.clientHeight;
+      if(max<=0)return;
+      const percent=Math.min(100,Math.round(el.scrollTop/max*100));
+      if(percent>last+4){last=percent;trackDepth(percent);}
+    };
+    el.addEventListener('scroll',onScroll,{passive:true});
+    return()=>el.removeEventListener('scroll',onScroll);
+  },[]);
 
   return(
     <div className="lp" ref={root}>
@@ -52,7 +71,7 @@ export default function LandingPage(){
             {LANGS.map(l=><button key={l.id} type="button" lang={l.id} aria-label={l.name} aria-pressed={l.id===lang} className={l.id===lang?'is-active':''} onClick={()=>setLang(l.id)}>{l.label}</button>)}
           </div>
           <Link to="/login" className="lp-link">{t.nav.signIn}</Link>
-          <Link to="/atlas" className="lp-pill">{t.nav.open}</Link>
+          <Link to="/atlas" className="lp-pill" onClick={engage}>{t.nav.open}</Link>
         </nav>
       </header>
 
@@ -66,8 +85,8 @@ export default function LandingPage(){
             </h1>
             <p className="lp-hero-lead">{t.hero.lead}</p>
             <div className="lp-hero-actions">
-              <Link to="/atlas" className="lp-pill lp-pill-dark">{t.hero.cta}<ArrowUpRight size={15}/></Link>
-              <Link to="/signup" className="lp-link">{t.hero.signup}</Link>
+              <Link to="/atlas" className="lp-pill lp-pill-dark" onClick={engage}>{t.hero.cta}<ArrowUpRight size={15}/></Link>
+              <Link to="/signup" className="lp-link" onClick={engage}>{t.hero.signup}</Link>
             </div>
           </div>
           <a href="#strip" className="lp-scroll"><ArrowDown size={14}/>{t.hero.scroll}</a>
@@ -103,6 +122,15 @@ export default function LandingPage(){
               {/* Counts mirror the system totals the atlas reports for the packaged model. */}
               {t.stats.items.map(s=><div key={s.value}><dt>{s.value}</dt><dd><b>{s.label}</b>{s.note}</dd></div>)}
             </dl>
+            {/* Usage counter: how often the page was visited and how often it was really used. */}
+            <div className="lp-usage">
+              <span className="lp-usage-label">{t.usage.label}</span>
+              <ul className="lp-usage-list">
+                <li><b>{counter.visits.toLocaleString()}</b><span>{t.usage.visits}</span></li>
+                <li><b>{counter.engaged.toLocaleString()}</b><span>{t.usage.engaged}</span></li>
+                <li><b>{counter.opens.toLocaleString()}</b><span>{t.usage.opens}</span></li>
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -111,7 +139,7 @@ export default function LandingPage(){
             <h2 className="lp-echo"><span>{t.unlock.lead}</span>{t.unlock.title}</h2>
             <div className="lp-unlock-row">
               <p>{t.unlock.text}</p>
-              <Link to="/atlas" className="lp-pill">{t.unlock.cta}</Link>
+              <Link to="/atlas" className="lp-pill" onClick={engage}>{t.unlock.cta}</Link>
             </div>
             <ul className="lp-features">
               {t.unlock.features.map((f,i)=><li key={i}><span>{String(i+1).padStart(2,'0')}</span><h3>{f.title}</h3><p>{f.text}</p></li>)}
@@ -130,7 +158,7 @@ export default function LandingPage(){
       <footer className="lp-footer">
         <span>Human Atlas © {new Date().getFullYear()}</span>
         <nav aria-label={t.footer.label}>
-          <Link to="/atlas">{t.footer.atlas}</Link>
+          <Link to="/atlas" onClick={engage}>{t.footer.atlas}</Link>
           <Link to="/signup">{t.footer.signup}</Link>
           <Link to="/login">{t.footer.login}</Link>
           {SOURCES.map(s=><a key={s.name} href={s.url} target="_blank" rel="noreferrer">{s.name}</a>)}

@@ -1,58 +1,88 @@
 import {
-  ELBOW_MUSCLES,
-  elbowAtlasFocusIds,
+  JOINT_ROM,
+  jointAtlasFocusIds,
   matchPartsForPatterns,
+  musclesFor,
+  shoulderMotionInfo,
   type RomJoint,
+  type RomMotion,
   type RomProtocol,
   type RomSide,
 } from './muscle-map';
 
-export type ElbowPhase = 'flexion' | 'extension' | 'hold';
+export type RomPhase = 'flexion' | 'extension' | 'hold';
+/** @deprecated use RomPhase */
+export type ElbowPhase = RomPhase;
 
 export interface ActivationFrame {
+  joint: RomJoint;
+  motion: RomMotion;
   /** partId → 0..1 contraction intensity (muscles only). */
   byPartId: Record<string, number>;
   agonistIds: string[];
   antagonistIds: string[];
   agonistLevel: number;
   antagonistLevel: number;
-  /** Which action is currently driving the highlight. */
-  phase: ElbowPhase;
-  /** Muscle ids that should read as “in use” right now. */
+  phase: RomPhase;
   activeIds: string[];
-  /** Muscle + bone ids to isolate / frame on the atlas. */
   focusIds: string[];
+  risingName: string;
+  loweringName: string;
+  agonistLabel: string;
+  antagonistLabel: string;
+  maxRom: number;
 }
 
-/** Enter motion phases only with clear angular speed (deg/s). */
 const ENTER_FLEX_VEL = 36;
 const ENTER_EXT_VEL = -36;
-/** Drop back to hold when motion settles. */
 const EXIT_VEL = 16;
 
-function muscleGroups(parts: {id: string; name: string}[], side: RomSide) {
+function muscleGroups(
+  parts: {id: string; name: string}[],
+  joint: RomJoint,
+  side: RomSide,
+  motion: RomMotion,
+) {
+  const map = musclesFor(joint, motion);
   return {
-    agonistIds: matchPartsForPatterns(parts, ELBOW_MUSCLES.agonists, side),
-    antagonistIds: matchPartsForPatterns(parts, ELBOW_MUSCLES.antagonists, side),
-    focusIds: elbowAtlasFocusIds(parts, side),
+    agonistIds: matchPartsForPatterns(parts, map.agonists, side),
+    antagonistIds: matchPartsForPatterns(parts, map.antagonists, side),
+    focusIds: jointAtlasFocusIds(parts, joint, side, motion),
+  };
+}
+
+function labels(joint: RomJoint, motion: RomMotion) {
+  if (joint === 'shoulder') {
+    const info = shoulderMotionInfo(motion);
+    return {
+      risingName: info.risingName,
+      loweringName: info.loweringName,
+      agonistLabel: info.agonistLabel,
+      antagonistLabel: info.antagonistLabel,
+      maxRom: info.maxRom,
+    };
+  }
+  return {
+    risingName: 'Flexion',
+    loweringName: 'Extension',
+    agonistLabel: JOINT_ROM.elbow.flexorLabel,
+    antagonistLabel: JOINT_ROM.elbow.extensorLabel,
+    maxRom: JOINT_ROM.elbow.normative.max,
   };
 }
 
 function resolvePhase(
   velocity: number,
   angleDeg: number,
-  previous: ElbowPhase,
-): ElbowPhase {
+  previous: RomPhase,
+  maxRom: number,
+): RomPhase {
   if (velocity >= ENTER_FLEX_VEL) return 'flexion';
   if (velocity <= ENTER_EXT_VEL) return 'extension';
-
-  // Hysteresis: stay in the current motion phase until speed clearly drops.
   if (previous === 'flexion' && velocity > -EXIT_VEL) return 'flexion';
   if (previous === 'extension' && velocity < EXIT_VEL) return 'extension';
-
-  // Posture-based hold — wide dead band so mid-range does not flicker.
-  if (angleDeg >= 115) return 'flexion';
-  if (angleDeg <= 28) return 'extension';
+  if (angleDeg >= maxRom * 0.72) return 'flexion';
+  if (angleDeg <= maxRom * 0.18) return 'extension';
   return 'hold';
 }
 
@@ -61,16 +91,25 @@ function smoothLevel(previous: number | undefined, next: number): number {
   return previous + 0.22 * (next - previous);
 }
 
-/** Baseline atlas focus before tracking — keeps elbow structures on screen. */
-export function idleElbowActivation(
+export function idleJointActivation(
   parts: {id: string; name: string}[],
+  joint: RomJoint,
   side: RomSide,
+  motion: RomMotion = 'flexion',
 ): ActivationFrame {
-  const {agonistIds, antagonistIds, focusIds} = muscleGroups(parts, side);
+  const {agonistIds, antagonistIds, focusIds} = muscleGroups(
+    parts,
+    joint,
+    side,
+    motion,
+  );
+  const meta = labels(joint, motion);
   const byPartId: Record<string, number> = {};
   for (const id of agonistIds) byPartId[id] = 0.2;
   for (const id of antagonistIds) byPartId[id] = 0.2;
   return {
+    joint,
+    motion,
     byPartId,
     agonistIds,
     antagonistIds,
@@ -79,26 +118,41 @@ export function idleElbowActivation(
     phase: 'hold',
     activeIds: [...agonistIds, ...antagonistIds],
     focusIds,
+    ...meta,
   };
 }
 
-/**
- * Educational heuristic from clinical elbow ROM:
- *  - Flexion (0→145°): biceps brachii, brachialis, brachioradialis
- *  - Extension (145→0°): triceps brachii, anconeus
- * Not EMG — for teaching visualization only.
- */
-export function computeElbowActivation(
+export function idleElbowActivation(
   parts: {id: string; name: string}[],
+  side: RomSide,
+): ActivationFrame {
+  return idleJointActivation(parts, 'elbow', side, 'flexion');
+}
+
+export function computeJointActivation(
+  parts: {id: string; name: string}[],
+  joint: RomJoint,
   side: RomSide,
   angleDeg: number,
   velocityDegPerSec: number,
-  previousPhase: ElbowPhase,
+  previousPhase: RomPhase,
   previousLevels?: {agonist: number; antagonist: number},
+  motion: RomMotion = 'flexion',
 ): ActivationFrame {
-  const {agonistIds, antagonistIds, focusIds} = muscleGroups(parts, side);
-  const phase = resolvePhase(velocityDegPerSec, angleDeg, previousPhase);
-  const flexNorm = Math.min(1, Math.max(0, angleDeg / 145));
+  const {agonistIds, antagonistIds, focusIds} = muscleGroups(
+    parts,
+    joint,
+    side,
+    motion,
+  );
+  const meta = labels(joint, motion);
+  const phase = resolvePhase(
+    velocityDegPerSec,
+    angleDeg,
+    previousPhase,
+    meta.maxRom,
+  );
+  const flexNorm = Math.min(1, Math.max(0, angleDeg / meta.maxRom));
 
   let agonistTarget = 0;
   let antagonistTarget = 0;
@@ -116,10 +170,10 @@ export function computeElbowActivation(
     antagonistTarget = 0.18 + (1 - flexNorm) * 0.38;
   }
 
-  if (angleDeg > 125 && phase !== 'extension') {
+  if (angleDeg > meta.maxRom * 0.85 && phase !== 'extension') {
     agonistTarget = Math.min(1, agonistTarget + 0.1);
   }
-  if (angleDeg < 20 && phase !== 'flexion') {
+  if (angleDeg < meta.maxRom * 0.12 && phase !== 'flexion') {
     antagonistTarget = Math.min(1, antagonistTarget + 0.1);
   }
 
@@ -138,6 +192,8 @@ export function computeElbowActivation(
         : [...agonistIds, ...antagonistIds];
 
   return {
+    joint,
+    motion,
     byPartId,
     agonistIds,
     antagonistIds,
@@ -146,11 +202,32 @@ export function computeElbowActivation(
     phase,
     activeIds,
     focusIds,
+    ...meta,
   };
 }
 
+export function computeElbowActivation(
+  parts: {id: string; name: string}[],
+  side: RomSide,
+  angleDeg: number,
+  velocityDegPerSec: number,
+  previousPhase: RomPhase,
+  previousLevels?: {agonist: number; antagonist: number},
+): ActivationFrame {
+  return computeJointActivation(
+    parts,
+    'elbow',
+    side,
+    angleDeg,
+    velocityDegPerSec,
+    previousPhase,
+    previousLevels,
+    'flexion',
+  );
+}
+
 export function protocolLabel(joint: RomJoint, protocol: RomProtocol): string {
-  if (joint === 'elbow' && protocol === 'flexion') return 'Elbow flexion';
-  if (joint === 'elbow' && protocol === 'extension') return 'Elbow extension';
+  if (protocol === 'flexion') return `${joint} flexion`;
+  if (protocol === 'extension') return `${joint} extension`;
   return `${joint} ${protocol}`;
 }

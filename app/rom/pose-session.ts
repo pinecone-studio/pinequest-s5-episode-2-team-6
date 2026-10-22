@@ -8,13 +8,13 @@ import {
   FLEXION_FEEDBACK_DEG,
   LM,
   createAngleFilter,
-  elbowFlexionDeg,
+  sampleJointAngle,
   updateAngleFilter,
   type AngleFilter,
   type Landmark,
   type JointSample,
 } from './joints';
-import type {RomSide} from './muscle-map';
+import type {RomJoint, RomSide, ShoulderMotion} from './muscle-map';
 
 const WASM =
   'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm';
@@ -23,7 +23,7 @@ const MODEL =
 
 export type PoseFrameHandler = (payload: {
   landmarks: Landmark[];
-  elbow: ReturnType<typeof elbowFlexionDeg>;
+  sample: JointSample | null;
   timestampMs: number;
 }) => void;
 
@@ -39,6 +39,8 @@ export class PoseSession {
     private readonly video: HTMLVideoElement,
     private readonly canvas: HTMLCanvasElement,
     private readonly side: () => RomSide,
+    private readonly joint: () => RomJoint,
+    private readonly shoulderMotion: () => ShoulderMotion,
     private readonly onFrame: PoseFrameHandler,
     private readonly onError: (message: string) => void,
     private readonly onCameraReady?: () => void,
@@ -47,7 +49,6 @@ export class PoseSession {
   async start() {
     if (this.running) return;
     try {
-      // Camera first so the live feed can appear before the pose model finishes loading.
       this.stream = await navigator.mediaDevices.getUserMedia({
         video: {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}},
         audio: false,
@@ -97,7 +98,6 @@ export class PoseSession {
     if (ctx) ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  /** Paint camera frames before pose model is ready. */
   private previewLoop = () => {
     if (!this.running || this.landmarker) return;
     this.paintVideoOnly();
@@ -137,21 +137,31 @@ export class PoseSession {
     const result = this.landmarker.detectForVideo(this.video, now);
     const landmarks = (result.landmarks[0] ?? []) as Landmark[];
     const side = this.side();
-    const elbow = elbowFlexionDeg(landmarks, side);
-    // HUD uses a calm angle; tracking logic smooths separately in RomPanel.
-    let hudElbow = elbow;
-    if (elbow) {
-      const smoothed = updateAngleFilter(this.hudFilter, elbow.angleDeg, now);
+    const joint = this.joint();
+    const sample = sampleJointAngle(
+      landmarks,
+      joint,
+      side,
+      this.shoulderMotion(),
+    );
+    let hudSample = sample;
+    if (sample) {
+      const smoothed = updateAngleFilter(this.hudFilter, sample.angleDeg, now);
       this.hudFilter = smoothed.filter;
-      hudElbow = {...elbow, angleDeg: smoothed.angle};
+      hudSample = {...sample, angleDeg: smoothed.angle};
     } else {
       this.hudFilter = createAngleFilter();
     }
-    this.draw(landmarks, hudElbow, side);
-    this.onFrame({landmarks, elbow, timestampMs: now});
+    this.draw(landmarks, hudSample, side, joint);
+    this.onFrame({landmarks, sample, timestampMs: now});
   };
 
-  private draw(landmarks: Landmark[], elbow: JointSample | null, side: RomSide) {
+  private draw(
+    landmarks: Landmark[],
+    sample: JointSample | null,
+    side: RomSide,
+    joint: RomJoint,
+  ) {
     const ctx = this.canvas.getContext('2d');
     if (!ctx) return;
     const w = this.video.videoWidth || 640;
@@ -159,7 +169,6 @@ export class PoseSession {
     if (this.canvas.width !== w) this.canvas.width = w;
     if (this.canvas.height !== h) this.canvas.height = h;
 
-    // Composite mirrored camera + overlays onto one visible surface.
     ctx.save();
     ctx.translate(w, 0);
     ctx.scale(-1, 1);
@@ -173,36 +182,48 @@ export class PoseSession {
         lineWidth: 2,
       });
       utils.drawLandmarks(points, {radius: 2.5, color: '#ffffff88'});
-      this.drawElbowFeedback(ctx, landmarks, elbow, side, w, h);
+      this.drawJointFeedback(ctx, landmarks, sample, side, joint, w, h);
     }
     ctx.restore();
 
-    if (elbow) {
-      this.drawElbowHud(ctx, elbow, w, h);
+    if (sample) {
+      this.drawJointHud(ctx, sample, w);
     }
   }
 
-  private drawElbowFeedback(
+  private drawJointFeedback(
     ctx: CanvasRenderingContext2D,
     landmarks: Landmark[],
-    elbow: JointSample | null,
+    sample: JointSample | null,
     side: RomSide,
+    joint: RomJoint,
     w: number,
     h: number,
   ) {
-    const shoulder = landmarks[side === 'left' ? LM.leftShoulder : LM.rightShoulder];
-    const joint = landmarks[side === 'left' ? LM.leftElbow : LM.rightElbow];
-    const wrist = landmarks[side === 'left' ? LM.leftWrist : LM.rightWrist];
-    if (!shoulder || !joint || !wrist) return;
+    const chain =
+      joint === 'shoulder'
+        ? [
+            landmarks[side === 'left' ? LM.leftHip : LM.rightHip],
+            landmarks[side === 'left' ? LM.leftShoulder : LM.rightShoulder],
+            landmarks[side === 'left' ? LM.leftElbow : LM.rightElbow],
+          ]
+        : [
+            landmarks[side === 'left' ? LM.leftShoulder : LM.rightShoulder],
+            landmarks[side === 'left' ? LM.leftElbow : LM.rightElbow],
+            landmarks[side === 'left' ? LM.leftWrist : LM.rightWrist],
+          ];
+    const [a, b, c] = chain;
+    if (!a || !b || !c) return;
 
-    const sx = shoulder.x * w;
-    const sy = shoulder.y * h;
-    const ex = joint.x * w;
-    const ey = joint.y * h;
-    const wx = wrist.x * w;
-    const wy = wrist.y * h;
+    const ax = a.x * w;
+    const ay = a.y * h;
+    const bx = b.x * w;
+    const by = b.y * h;
+    const cx = c.x * w;
+    const cy = c.y * h;
 
-    const flexing = !!elbow && elbow.angleDeg >= FLEXION_FEEDBACK_DEG;
+    const threshold = FLEXION_FEEDBACK_DEG[joint];
+    const flexing = !!sample && sample.angleDeg >= threshold;
     const line = flexing ? '#ff6b4a' : '#3ecfba';
     const glow = flexing ? '#ff6b4a66' : '#3ecfba55';
 
@@ -212,23 +233,23 @@ export class PoseSession {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 14;
     ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.lineTo(wx, wy);
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.lineTo(cx, cy);
     ctx.stroke();
 
     ctx.strokeStyle = line;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.lineTo(wx, wy);
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.lineTo(cx, cy);
     ctx.stroke();
 
     for (const [x, y, r] of [
-      [sx, sy, 6],
-      [ex, ey, 8],
-      [wx, wy, 6],
+      [ax, ay, 6],
+      [bx, by, 8],
+      [cx, cy, 6],
     ] as const) {
       ctx.beginPath();
       ctx.fillStyle = line;
@@ -240,32 +261,32 @@ export class PoseSession {
       ctx.fill();
     }
 
-    const aShoulder = Math.atan2(sy - ey, sx - ex);
-    const aWrist = Math.atan2(wy - ey, wx - ex);
-    let start = aShoulder;
-    let end = aWrist;
+    const a0 = Math.atan2(ay - by, ax - bx);
+    const a1 = Math.atan2(cy - by, cx - bx);
+    let start = a0;
+    let end = a1;
     let delta = end - start;
     while (delta <= -Math.PI) delta += Math.PI * 2;
     while (delta > Math.PI) delta -= Math.PI * 2;
     end = start + delta;
 
-    const radius = Math.min(48, Math.hypot(sx - ex, sy - ey) * 0.35);
+    const radius = Math.min(48, Math.hypot(ax - bx, ay - by) * 0.35);
     ctx.beginPath();
     ctx.strokeStyle = flexing ? '#ffd2c4' : '#b8fff3';
     ctx.lineWidth = 3;
-    ctx.arc(ex, ey, radius, start, end, delta < 0);
+    ctx.arc(bx, by, radius, start, end, delta < 0);
     ctx.stroke();
   }
 
-  private drawElbowHud(
+  private drawJointHud(
     ctx: CanvasRenderingContext2D,
-    elbow: JointSample,
+    sample: JointSample,
     w: number,
-    _h: number,
   ) {
-    const flexing = elbow.angleDeg >= FLEXION_FEEDBACK_DEG;
+    const threshold = FLEXION_FEEDBACK_DEG[sample.joint];
+    const flexing = sample.angleDeg >= threshold;
     const pad = 12;
-    const boxW = flexing ? 168 : 112;
+    const boxW = flexing ? 168 : 120;
     const boxH = flexing ? 54 : 40;
     const x = w - boxW - pad;
     const y = pad;
@@ -278,7 +299,11 @@ export class PoseSession {
     ctx.fillStyle = '#fff';
     ctx.font = '700 20px ui-sans-serif, system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${Math.round(elbow.angleDeg)}°`, x + 12, flexing ? y + 20 : y + boxH / 2);
+    ctx.fillText(
+      `${Math.round(sample.angleDeg)}°`,
+      x + 12,
+      flexing ? y + 20 : y + boxH / 2,
+    );
 
     if (flexing) {
       ctx.fillStyle = '#ff8f6e';
@@ -287,7 +312,7 @@ export class PoseSession {
     } else {
       ctx.fillStyle = '#9eb0bd';
       ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText('elbow', x + 70, y + boxH / 2);
+      ctx.fillText(sample.motion ?? sample.joint, x + 64, y + boxH / 2);
     }
     ctx.restore();
   }

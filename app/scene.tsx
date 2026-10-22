@@ -38,6 +38,11 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   const selectedData=new Uint8Array(width*4),selectionTexture=new T.DataTexture(selectedData,width,1);selectionTexture.needsUpdate=true;
   const activationData=new Uint8Array(width*4),activationTexture=new T.DataTexture(activationData,width,1);activationTexture.needsUpdate=true;
   const materials:T.Material[]=[],geometries:T.BufferGeometry[]=[],pickers:(T.Mesh|undefined)[]=[],centers=atlas.parts.map(p=>new T.Vector3().fromArray(p.bounds[0]).add(new T.Vector3().fromArray(p.bounds[1])).multiplyScalar(.5));
+  // Part centres drive educational contraction (bulge / shorten) in the muscle shader.
+  const centerData=new Float32Array(width*4);centers.forEach((c,i)=>{centerData[i*4]=c.x;centerData[i*4+1]=c.y;centerData[i*4+2]=c.z;});
+  const centerTexture=new T.DataTexture(centerData,width,1,T.RGBAFormat,T.FloatType);centerTexture.needsUpdate=true;
+  const smoothAct=new Float32Array(atlas.parts.length);
+  const contractShaders:{uniforms:Record<string,T.IUniform>}[]=[];
   const offsets:T.Vector3[]=[],bounds=atlas.parts.map(p=>new T.Box3(new T.Vector3().fromArray(p.bounds[0]),new T.Vector3().fromArray(p.bounds[1])));
   // Overall body extent drives the cross-section plane range.
   const extent=new T.Box3();for(const box of bounds)extent.union(box);
@@ -66,13 +71,38 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   };
   const materialFor=(system:string)=>{
    const m=new T.MeshStandardMaterial({color:SYSTEMS.find(s=>s.id===system)?.color??'#aebbb8',metalness:.08,roughness:.53,side:T.DoubleSide,transparent:system==='integumentary',opacity:system==='integumentary'?.1:1,depthWrite:system!=='integumentary'});
+   m.customProgramCacheKey=()=>'rom-contract-v2';
    m.onBeforeCompile=shader=>{
-    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.stateWidth={value:width};
-    shader.vertexShader='attribute float partIndex; uniform sampler2D partState; uniform sampler2D selectionState; uniform sampler2D activationState; uniform float stateWidth; varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.vertexShader;
-    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5); vec4 state = texture2D(partState, stateUv); transformed += state.xyz; partVisible = state.w; partSelected = texture2D(selectionState, stateUv).r; partActivated = texture2D(activationState, stateUv).r;');
+    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};
+    contractShaders.push(shader);
+    // Muscular system gets a stronger educational contraction; others only tint.
+    const contractScale=system==='muscular'?1:0.15;
+    shader.uniforms.uContractScale={value:contractScale};
+    shader.vertexShader='attribute float partIndex; uniform sampler2D partState; uniform sampler2D selectionState; uniform sampler2D activationState; uniform sampler2D partCenter; uniform float stateWidth; uniform float uTime; uniform float uContractScale; varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+vec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5);
+vec4 state = texture2D(partState, stateUv);
+partVisible = state.w;
+partSelected = texture2D(selectionState, stateUv).r;
+partActivated = texture2D(activationState, stateUv).r;
+vec3 partOrigin = texture2D(partCenter, stateUv).xyz;
+vec3 delta = transformed - partOrigin;
+float act = partActivated * uContractScale;
+float pulse = 0.5 + 0.5 * sin(uTime * 7.5 + partIndex * 0.37);
+float bulge = act * (0.07 + 0.045 * pulse * act);
+float shorten = act * 0.055;
+// Belly swell (radial) + slight shortening along body-up for a contraction cue.
+transformed = partOrigin + vec3(delta.x * (1.0 + bulge), delta.y * (1.0 - shorten), delta.z * (1.0 + bulge));
+transformed += state.xyz;`);
     shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
-    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.22, 0.16), partActivated * 0.92);\ndiffuseColor.rgb += vec3(0.18, 0.04, 0.02) * partActivated;');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);
+float heat = partActivated;
+diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.2, 0.14), heat * 0.88);
+diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    };materials.push(m);return m;
   };
   const mats=new Map(SYSTEMS.map(s=>[s.id,materialFor(s.id)]));
@@ -138,10 +168,23 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
    if(sliceKey!==lastSliceKey){applySlice(slice);lastSliceKey=sliceKey;dirty=true;}
    const labelKey=s.labels?'on':'off';
    if(labelKey!==lastLabelKey){lastLabelKey=labelKey;dirty=true;}
-   const activationMap=latestActivations.current,activationKey=JSON.stringify(activationMap);
-   if(activationKey!==lastActivationKey){
-    atlas.parts.forEach((p,i)=>{activationData[i*4]=Math.min(255,Math.max(0,Math.round((activationMap[p.id]??0)*255)));});
-    activationTexture.needsUpdate=true;lastActivationKey=activationKey;dirty=true;
+   const activationMap=latestActivations.current;
+   let contracting=false;
+   // Ease activation so contraction/release reads as motion, not a hard snap.
+   for(let i=0;i<atlas.parts.length;i++){
+    const target=activationMap[atlas.parts[i].id]??0;
+    smoothAct[i]+= (target-smoothAct[i])*Math.min(1,dt*7);
+    if(smoothAct[i]>0.008||target>0.008)contracting=true;
+    activationData[i*4]=Math.min(255,Math.max(0,Math.round(smoothAct[i]*255)));
+   }
+   if(contracting){
+    activationTexture.needsUpdate=true;
+    const t=clock.elapsedTime;
+    for(const sh of contractShaders)sh.uniforms.uTime.value=t;
+    dirty=true;
+    lastActivationKey='live';
+   }else if(lastActivationKey!=='idle'){
+    activationTexture.needsUpdate=true;lastActivationKey='idle';dirty=true;
    }
    if(changed||moving||lastExtent<0){
     const visible=new Set(s.visible),selection=new Set(s.selected),peeled=peeledSystems(s.peel??0);
@@ -202,7 +245,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
 
   };animate();
   const contextLost=(e:Event)=>{e.preventDefault();onError('The 3D session was paused by your device. Reload to continue.');};renderer.domElement.addEventListener('webglcontextlost',contextLost);
-  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();labelLayer.remove();renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();centerTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();labelLayer.remove();renderer.dispose();renderer.domElement.remove();};
  },[atlas]);
  return <div className="scene" ref={host}/>;
 }

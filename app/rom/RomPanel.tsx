@@ -10,10 +10,10 @@ import {
 } from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {
-  computeElbowActivation,
-  idleElbowActivation,
+  computeJointActivation,
+  idleJointActivation,
   type ActivationFrame,
-  type ElbowPhase,
+  type RomPhase,
 } from './activation';
 import {
   FLEXION_FEEDBACK_DEG,
@@ -26,10 +26,14 @@ import {
   type RomTracker,
 } from './joints';
 import {
-  ELBOW_EXTENSOR_LABEL,
-  ELBOW_FLEXOR_LABEL,
-  NORMATIVE_ROM,
+  JOINT_ROM,
+  ROM_JOINTS,
+  SHOULDER_MOTIONS,
+  shoulderMotionInfo,
+  type RomJoint,
+  type RomMotion,
   type RomSide,
+  type ShoulderMotion,
 } from './muscle-map';
 import {PoseSession} from './pose-session';
 
@@ -54,28 +58,66 @@ export default function RomPanel({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<PoseSession | null>(null);
   const sideRef = useRef<RomSide>('right');
+  const jointRef = useRef<RomJoint>('elbow');
+  const shoulderMotionRef = useRef<ShoulderMotion>('auto');
   const filterRef = useRef<AngleFilter>(createAngleFilter());
-  const phaseRef = useRef<ElbowPhase>('hold');
+  const phaseRef = useRef<RomPhase>('hold');
   const levelsRef = useRef({agonist: 0.2, antagonist: 0.2});
   const lastSeen = useRef(0);
   const lastUiPush = useRef(0);
   const lastUiKey = useRef('');
 
+  const [joint, setJoint] = useState<RomJoint>('elbow');
+  const [shoulderMotion, setShoulderMotion] = useState<ShoulderMotion>('auto');
   const [side, setSide] = useState<RomSide>('right');
   const [running, setRunning] = useState(false);
   const [previewOn, setPreviewOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState<TrackStatus>('idle');
-  const [tracker, setTracker] = useState<RomTracker>(() => createRomTracker(90));
+  const [tracker, setTracker] = useState<RomTracker>(() =>
+    createRomTracker(JOINT_ROM.elbow.trackerSeed),
+  );
   const [activation, setActivation] = useState<ActivationFrame | null>(null);
 
   sideRef.current = side;
+  jointRef.current = joint;
+  shoulderMotionRef.current = shoulderMotion;
+  const info = JOINT_ROM[joint];
 
-  const pushAtlasFocus = (nextSide: RomSide, live?: ActivationFrame | null) => {
-    const frame = live ?? idleElbowActivation(parts, nextSide);
+  const resolveMotion = (
+    nextJoint: RomJoint,
+    preferred: ShoulderMotion,
+    fromSample?: RomMotion,
+  ): RomMotion => {
+    if (nextJoint !== 'shoulder') return 'flexion';
+    if (preferred === 'auto') return fromSample ?? 'abduction';
+    return preferred;
+  };
+
+  const pushAtlasFocus = (
+    nextJoint: RomJoint,
+    nextSide: RomSide,
+    live?: ActivationFrame | null,
+    motionHint?: RomMotion,
+  ) => {
+    const motion = resolveMotion(
+      nextJoint,
+      shoulderMotionRef.current,
+      motionHint ?? live?.motion,
+    );
+    const frame = live ?? idleJointActivation(parts, nextJoint, nextSide, motion);
     setActivation(frame);
     onActivation(frame);
+  };
+
+  const resetTrackingState = (nextJoint: RomJoint = jointRef.current) => {
+    filterRef.current = createAngleFilter();
+    phaseRef.current = 'hold';
+    levelsRef.current = {agonist: 0.2, antagonist: 0.2};
+    lastUiPush.current = 0;
+    lastUiKey.current = '';
+    setTracker(createRomTracker(JOINT_ROM[nextJoint].trackerSeed));
   };
 
   useEffect(() => {
@@ -87,28 +129,23 @@ export default function RomPanel({
       setBusy(false);
       setStatus('idle');
       setError('');
-      filterRef.current = createAngleFilter();
-      phaseRef.current = 'hold';
-      levelsRef.current = {agonist: 0.2, antagonist: 0.2};
-      lastUiPush.current = 0;
-      lastUiKey.current = '';
+      resetTrackingState();
       setActivation(null);
       onActivation(null);
       onRomFocus(false);
       return;
     }
-    // Opening the lab frames the elbow on the atlas immediately.
     onRomFocus(true);
-    pushAtlasFocus(side);
+    pushAtlasFocus(joint, side);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when panel opens
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    pushAtlasFocus(side);
-    // Side change while lab is open — re-frame the chosen arm on the atlas.
+    resetTrackingState(joint);
+    pushAtlasFocus(joint, side);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [side, parts, open]);
+  }, [side, joint, shoulderMotion, parts, open]);
 
   useEffect(
     () => () => {
@@ -123,26 +160,23 @@ export default function RomPanel({
     setBusy(true);
     setError('');
     setStatus('starting');
-    setTracker(createRomTracker(90));
-    filterRef.current = createAngleFilter();
-    phaseRef.current = 'hold';
-    levelsRef.current = {agonist: 0.2, antagonist: 0.2};
-    lastUiPush.current = 0;
-    lastUiKey.current = '';
+    resetTrackingState(jointRef.current);
     onRomFocus(true);
-    pushAtlasFocus(sideRef.current);
+    pushAtlasFocus(jointRef.current, sideRef.current);
     const session = new PoseSession(
       videoRef.current,
       canvasRef.current,
       () => sideRef.current,
-      ({elbow, timestampMs}) => {
-        if (!elbow) {
+      () => jointRef.current,
+      () => shoulderMotionRef.current,
+      ({sample, timestampMs}) => {
+        if (!sample || sample.joint !== jointRef.current) {
           const next = timestampMs - lastSeen.current > 1400 ? 'lost' : 'searching';
           setStatus((prev) => {
             if (prev !== next) {
               filterRef.current = createAngleFilter();
               phaseRef.current = 'hold';
-              pushAtlasFocus(sideRef.current);
+              pushAtlasFocus(jointRef.current, sideRef.current);
             }
             return next;
           });
@@ -153,18 +187,25 @@ export default function RomPanel({
 
         const smoothed = updateAngleFilter(
           filterRef.current,
-          elbow.angleDeg,
+          sample.angleDeg,
           timestampMs,
         );
         filterRef.current = smoothed.filter;
 
-        const frame = computeElbowActivation(
+        const motion = resolveMotion(
+          jointRef.current,
+          shoulderMotionRef.current,
+          sample.motion,
+        );
+        const frame = computeJointActivation(
           parts,
+          jointRef.current,
           sideRef.current,
           smoothed.angle,
           smoothed.velocity,
           phaseRef.current,
           levelsRef.current,
+          motion,
         );
         phaseRef.current = frame.phase;
         levelsRef.current = {
@@ -172,10 +213,9 @@ export default function RomPanel({
           antagonist: frame.antagonistLevel,
         };
 
-        // Throttle UI/atlas pushes so landmark noise does not thrash React/Three.
         const angleBucket = Math.round(smoothed.angle);
         const levelBucket = `${Math.round(frame.agonistLevel * 8)}_${Math.round(frame.antagonistLevel * 8)}`;
-        const uiKey = `${frame.phase}:${angleBucket}:${levelBucket}:${sideRef.current}`;
+        const uiKey = `${jointRef.current}:${motion}:${frame.phase}:${angleBucket}:${levelBucket}:${sideRef.current}`;
         const due = timestampMs - lastUiPush.current >= 80;
         if (!due && uiKey === lastUiKey.current) return;
         lastUiPush.current = timestampMs;
@@ -199,7 +239,7 @@ export default function RomPanel({
         setRunning(true);
         setBusy(false);
         setStatus('starting');
-        pushAtlasFocus(sideRef.current);
+        pushAtlasFocus(jointRef.current, sideRef.current);
       },
     );
     sessionRef.current = session;
@@ -209,7 +249,7 @@ export default function RomPanel({
       setPreviewOn(true);
       setBusy(false);
       setStatus('searching');
-      pushAtlasFocus(sideRef.current);
+      pushAtlasFocus(jointRef.current, sideRef.current);
     }
   };
 
@@ -220,43 +260,59 @@ export default function RomPanel({
     setPreviewOn(false);
     setBusy(false);
     setStatus('idle');
-    filterRef.current = createAngleFilter();
-    phaseRef.current = 'hold';
-    levelsRef.current = {agonist: 0.2, antagonist: 0.2};
-    lastUiPush.current = 0;
-    lastUiKey.current = '';
-    // Keep atlas framed on the elbow while the lab stays open.
-    pushAtlasFocus(sideRef.current);
+    resetTrackingState();
+    pushAtlasFocus(jointRef.current, sideRef.current);
   };
 
   if (!open) return null;
 
-  const norm = NORMATIVE_ROM.elbow;
+  const activeMotion: RomMotion =
+    activation?.motion ??
+    resolveMotion(joint, shoulderMotion, 'abduction');
+  const motionMeta =
+    joint === 'shoulder'
+      ? shoulderMotionInfo(activeMotion)
+      : {
+          risingName: 'Flexion',
+          loweringName: 'Extension',
+          agonistLabel: info.flexorLabel,
+          antagonistLabel: info.extensorLabel,
+          maxRom: info.normative.max,
+          oppositeMax: 0,
+          tip: 'Flex and extend the elbow in view of the camera.',
+        };
+  const maxRom = motionMeta.maxRom;
   const hasData = tracker.samples > 0;
   const romSpan = hasData ? tracker.max - tracker.min : 0;
   const angle = hasData ? tracker.current : 0;
-  const gaugePct = Math.min(100, Math.max(0, (angle / norm.max) * 100));
-  const minPct = hasData ? Math.min(100, Math.max(0, (tracker.min / norm.max) * 100)) : 0;
-  const maxPct = hasData ? Math.min(100, Math.max(0, (tracker.max / norm.max) * 100)) : 0;
+  const gaugePct = Math.min(100, Math.max(0, (angle / maxRom) * 100));
+  const minPct = hasData ? Math.min(100, Math.max(0, (tracker.min / maxRom) * 100)) : 0;
+  const maxPct = hasData ? Math.min(100, Math.max(0, (tracker.max / maxRom) * 100)) : 0;
   const flexorPct = Math.round((activation?.agonistLevel ?? 0) * 100);
   const extensorPct = Math.round((activation?.antagonistLevel ?? 0) * 100);
   const phase = activation?.phase;
-  const flexionLive =
+  const risingLive =
     status === 'tracking' &&
     hasData &&
-    (phase === 'flexion' || angle >= FLEXION_FEEDBACK_DEG);
-  const extensionLive = status === 'tracking' && phase === 'extension';
+    (phase === 'flexion' || angle >= FLEXION_FEEDBACK_DEG[joint]);
+  const loweringLive = status === 'tracking' && phase === 'extension';
 
   const statusCopy: Record<TrackStatus, string> = {
     idle: 'Ready when you are',
     starting: 'Starting camera…',
-    searching: `Show your ${side} arm`,
-    tracking: extensionLive
-      ? 'Extension — triceps · anconeus'
-      : flexionLive
-        ? 'Flexion — biceps · brachialis · brachioradialis'
-        : 'Tracking elbow',
-    lost: `Looking for your ${side} arm…`,
+    searching:
+      joint === 'shoulder'
+        ? motionMeta.tip
+        : `Show your ${side} arm`,
+    tracking: loweringLive
+      ? `${motionMeta.loweringName} — ${motionMeta.antagonistLabel.split(' · ').slice(0, 2).join(' · ')}`
+      : risingLive
+        ? `${motionMeta.risingName} — ${motionMeta.agonistLabel.split(' · ').slice(0, 2).join(' · ')}`
+        : `Tracking ${joint}${joint === 'shoulder' ? ` · ${activeMotion}` : ''}`,
+    lost:
+      joint === 'shoulder'
+        ? `Looking for your ${side} shoulder…`
+        : `Looking for your ${side} arm…`,
   };
 
   return (
@@ -264,10 +320,12 @@ export default function RomPanel({
       <header className="rom-header">
         <div className="rom-title-block">
           <p className="rom-kicker">Live movement</p>
-          <h2 className="rom-title">Elbow ROM lab</h2>
+          <h2 className="rom-title">{info.title}</h2>
           <p className="rom-subtitle">
-            Elbow (humeroulnar / humeroradial): flex 0–145° and extend back — muscles
-            in use light up on the atlas.
+            {info.anatomy}: {motionMeta.risingName.toLowerCase()} 0–{maxRom}° /
+            {motionMeta.loweringName.toLowerCase()}
+            {joint === 'shoulder' ? ` 0–${motionMeta.oppositeMax}°` : ' to 0°'} —
+            muscles in use light up on the atlas.
           </p>
         </div>
         <Button
@@ -288,11 +346,41 @@ export default function RomPanel({
         {statusCopy[status]}
       </div>
 
+      <div className="rom-side-toggle" role="group" aria-label="Joint">
+        {ROM_JOINTS.map((id) => (
+          <Button
+            key={id}
+            variant="ghost"
+            aria-pressed={joint === id}
+            className={joint === id ? 'active' : ''}
+            onClick={() => setJoint(id)}
+          >
+            {id === 'elbow' ? 'Elbow' : 'Shoulder'}
+          </Button>
+        ))}
+      </div>
+
+      {joint === 'shoulder' && (
+        <div className="rom-side-toggle" role="group" aria-label="Shoulder motion">
+          {SHOULDER_MOTIONS.map((mode) => (
+            <Button
+              key={mode}
+              variant="ghost"
+              aria-pressed={shoulderMotion === mode}
+              className={shoulderMotion === mode ? 'active' : ''}
+              onClick={() => setShoulderMotion(mode)}
+            >
+              {mode === 'auto' ? 'Auto' : mode === 'flexion' ? 'Flexion' : 'Abduction'}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {!running && (
         <ol className="rom-steps">
           <li>
             <em>1</em>
-            <span>Pick left or right arm</span>
+            <span>Pick joint{joint === 'shoulder' ? ', motion,' : ''} and side</span>
           </li>
           <li>
             <em>2</em>
@@ -300,7 +388,7 @@ export default function RomPanel({
           </li>
           <li>
             <em>3</em>
-            <span>Flex and extend — watch the 3D body</span>
+            <span>{motionMeta.tip}</span>
           </li>
         </ol>
       )}
@@ -312,7 +400,7 @@ export default function RomPanel({
           className={side === 'left' ? 'active' : ''}
           onClick={() => setSide('left')}
         >
-          Left arm
+          Left
         </Button>
         <Button
           variant="ghost"
@@ -320,12 +408,12 @@ export default function RomPanel({
           className={side === 'right' ? 'active' : ''}
           onClick={() => setSide('right')}
         >
-          Right arm
+          Right
         </Button>
       </div>
 
       <div
-        className={`rom-video-wrap${previewOn ? ' is-live' : ''}${flexionLive ? ' is-flexing' : ''}`}
+        className={`rom-video-wrap${previewOn ? ' is-live' : ''}${risingLive ? ' is-flexing' : ''}`}
       >
         <video ref={videoRef} className="rom-video-src" playsInline muted autoPlay />
         <canvas ref={canvasRef} className="rom-canvas" />
@@ -335,7 +423,11 @@ export default function RomPanel({
               <Camera size={22} />
             </div>
             <strong>Camera preview</strong>
-            <span>Stand so your {side} elbow and wrist are visible</span>
+            <span>
+              {joint === 'shoulder'
+                ? `Keep your ${side} hip, shoulder, and elbow in frame`
+                : `Stand so your ${side} elbow and wrist are visible`}
+            </span>
           </div>
         )}
         {previewOn && (
@@ -344,10 +436,10 @@ export default function RomPanel({
             Live
           </div>
         )}
-        {flexionLive && (
+        {risingLive && (
           <div className="rom-flex-chip" role="status">
             <Sparkles size={13} />
-            Flexion · {angle.toFixed(0)}°
+            {motionMeta.risingName} · {angle.toFixed(0)}°
           </div>
         )}
       </div>
@@ -385,7 +477,11 @@ export default function RomPanel({
       <div className="rom-gauge-card">
         <div className="rom-gauge-top">
           <div>
-            <span className="rom-gauge-label">Elbow flexion</span>
+            <span className="rom-gauge-label">
+              {joint === 'shoulder'
+                ? `Shoulder ${motionMeta.risingName.toLowerCase()}`
+                : 'Elbow flexion'}
+            </span>
             <div className="rom-gauge-value">
               {hasData ? (
                 <>
@@ -426,8 +522,10 @@ export default function RomPanel({
           )}
         </div>
         <div className="rom-range-labels">
-          <span>Extended 0°</span>
-          <span>Flexed {norm.max}°</span>
+          <span>{joint === 'shoulder' ? 'At side 0°' : 'Extended 0°'}</span>
+          <span>
+            {motionMeta.risingName} {maxRom}°
+          </span>
         </div>
 
         <div className="rom-metric-row">
@@ -453,10 +551,10 @@ export default function RomPanel({
           <h3>Muscles in use</h3>
           <span>
             {phase === 'flexion'
-              ? 'Flexion highlighted'
+              ? `${motionMeta.risingName} — contracting`
               : phase === 'extension'
-                ? 'Extension highlighted'
-                : 'Shown in red on the 3D body'}
+                ? `${motionMeta.loweringName} — contracting`
+                : 'Red swell = educational contraction'}
           </span>
         </div>
 
@@ -464,8 +562,10 @@ export default function RomPanel({
           className={`rom-muscle-card${phase === 'flexion' ? ' is-driving' : ''}`}
         >
           <div className="rom-muscle-meta">
-            <strong>Flexion · 0–145°</strong>
-            <span>{ELBOW_FLEXOR_LABEL}</span>
+            <strong>
+              {motionMeta.risingName} · 0–{maxRom}°
+            </strong>
+            <span>{motionMeta.agonistLabel}</span>
           </div>
           <div className="rom-muscle-bar">
             <i style={{width: `${flexorPct}%`}} />
@@ -477,8 +577,11 @@ export default function RomPanel({
           className={`rom-muscle-card${phase === 'extension' ? ' is-driving' : ''}`}
         >
           <div className="rom-muscle-meta">
-            <strong>Extension · 145–0°</strong>
-            <span>{ELBOW_EXTENSOR_LABEL}</span>
+            <strong>
+              {motionMeta.loweringName}
+              {joint === 'shoulder' ? ` · 0–${motionMeta.oppositeMax}°` : ' · to 0°'}
+            </strong>
+            <span>{motionMeta.antagonistLabel}</span>
           </div>
           <div className="rom-muscle-bar">
             <i className="antagonist" style={{width: `${extensorPct}%`}} />
@@ -488,15 +591,17 @@ export default function RomPanel({
 
         {!activation && (
           <p className="rom-muscles-idle">
-            Start the camera and flex / extend — active muscles light up on the body.
+            Start the camera and move — active muscles light up on the body.
           </p>
         )}
       </div>
 
       <p className="rom-disclaimer">
         <CheckCircle2 size={13} />
-        Teaching demo only — not a clinical ROM or EMG measurement. Normative elbow
-        flexion ~{norm.min}–{norm.max}°; hyperextension often ~5–10°.
+        Teaching demo only — not clinical measurement or real fiber mechanics. Muscle
+        swell is an educational cue. Ref: Limb Movements Muscles ROM.{' '}
+        {info.normative.label}
+        {joint === 'shoulder' ? ' *Latissimus dorsi has no discrete mesh here.' : ''}
       </p>
     </section>
   );

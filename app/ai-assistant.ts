@@ -355,7 +355,7 @@ function viewIntent(question: string): View | null {
 
 // Mongolian agglutinates: "шошго", "шошгыг", "шошгонд" all share the "шошг"
 // stem. Match the stem so commands with case suffixes still work.
-const LABEL_STEM = /шошг|тайлбар|бичиг/u;
+const LABEL_STEM = /шошг|тайлбар(?!ла)|бичиг/u;
 
 function asksAboutLabels(question: string): boolean {
   const text = normalize(question);
@@ -508,9 +508,9 @@ export function askAtlas(question: string, ctx: AssistantContext): AssistantRepl
 
 /** Suggested openings shown in an empty chat. */
 export const ASSISTANT_PROMPTS = [
-  'Энэ бүтэц юу хийдэг вэ?',
-  'Rotator cuff-ийг тайлбарла',
-  'Зүрхний үйл ажиллагааг тайлбарла',
-  'Бөөрний анатомийн бүтцийг тайлбарла',
-  'Hand bones-ийн тухай сорил өг',
+  'Бөөр хэрхэн ажилладаг вэ?',
+  'Хиймэл оюун ухаан гэж юу вэ?',
+  'Эрүүл хооллолтын үндсэн зарчмуудыг тайлбарла',
+  'Зүрхний үйл ажиллагааг дэлгэрэнгүй тайлбарла',
+  'Rotator cuff-ийг харуул',
 ];

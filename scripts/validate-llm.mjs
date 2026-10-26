@@ -119,7 +119,7 @@ assert.equal(resolveLlmConfig({GEMINI_API_KEY: '   '}), null);
 assert.deepEqual(resolveLlmConfig({GEMINI_API_KEY: 'g-key'}), {
   provider: 'gemini',
   apiKey: 'g-key',
-  model: 'gemini-3.6-flash',
+  model: 'gemini-3.5-flash-lite',
   baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
 });
 
@@ -190,6 +190,8 @@ assert.match(prompt, /<atlas_context>/);
 assert.match(prompt, /Сонгосон бүтэц/);
 assert.match(prompt, /short head of right biceps brachii/);
 assert.match(prompt, /103/);
+assert.match(prompt, /зохиомол монгол үг бүү үүсгэ/);
+assert.match(prompt, /Эмийн нэр, тунг санал болгохгүй/);
 
 const emptyPrompt = buildSystemPrompt();
 assert.match(emptyPrompt, /Сонгосон бүтэц байхгүй/);
@@ -199,7 +201,7 @@ assert.match(emptyPrompt, /Нэмэлт лавлагаа байхгүй/);
 const hugePrompt = buildSystemPrompt({
   references: [{name: 'Huge reference', overview: 'x'.repeat(50000)}],
 });
-assert.ok(hugePrompt.length < 16000, `prompt was ${hugePrompt.length} chars`);
+assert.ok(hugePrompt.length < 17000, `prompt was ${hugePrompt.length} chars`);
 assert.ok(hugePrompt.endsWith('</atlas_context>'));
 
 const built = buildMessages({
@@ -286,7 +288,7 @@ assert.equal(response.status, 200);
 assert.deepEqual(await response.json(), {
   configured: true,
   provider: 'gemini',
-  model: 'gemini-3.6-flash',
+  model: 'gemini-3.5-flash-lite',
 });
 
 response = await handleChatRequest(new Request('http://localhost/api/chat', {method: 'OPTIONS'}), offlineEnv);
@@ -741,14 +743,14 @@ try {
 
   // Health returns the parsed provider badge payload.
   globalThis.fetch = async () =>
-    new Response(JSON.stringify({configured: true, provider: 'gemini', model: 'gemini-3.6-flash'}), {
+    new Response(JSON.stringify({configured: true, provider: 'gemini', model: 'gemini-3.5-flash-lite'}), {
       status: 200,
       headers: {'content-type': 'application/json'},
     });
   assert.deepEqual(await fetchAssistantHealth(), {
     configured: true,
     provider: 'gemini',
-    model: 'gemini-3.6-flash',
+    model: 'gemini-3.5-flash-lite',
   });
 } finally {
   globalThis.fetch = originalFetch;

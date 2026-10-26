@@ -9,6 +9,101 @@ import type {ReactNode} from 'react';
 
 const INLINE = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|_[^_\n]+_|\[[^\]]+\]\([^)]+\))/g;
 
+const SUBSCRIPT: Record<string, string> = {
+  '0': '₀',
+  '1': '₁',
+  '2': '₂',
+  '3': '₃',
+  '4': '₄',
+  '5': '₅',
+  '6': '₆',
+  '7': '₇',
+  '8': '₈',
+  '9': '₉',
+  '+': '₊',
+  '-': '₋',
+  '=': '₌',
+  '(': '₍',
+  ')': '₎',
+};
+
+const SUPERSCRIPT: Record<string, string> = {
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹',
+  '+': '⁺',
+  '-': '⁻',
+  '=': '⁼',
+  '(': '⁽',
+  ')': '⁾',
+};
+
+const LATEX_SYMBOLS: Record<string, string> = {
+  times: '×',
+  cdot: '·',
+  pm: '±',
+  mp: '∓',
+  to: '→',
+  rightarrow: '→',
+  leftarrow: '←',
+  le: '≤',
+  leq: '≤',
+  ge: '≥',
+  geq: '≥',
+  approx: '≈',
+  neq: '≠',
+  ne: '≠',
+  degree: '°',
+  circ: '°',
+  alpha: 'α',
+  beta: 'β',
+  gamma: 'γ',
+  delta: 'δ',
+  mu: 'μ',
+};
+
+function toScript(value: string, table: Record<string, string>): string {
+  return [...value].map(character => table[character] ?? character).join('');
+}
+
+/** Turn simple inline LaTeX into readable text because the panel has no math renderer. */
+function latexToText(body: string): string {
+  let text = body;
+  for (let pass = 0; pass < 3; pass += 1) {
+    text = text.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\{([^{}]*)\}/g, '$1');
+  }
+  text = text.replace(/\\(?:left|right)/g, '');
+  text = text.replace(/\\([a-zA-Z]+)/g, (_, name: string) => LATEX_SYMBOLS[name] ?? ' ');
+  text = text.replace(/[{}]/g, '');
+  text = text.replace(/_\{([^{}]+)\}/g, (_, value: string) => toScript(value, SUBSCRIPT));
+  text = text.replace(/\^\{([^{}]+)\}/g, (_, value: string) => toScript(value, SUPERSCRIPT));
+  text = text.replace(/_([0-9a-zA-Z+\-=()])/g, (_, value: string) => SUBSCRIPT[value] ?? value);
+  text = text.replace(/\^([0-9a-zA-Z+\-=()])/g, (_, value: string) => SUPERSCRIPT[value] ?? value);
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function normalizeMath(value: string): string {
+  return value
+    .replace(/\$\$([^$\n]+)\$\$/g, (match, body: string) => (/\\[a-zA-Z]+|[_^]/.test(body) ? latexToText(body) : match))
+    .replace(/\$([^$\n]+)\$/g, (match, body: string) => (/\\[a-zA-Z]+|[_^]/.test(body) ? latexToText(body) : match));
+}
+
+/** Collapse nested emphasis such as **text (*latin*)** into a form the inline parser handles. */
+function normalizeEmphasis(value: string): string {
+  return value
+    .replace(/\*\*\*([^*\n]+)\*\*\*/g, '**$1**')
+    .replace(/\*\*([^*\n]*?)\*([^*\n]+)\*([^*\n]*?)\*\*/g, '**$1$2$3**')
+    .replace(/\*([^*\n]*?)\*\*([^*\n]+)\*\*([^*\n]*?)\*/g, '*$1$2$3*');
+}
+
+
 function inline(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   let last = 0;
@@ -66,7 +161,7 @@ function list(items: string[], ordered: boolean, key: string): ReactNode {
 
 export default function MarkdownText({text}: {text: string}) {
   const blocks: ReactNode[] = [];
-  const source = text.replace(/\r\n/g, '\n');
+  const source = normalizeEmphasis(normalizeMath(text.replace(/\r\n/g, '\n')));
   const input = source.split('\n');
   let index = 0;
 
@@ -107,6 +202,12 @@ export default function MarkdownText({text}: {text: string}) {
       continue;
     }
 
+    if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+      blocks.push(<hr key={`hr-${blocks.length}`} className="ai-rule" />);
+      index += 1;
+      continue;
+    }
+
     if (/^\s*[-*•]\s+/.test(line)) {
       const items: string[] = [];
       while (index < input.length && /^\s*[-*•]\s+/.test(input[index])) {
@@ -139,6 +240,7 @@ export default function MarkdownText({text}: {text: string}) {
         !current.trim() ||
         /^```/.test(current.trim()) ||
         /^(#{1,6})\s+/.test(current) ||
+        /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(current) ||
         /^\s*[-*•]\s+/.test(current) ||
         /^\s*\d+[.)]\s+/.test(current)
       ) {

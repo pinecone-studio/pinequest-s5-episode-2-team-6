@@ -22,8 +22,24 @@ assert.equal(reply.actions.length, 0);
 // Named groups highlight every member.
 reply = askAtlas('Show me the rotator cuff', empty);
 assert.equal(reply.actions[0].kind, 'highlight');
-assert.equal(reply.actions[0].label, 'Highlighted 4');
+assert.equal(reply.actions[0].label, '4 бүтэц тодруулсан');
 assert.ok(reply.actions[0].ids.length >= 4);
+
+// Mongolian questions still drive the model actions.
+reply = askAtlas('Мөрийг харуул', empty);
+assert.equal(reply.actions[0].kind, 'highlight');
+assert.ok(reply.actions[0].ids.length >= 4);
+reply = askAtlas('Арын харагдац руу эргүүл', empty);
+assert.equal(reply.actions[0].kind, 'view');
+assert.equal(reply.actions[0].view, 'back');
+reply = askAtlas('Сорил өг', empty);
+assert.equal(reply.actions[0].kind, 'quiz');
+reply = askAtlas('Аялал эхлүүл', empty);
+assert.equal(reply.actions[0].kind, 'tour');
+reply = askAtlas('Шошгыг нуу', empty);
+assert.deepEqual(reply.actions[0], {kind: 'labels', on: false, label: 'Шошго унтраасан'});
+reply = askAtlas('Шошго харуул', empty);
+assert.deepEqual(reply.actions[0], {kind: 'labels', on: true, label: 'Шошго асаасан'});
 
 // Views rotate the model.
 reply = askAtlas('Turn to the back view', empty);
@@ -38,9 +54,9 @@ assert.equal(reply.actions[0].kind, 'tour');
 
 // Labels can be switched on and off.
 reply = askAtlas('Show the floating labels', empty);
-assert.deepEqual(reply.actions[0], {kind: 'labels', on: true, label: 'Labels on'});
+assert.deepEqual(reply.actions[0], {kind: 'labels', on: true, label: 'Шошго асаасан'});
 reply = askAtlas('Hide the labels', empty);
-assert.deepEqual(reply.actions[0], {kind: 'labels', on: false, label: 'Labels off'});
+assert.deepEqual(reply.actions[0], {kind: 'labels', on: false, label: 'Шошго унтраасан'});
 
 // The selected structure answers function and nerve questions.
 const biceps = {name: 'short head of right biceps brachii', system: 'muscular', conceptId: 'biceps', elements: []};
@@ -51,7 +67,15 @@ assert.ok(reply.actions.some(action => action.kind === 'highlight'));
 
 reply = askAtlas('Which nerve supplies it?', {atlas, selection: biceps});
 assert.match(reply.text, /musculocutaneous/i);
-assert.ok(reply.actions.some(action => action.label === 'Show its nerve'));
+assert.ok(reply.actions.some(action => action.label === 'Мэдрэлийг харуулах'));
+
+// Mongolian function and nerve questions use the selected structure.
+reply = askAtlas('Энэ булчин юу хийдэг вэ?', {atlas, selection: biceps});
+assert.match(reply.text, /flexes the elbow/i);
+assert.match(reply.text, /musculocutaneous/i);
+reply = askAtlas('Ямар мэдрэл мэдрүүлдэг вэ?', {atlas, selection: biceps});
+assert.match(reply.text, /musculocutaneous/i);
+assert.ok(reply.actions.some(action => action.label === 'Мэдрэлийг харуулах'));
 
 // Naming another structure overrides the current selection.
 reply = askAtlas('What does the femur do?', {atlas, selection: biceps});

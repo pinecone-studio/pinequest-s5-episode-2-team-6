@@ -108,6 +108,12 @@ LLM_MODEL=llama3.1
 
 ## Rebuilding geometry
 
+The optimizer preserves source triangles and normals for arterial, venous, cardiac,
+and skeletal meshes. Run `node scripts/validate-source-preservation.mjs` to check
+this policy. Existing packaged meshes are unchanged; recovering discarded detail
+requires rebuilding from the original source meshes. Source fidelity does not
+establish clinical accuracy, valid vessel lumens, or suitability for flow simulation.
+
 The repository includes browser-ready geometry. Rebuilding it is optional: obtain the official BodyParts3D OBJ archive and English metadata tables, prepare the joined concepts and display-system mappings, run `scripts/convert-anatomy.py`, then `node scripts/optimize-anatomy.mjs` and `node scripts/compress-models.mjs`. Simplification uses a 0.2% relative error limit per structure. Afterwards run `node scripts/fix-systems.mjs` to correct display-system assignments and `node scripts/refine-bones.mjs OBJ_DIRECTORY && node scripts/compress-models.mjs` to restore full-resolution bones, then download the Z-Anatomy FBX files (`NervousSystem100`, `LymphoidOrgans100`, `VisceralSystem100`, `SkeletalSystem100`, `Joints100`) from https://github.com/LluisV/Z-Anatomy/tree/PC-Version/Resources/Models/FBX and run `node --max-old-space-size=8000 scripts/import-zanatomy.mjs FBX_DIRECTORY`.
 
 ## Deploy

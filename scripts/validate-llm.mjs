@@ -598,6 +598,33 @@ try {
   await quotaMock.close();
 }
 
+const exhaustedMock = await startMock((request, res) => {
+  res.writeHead(429, {'content-type': 'application/json'});
+  res.end(
+    JSON.stringify({
+      error: {
+        message: 'You have no credits remaining. Add credits to continue using the API.',
+        type: 'insufficient_quota',
+        code: 'credit_balance_exhausted',
+      },
+    }),
+  );
+});
+try {
+  response = await handleChatRequest(chatRequest({messages: [userTurn]}), {
+    LLM_PROVIDER: 'openai-compatible',
+    LLM_API_KEY: 'key',
+    LLM_BASE_URL: exhaustedMock.url,
+    LLM_MODEL: 'mock-model',
+    LLM_DISABLE_RATE_LIMIT: '1',
+  });
+  assert.equal(response.status, 402);
+  assert.equal((await response.json()).error.code, 'provider_quota');
+  assert.equal(response.headers.get('retry-after'), '60');
+} finally {
+  await exhaustedMock.close();
+}
+
 const missingModelMock = await startMock((request, res) => {
   res.writeHead(404, {'content-type': 'application/json'});
   res.end(JSON.stringify({error: {message: 'model not found'}}));

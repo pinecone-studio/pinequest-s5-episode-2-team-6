@@ -106,6 +106,8 @@ LLM_MODEL=llama3.1
 
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
+If OpenAI returns `insufficient_quota` / `credit_balance_exhausted`, add credits to that OpenAI project; the panel shows this as `provider_quota` instead of a generic rate-limit error.
+
 ## Rebuilding geometry
 
 The repository includes browser-ready geometry. Rebuilding it is optional: obtain the official BodyParts3D OBJ archive and English metadata tables, prepare the joined concepts and display-system mappings, run `scripts/convert-anatomy.py`, then `node scripts/optimize-anatomy.mjs` and `node scripts/compress-models.mjs`. Simplification uses a 0.2% relative error limit per structure. Afterwards run `node scripts/fix-systems.mjs` to correct display-system assignments and `node scripts/refine-bones.mjs OBJ_DIRECTORY && node scripts/compress-models.mjs` to restore full-resolution bones, then download the Z-Anatomy FBX files (`NervousSystem100`, `LymphoidOrgans100`, `VisceralSystem100`, `SkeletalSystem100`, `Joints100`) from https://github.com/LluisV/Z-Anatomy/tree/PC-Version/Resources/Models/FBX and run `node --max-old-space-size=8000 scripts/import-zanatomy.mjs FBX_DIRECTORY`.

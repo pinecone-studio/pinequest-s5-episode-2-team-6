@@ -2,6 +2,7 @@ import {useEffect,useRef,type PointerEvent} from 'react';
 import {Sparkles,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import type {AnchorChannel} from './anchor';
+import {useLang} from './locale';
 
 export interface InfoBrief {
   name: string;
@@ -43,6 +44,7 @@ function savePlace(place: {x: number; y: number}) {
 
 /** A compact card that hangs off the tapped structure in the 3D view. */
 export default function InfoCard({brief, anchor, onAsk, onHighlight, onShowNerve, onIsolate, onClose}: Props) {
+  const {t} = useLang();
   const ref = useRef<HTMLDivElement>(null);
   // Where the card was last drawn, and the user's drag offset from the anchor
   // point. A dragged card keeps that offset so it still follows the structure.
@@ -117,7 +119,7 @@ export default function InfoCard({brief, anchor, onAsk, onHighlight, onShowNerve
       className="info-card"
       ref={ref}
       role="dialog"
-      aria-label={`About ${brief.name}`}
+      aria-label={t.card.about(brief.name)}
       onPointerDown={startDrag}
       onPointerMove={moveDrag}
       onPointerUp={endDrag}
@@ -129,34 +131,34 @@ export default function InfoCard({brief, anchor, onAsk, onHighlight, onShowNerve
           {brief.latin && <span className="info-card-latin">{brief.latin}</span>}
           {brief.system && <span className="info-card-system">{brief.system}</span>}
         </div>
-        <Button variant="ghost" className="icon-button info-card-close" onClick={onClose} aria-label="Close information card">
+        <Button variant="ghost" className="icon-button info-card-close" onClick={onClose} aria-label={t.card.close}>
           <X size={15} />
         </Button>
       </div>
       {brief.function && (
         <p className="info-card-line">
-          <b>Function:</b> {brief.function}
+          <b>{t.card.function}:</b> {brief.function}
         </p>
       )}
       {brief.nerve && (
         <p className="info-card-line">
-          <b>Nerve:</b> {brief.nerve}
+          <b>{t.card.nerve}:</b> {brief.nerve}
         </p>
       )}
       <div className="info-card-actions">
         <Button variant="ghost" className="info-card-chip" onClick={onHighlight}>
-          Highlight
+          {t.card.highlight}
         </Button>
         {brief.nerve && (
           <Button variant="ghost" className="info-card-chip" onClick={onShowNerve}>
-            Show its nerve
+            {t.card.showNerve}
           </Button>
         )}
         <Button variant="ghost" className="info-card-chip" onClick={onIsolate}>
-          Isolate
+          {t.card.isolate}
         </Button>
         <Button variant="ghost" className="info-card-ask" onClick={onAsk}>
-          <Sparkles size={14} /> Ask AI about this
+          <Sparkles size={14} /> {t.card.ask}
         </Button>
       </div>
     </div>

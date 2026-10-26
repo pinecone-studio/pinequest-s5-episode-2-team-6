@@ -2,6 +2,7 @@ import {lazy,Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route} from 'react-router-dom';
 import LandingPage from '../app/landing/page';
+import {LangProvider} from '../app/locale';
 import '../app/globals.css';
 
 // The landing page ships in the entry bundle; the atlas (with ROM Lab's camera code) and the
@@ -12,6 +13,7 @@ const SignupPage=lazy(()=>import('../app/signup/page'));
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
+    <LangProvider>
     <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<LandingPage/>}/>
@@ -20,5 +22,6 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/signup" element={<SignupPage/>}/>
       </Routes>
     </Suspense>
+    </LangProvider>
   </BrowserRouter>
 );

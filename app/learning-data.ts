@@ -2,6 +2,7 @@
  *  Steps name a concept that the app looks up in the atlas when the tour runs. */
 
 import type {View} from './anatomy';
+import type {Lang} from './landing/copy';
 
 export interface TourStep {
   concept: string;
@@ -273,3 +274,93 @@ export const QUIZ: QuizQuestion[] = [
     explain: 'The subscapularis is the only rotator cuff muscle on the front of the scapula, so it is the internal rotator of the cuff.',
   },
 ];
+
+const TOUR_MN: Record<string, {title: string; summary: string; text: string[]}> = {
+  arm: {
+    title: 'Гар',
+    summary: 'Тохой, мөрийг хөдөлгөдөг булчингууд.',
+    text: [
+      'Дээд мөчний цорын ганц яс. Толгой нь мөрний үенд, доод үзүүрийн товойлт нь тохойг үүсгэнэ.',
+      'Хоёр толгойтой. Тохойг нугалж, шууг супинаци хийнэ. Урт толгой нь мөрийг урагш татна.',
+      'Гарын ар талын гурван толгой тохойг сунгана. Урт толгой нь мөрийг ч дайрна.',
+      'Шуунд radius гар, ulna тохойг үүрдэг. Шуу эргэхэд хоёр яс солбино.',
+    ],
+  },
+  'rotator cuff': {
+    title: 'Rotator cuff',
+    summary: 'Гарыг хөдөлгөх үед мөрийг төвд нь барьдаг дөрвөн булчин.',
+    text: [
+      'Scapula-ийн нурууны дээгүүр байрлаж, гарыг хажуу тийш эхний 15 градус өргөнө.',
+      'Scapula-ийн нурууны доорх хонхорыг дүүргэж, гарыг гадагш эргүүлнэ.',
+      'Triceps-ийн урт толгойн хажуугаар явж, гарыг гадагш эргүүлэхэд тусална.',
+      'Scapula-ийн урд талын цорын ганц rotator cuff булчин. Гарыг дотогш эргүүлнэ.',
+    ],
+  },
+  knee: {
+    title: 'Өвдөг',
+    summary: 'Биеийн хамгийн том үений шөрмөс, мөгөөрс, яс.',
+    text: [
+      'Гуяны яс өвдөгний ховилд эргэлддэг хоёр товойлтоор төгсөнө.',
+      'Өвдөгний товрог нь quadriceps-ийн шөрмөсөнд байрлаж, булчинг урагш хөшүүргэдэг.',
+      'Хоёр шаантаг fibrocartilage үеийг гүнзгийрүүлж, таарахгүй гадаргуу дээрх ачааллыг тараана.',
+      'Өвдөгний төвд солбисон хоёр шөрмөс. Урд талынх нь tibia-г урагш гулгахаас сэргийлнэ.',
+    ],
+  },
+  'blood-flow': {
+    title: 'Цусны урсгал',
+    summary: 'Зүрхнээс том судас хүртэл нэг дусал цусны замыг дага.',
+    text: [
+      'Дөрвөн тасалгаа. Баруун тал цусыг уушгинд, зүүн тал биеэр эргүүлнэ.',
+      'Aorta зүүн ховдолоос гарч, зүрхний дээгүүр хойш нумна.',
+      'Нум толгой, гарыг хангах судсыг салаалсны дараа aorta доош бууна.',
+      'Aorta цээж, хэвлийгээр аарцаг хүртэл доош явна.',
+    ],
+  },
+  layers: {
+    title: 'Биеийн дотор',
+    summary: 'Доод самбарын Давхарга хэрэгслээр биеийг давхаргаар нь хуул.',
+    text: [
+      'Самбарыг Давхарга руу шилжүүлж, гадаргууг хуулаад эрхтэнд хүр.',
+      'Уушги зүрхний хажууд дээд цээжийг дүүргэнэ. Дахин хуулахад тусад нь харагдана.',
+      'Элэг баруун дээд хэвлийг дүүргэнэ. Ходоод түүний зүүн талд байрлана.',
+    ],
+  },
+};
+
+const QUIZ_MN: {prompt: string; explain: string}[] = [
+  {prompt: 'Тохойг нугалж, шууг супинаци хийдэг булчин аль нь вэ?', explain: 'Biceps brachii тохойг нугалж, алгыг дээш эргүүлнэ. Musculocutaneous мэдрэлээр мэдрүүлнэ.'},
+  {prompt: 'Triceps brachii-г аль мэдрэл мэдрүүлдэг вэ?', explain: 'Triceps-ийг radial мэдрэл мэдрүүлнэ. Энэ мэдрэл шууны бүх сунгагч булчинг ч хөдөлгөнө.'},
+  {prompt: 'Амьсгал авах гол булчин аль нь вэ?', explain: 'Diaphragm агшиж хавтгайрахдаа агаарыг уушгинд татна. Phrenic мэдрэлээр мэдрүүлнэ.'},
+  {prompt: 'Rotator cuff-ийг бүрдүүлдэг дөрвөн булчин аль нь вэ?', explain: 'Supraspinatus, infraspinatus, teres minor, subscapularis. Эдгээр нь humerus-ийн толгойг үенд барина.'},
+  {prompt: 'Тохойн нугалтын үндсэн хөдөлгөгч булчин аль нь вэ?', explain: 'Brachialis нь humerus дээр шууд байрлаж, шуу ямар байрлалтай байхаас үл хамааран тохойг нугална.'},
+  {prompt: 'Өвдөгт tibia-г урагш гулгахаас сэргийлдэг шөрмөс аль нь вэ?', explain: 'Anterior cruciate ligament нь tibia-ийн урагшлах хөдөлгөөнийг хязгаарлаж, сунгасан өвдгийг түгжихэд тусална.'},
+  {prompt: 'Sternocleidomastoid-ийг аль мэдрэл мэдрүүлдэг вэ?', explain: 'Spinal accessory мэдрэл. Толгойг эсрэг тал руу эргүүлж, хүзүүг нугална.'},
+  {prompt: 'Амны хөндийн шалыг бүрдүүлдэг булчин аль нь вэ?', explain: 'Mylohyoid нь эрүүний mylohyoid шугамаас hyoid хүртэл татаж, амны хөндийн булчинлаг шалыг үүсгэнэ.'},
+  {prompt: 'Биеийн хамгийн урт яс аль нь вэ?', explain: 'Femur нь ташаанаас өвдөг хүртэл үргэлжилж, зогсох, алхах ачааллыг үүрдэг.'},
+  {prompt: 'Thenar eminence-ийн булчинг аль мэдрэл мэдрүүлдэг вэ?', explain: 'Median мэдрэлийн recurrent салбар. Энэ мэдрэл гэмтвэл эрхий хурууны эсэргүүцэл суларна.'},
+  {prompt: 'Gastrocnemius юу хийдэг вэ?', explain: 'Хөлийг доош чиглүүлж, өвдгийг дайран өнгөрдөг тул өвдгийг нугалахад тусална. Tibial мэдрэлээр мэдрүүлнэ.'},
+  {prompt: 'Мөрийг дотогш эргүүлдэг булчин аль нь вэ?', explain: 'Subscapularis нь scapula-ийн урд талын цорын ганц rotator cuff булчин тул гарыг дотогш эргүүлнэ.'},
+];
+
+export function toursFor(lang: Lang): Tour[] {
+  if (lang === 'en') return TOURS;
+  return TOURS.map(tour => {
+    const copy = TOUR_MN[tour.id];
+    if (!copy) return tour;
+    return {
+      ...tour,
+      title: copy.title,
+      summary: copy.summary,
+      steps: tour.steps.map((step, index) => ({...step, text: copy.text[index] ?? step.text})),
+    };
+  });
+}
+
+export function quizFor(lang: Lang): QuizQuestion[] {
+  if (lang === 'en') return QUIZ;
+  return QUIZ.map((question, index) => ({
+    ...question,
+    prompt: QUIZ_MN[index]?.prompt ?? question.prompt,
+    explain: QUIZ_MN[index]?.explain ?? question.explain,
+  }));
+}

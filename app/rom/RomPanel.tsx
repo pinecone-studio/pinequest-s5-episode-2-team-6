@@ -9,6 +9,8 @@ import {
   X,
 } from 'lucide-react';
 import {Button} from '@/components/ui/button';
+import {cameraError} from '../atlas-copy';
+import {useLang} from '../locale';
 import {
   computeJointActivation,
   idleJointActivation,
@@ -54,6 +56,10 @@ export default function RomPanel({
   onActivation,
   onRomFocus,
 }: Props) {
+  const {lang, t} = useLang();
+  const copy = t.romLab;
+  const langRef = useRef(lang);
+  langRef.current = lang;
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<PoseSession | null>(null);
@@ -226,7 +232,7 @@ export default function RomPanel({
         onActivation(frame);
       },
       (message) => {
-        setError(message);
+        setError(cameraError(message, langRef.current));
         setRunning(false);
         setPreviewOn(false);
         setBusy(false);
@@ -297,35 +303,38 @@ export default function RomPanel({
     (phase === 'flexion' || angle >= FLEXION_FEEDBACK_DEG[joint]);
   const loweringLive = status === 'tracking' && phase === 'extension';
 
+  const motionName = (name: string) => {
+    const key = name.toLowerCase();
+    if (key === 'flexion') return copy.flexion;
+    if (key === 'extension') return copy.extension;
+    if (key === 'abduction') return copy.abduction;
+    if (key === 'adduction') return copy.adduction;
+    return name;
+  };
+  const sideName = side === 'left' ? copy.left : copy.right;
+  const riseName = motionName(motionMeta.risingName);
+  const lowerName = motionName(motionMeta.loweringName);
+  const tip = copy.tips[motionMeta.tip] ?? motionMeta.tip;
   const statusCopy: Record<TrackStatus, string> = {
-    idle: 'Ready when you are',
-    starting: 'Starting camera…',
-    searching:
-      joint === 'shoulder'
-        ? motionMeta.tip
-        : `Show your ${side} arm`,
+    idle: copy.ready,
+    starting: copy.starting,
+    searching: joint === 'shoulder' ? tip : copy.showArm(sideName),
     tracking: loweringLive
-      ? `${motionMeta.loweringName} — ${motionMeta.antagonistLabel.split(' · ').slice(0, 2).join(' · ')}`
+      ? copy.phase(lowerName, motionMeta.antagonistLabel.split(' · ').slice(0, 2).join(' · '))
       : risingLive
-        ? `${motionMeta.risingName} — ${motionMeta.agonistLabel.split(' · ').slice(0, 2).join(' · ')}`
-        : `Tracking ${joint}${joint === 'shoulder' ? ` · ${activeMotion}` : ''}`,
-    lost:
-      joint === 'shoulder'
-        ? `Looking for your ${side} shoulder…`
-        : `Looking for your ${side} arm…`,
+        ? copy.phase(riseName, motionMeta.agonistLabel.split(' · ').slice(0, 2).join(' · '))
+        : copy.tracking(joint === 'elbow' ? copy.elbow : copy.shoulder, joint === 'shoulder' ? motionName(activeMotion) : ''),
+    lost: joint === 'shoulder' ? copy.lookingShoulder(sideName) : copy.lookingArm(sideName),
   };
 
   return (
-    <section className="rom-panel glass" aria-label="Range of motion lab">
+    <section className="rom-panel glass" aria-label={copy.panel}>
       <header className="rom-header">
         <div className="rom-title-block">
-          <p className="rom-kicker">Live movement</p>
-          <h2 className="rom-title">{info.title}</h2>
+          <p className="rom-kicker">{copy.kicker}</p>
+          <h2 className="rom-title">{joint === 'elbow' ? copy.elbowTitle : copy.shoulderTitle}</h2>
           <p className="rom-subtitle">
-            {info.anatomy}: {motionMeta.risingName.toLowerCase()} 0–{maxRom}° /
-            {motionMeta.loweringName.toLowerCase()}
-            {joint === 'shoulder' ? ` 0–${motionMeta.oppositeMax}°` : ' to 0°'} —
-            muscles in use light up on the atlas.
+            {copy.subtitle(joint, riseName, lowerName, maxRom, motionMeta.oppositeMax)}
           </p>
         </div>
         <Button
@@ -335,7 +344,7 @@ export default function RomPanel({
             stop();
             onClose();
           }}
-          aria-label="Close ROM lab"
+          aria-label={copy.close}
         >
           <X size={18} />
         </Button>
@@ -346,7 +355,7 @@ export default function RomPanel({
         {statusCopy[status]}
       </div>
 
-      <div className="rom-side-toggle" role="group" aria-label="Joint">
+      <div className="rom-side-toggle" role="group" aria-label={copy.joint}>
         {ROM_JOINTS.map((id) => (
           <Button
             key={id}
@@ -355,13 +364,13 @@ export default function RomPanel({
             className={joint === id ? 'active' : ''}
             onClick={() => setJoint(id)}
           >
-            {id === 'elbow' ? 'Elbow' : 'Shoulder'}
+            {id === 'elbow' ? copy.elbow : copy.shoulder}
           </Button>
         ))}
       </div>
 
       {joint === 'shoulder' && (
-        <div className="rom-side-toggle" role="group" aria-label="Shoulder motion">
+        <div className="rom-side-toggle" role="group" aria-label={copy.shoulderMotion}>
           {SHOULDER_MOTIONS.map((mode) => (
             <Button
               key={mode}
@@ -370,7 +379,7 @@ export default function RomPanel({
               className={shoulderMotion === mode ? 'active' : ''}
               onClick={() => setShoulderMotion(mode)}
             >
-              {mode === 'auto' ? 'Auto' : mode === 'flexion' ? 'Flexion' : 'Abduction'}
+              {mode === 'auto' ? copy.auto : mode === 'flexion' ? copy.flexion : copy.abduction}
             </Button>
           ))}
         </div>
@@ -380,27 +389,27 @@ export default function RomPanel({
         <ol className="rom-steps">
           <li>
             <em>1</em>
-            <span>Pick joint{joint === 'shoulder' ? ', motion,' : ''} and side</span>
+            <span>{copy.pick(joint === 'shoulder')}</span>
           </li>
           <li>
             <em>2</em>
-            <span>Start the camera</span>
+            <span>{copy.startStep}</span>
           </li>
           <li>
             <em>3</em>
-            <span>{motionMeta.tip}</span>
+            <span>{tip}</span>
           </li>
         </ol>
       )}
 
-      <div className="rom-side-toggle" role="group" aria-label="Arm side">
+      <div className="rom-side-toggle" role="group" aria-label={copy.side}>
         <Button
           variant="ghost"
           aria-pressed={side === 'left'}
           className={side === 'left' ? 'active' : ''}
           onClick={() => setSide('left')}
         >
-          Left
+          {copy.left}
         </Button>
         <Button
           variant="ghost"
@@ -408,7 +417,7 @@ export default function RomPanel({
           className={side === 'right' ? 'active' : ''}
           onClick={() => setSide('right')}
         >
-          Right
+          {copy.right}
         </Button>
       </div>
 
@@ -422,24 +431,22 @@ export default function RomPanel({
             <div className="rom-placeholder-icon">
               <Camera size={22} />
             </div>
-            <strong>Camera preview</strong>
+            <strong>{copy.preview}</strong>
             <span>
-              {joint === 'shoulder'
-                ? `Keep your ${side} hip, shoulder, and elbow in frame`
-                : `Stand so your ${side} elbow and wrist are visible`}
+              {joint === 'shoulder' ? copy.frameShoulder(sideName) : copy.frameElbow(sideName)}
             </span>
           </div>
         )}
         {previewOn && (
           <div className="rom-live-chip">
             <span className="rom-live-pulse" />
-            Live
+            {copy.live}
           </div>
         )}
         {risingLive && (
           <div className="rom-flex-chip" role="status">
             <Sparkles size={13} />
-            {motionMeta.risingName} · {angle.toFixed(0)}°
+            {riseName} · {angle.toFixed(0)}°
           </div>
         )}
       </div>
@@ -448,12 +455,12 @@ export default function RomPanel({
         {!running ? (
           <Button className="rom-primary" onClick={start} disabled={busy}>
             <Camera size={18} />
-            {busy ? 'Starting…' : 'Start camera'}
+            {busy ? copy.startingBtn : copy.start}
           </Button>
         ) : (
           <Button className="rom-primary rom-primary-stop" onClick={stop}>
             <CameraOff size={18} />
-            Stop
+            {copy.stop}
           </Button>
         )}
         <Button
@@ -463,7 +470,7 @@ export default function RomPanel({
           onClick={() => setTracker(resetRomTracker(tracker.current))}
         >
           <RotateCcw size={16} />
-          Reset range
+          {copy.resetRange}
         </Button>
       </div>
 
@@ -478,9 +485,7 @@ export default function RomPanel({
         <div className="rom-gauge-top">
           <div>
             <span className="rom-gauge-label">
-              {joint === 'shoulder'
-                ? `Shoulder ${motionMeta.risingName.toLowerCase()}`
-                : 'Elbow flexion'}
+              {joint === 'shoulder' ? copy.gaugeShoulder(riseName) : copy.gaugeElbow}
             </span>
             <div className="rom-gauge-value">
               {hasData ? (
@@ -522,23 +527,23 @@ export default function RomPanel({
           )}
         </div>
         <div className="rom-range-labels">
-          <span>{joint === 'shoulder' ? 'At side 0°' : 'Extended 0°'}</span>
+          <span>{joint === 'shoulder' ? copy.atSide : copy.extended}</span>
           <span>
-            {motionMeta.risingName} {maxRom}°
+            {riseName} {maxRom}°
           </span>
         </div>
 
         <div className="rom-metric-row">
           <div>
-            <span>Your range</span>
+            <span>{copy.yourRange}</span>
             <strong>{hasData ? `${romSpan.toFixed(0)}°` : '—'}</strong>
           </div>
           <div>
-            <span>Lowest</span>
+            <span>{copy.lowest}</span>
             <strong>{hasData ? `${tracker.min.toFixed(0)}°` : '—'}</strong>
           </div>
           <div>
-            <span>Highest</span>
+            <span>{copy.highest}</span>
             <strong>{hasData ? `${tracker.max.toFixed(0)}°` : '—'}</strong>
           </div>
         </div>
@@ -548,13 +553,13 @@ export default function RomPanel({
         className={`rom-muscles-card${activation ? ' is-active' : ''}${phase ? ` phase-${phase}` : ''}`}
       >
         <div className="rom-muscles-head">
-          <h3>Muscles in use</h3>
+          <h3>{copy.muscles}</h3>
           <span>
             {phase === 'flexion'
-              ? `${motionMeta.risingName} — contracting`
+              ? copy.contracting(riseName)
               : phase === 'extension'
-                ? `${motionMeta.loweringName} — contracting`
-                : 'Red swell = educational contraction'}
+                ? copy.contracting(lowerName)
+                : copy.swell}
           </span>
         </div>
 
@@ -563,7 +568,7 @@ export default function RomPanel({
         >
           <div className="rom-muscle-meta">
             <strong>
-              {motionMeta.risingName} · 0–{maxRom}°
+              {riseName} · 0–{maxRom}°
             </strong>
             <span>{motionMeta.agonistLabel}</span>
           </div>
@@ -578,8 +583,8 @@ export default function RomPanel({
         >
           <div className="rom-muscle-meta">
             <strong>
-              {motionMeta.loweringName}
-              {joint === 'shoulder' ? ` · 0–${motionMeta.oppositeMax}°` : ' · to 0°'}
+              {lowerName}
+              {joint === 'shoulder' ? ` · 0–${motionMeta.oppositeMax}°` : ` · ${copy.toZero}`}
             </strong>
             <span>{motionMeta.antagonistLabel}</span>
           </div>
@@ -591,17 +596,16 @@ export default function RomPanel({
 
         {!activation && (
           <p className="rom-muscles-idle">
-            Start the camera and move — active muscles light up on the body.
+            {copy.idle}
           </p>
         )}
       </div>
 
       <p className="rom-disclaimer">
         <CheckCircle2 size={13} />
-        Teaching demo only — not clinical measurement or real fiber mechanics. Muscle
-        swell is an educational cue. Ref: Limb Movements Muscles ROM.{' '}
-        {info.normative.label}
-        {joint === 'shoulder' ? ' *Latissimus dorsi has no discrete mesh here.' : ''}
+        {copy.disclaimer}{' '}
+        {copy.norm[joint]}
+        {joint === 'shoulder' ? copy.latNote : ''}
       </p>
     </section>
   );

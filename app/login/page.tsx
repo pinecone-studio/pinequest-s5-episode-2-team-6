@@ -35,7 +35,7 @@ export default function LoginPage(){
       <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-sm">
         <div className="mb-4 flex justify-end"><LangSwitch/></div>
         <p className="mb-2 text-xs font-medium tracking-[0.2em] text-slate-500">{t.auth.kicker}</p>
-        <h1 className="mb-1 text-3xl font-semibold text-slate-900">Human Atlas</h1>
+        <h1 className="mb-1 text-3xl font-semibold text-slate-900">Anatomn</h1>
         <p className="mb-6 text-sm text-slate-500">{t.auth.loginLead}</p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">

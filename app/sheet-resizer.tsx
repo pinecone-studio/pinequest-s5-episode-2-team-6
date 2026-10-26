@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,type KeyboardEvent,type PointerEvent} from 'react';
 import {Maximize2,Minimize2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
+import {useLang} from './locale';
 
 // What the user can change: the sheet's height and width, and its gap from the screen's right edge.
 type Size = 'height' | 'width' | 'right';
@@ -85,6 +86,7 @@ function measure(sheet: HTMLElement) {
  * button, or double-clicking a grip, puts it back.
  */
 export default function SheetResizer() {
+  const {t} = useLang();
   const grips = {bottom: useRef<HTMLDivElement>(null), left: useRef<HTMLDivElement>(null), right: useRef<HTMLDivElement>(null)};
   const drag = useRef<{edge: Edge; pointer: number; x: number; y: number; start: ReturnType<typeof measure>; moved: boolean} | null>(null);
   const [sized, setSized] = useState({height: false, width: false, right: false});
@@ -171,10 +173,10 @@ export default function SheetResizer() {
       className={`sheet-grip sheet-grip-${edge}`}
       role="separator"
       aria-orientation={edge === 'bottom' ? 'horizontal' : 'vertical'}
-      aria-label={edge === 'bottom' ? 'Resize details panel height' : `Resize details panel from the ${edge}`}
+      aria-label={t.resize[edge]}
       aria-valuemin={edge === 'bottom' ? MIN.height : MIN.width}
       tabIndex={0}
-      title="Drag to resize · double-click to reset"
+      title={t.resize.grip}
       onPointerDown={e => startDrag(e, edge)}
       onPointerMove={moveDrag}
       onPointerUp={endDrag}
@@ -190,8 +192,8 @@ export default function SheetResizer() {
         variant="ghost"
         size="icon-sm"
         className="sheet-expand"
-        aria-label={expanded ? 'Restore panel size' : 'Expand panel'}
-        title={expanded ? 'Restore size' : 'Expand'}
+        aria-label={expanded ? t.resize.restore : t.resize.expand}
+        title={expanded ? t.resize.restoreTip : t.resize.expandTip}
         onClick={toggle}
       >
         {expanded ? <Minimize2 /> : <Maximize2 />}

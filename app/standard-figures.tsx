@@ -3,6 +3,7 @@ import {ArrowUpRight,ChevronLeft,ChevronRight,Maximize2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {ANATOMY_STANDARD_LICENSE,loadStandardPage,standardImageUrl,type StandardFigure,type StandardPage} from './anatomy-standard';
+import {useLang} from './locale';
 
 /** Loads the Anatomy Standard figure index entry for a reference link; null while loading or when the page has no figures. */
 export function useStandardPage(url:string|undefined){
@@ -21,20 +22,21 @@ function Figure({figure,showOverlay}:{figure:StandardFigure,showOverlay:boolean}
 }
 
 export function StandardFigures({page,link}:{page:StandardPage,link:string}){
+ const {t}=useLang();
  const [index,setIndex]=useState(0),[overlay,setOverlay]=useState(true),[zoom,setZoom]=useState(false);
  const count=page.figures.length,figure=page.figures[Math.min(index,count-1)];
  const step=(d:number)=>setIndex(i=>(i+d+count)%count);
- const toggleLabel=figure.overlayKind==='labels'?(overlay?'Hide labels':'Show labels'):(overlay?'First view':'Second view');
+ const toggleLabel=figure.overlayKind==='labels'?(overlay?t.figures.hide:t.figures.show):(overlay?t.figures.first:t.figures.second);
  const controls=<div className="standard-figure-controls">
-  <Button variant="ghost" size="icon-sm" onClick={()=>step(-1)} disabled={count<2} aria-label="Previous figure"><ChevronLeft size={16}/></Button>
+  <Button variant="ghost" size="icon-sm" onClick={()=>step(-1)} disabled={count<2} aria-label={t.figures.prev}><ChevronLeft size={16}/></Button>
   <span className="small-number">{index+1} / {count}</span>
-  <Button variant="ghost" size="icon-sm" onClick={()=>step(1)} disabled={count<2} aria-label="Next figure"><ChevronRight size={16}/></Button>
+  <Button variant="ghost" size="icon-sm" onClick={()=>step(1)} disabled={count<2} aria-label={t.figures.next}><ChevronRight size={16}/></Button>
   <Button variant="ghost" size="sm" className="standard-figure-toggle" onClick={()=>setOverlay(v=>!v)}>{toggleLabel}</Button>
  </div>;
  const credit=<p className="standard-figure-credit">Figure © <a href={link} target="_blank" rel="noreferrer">Anatomy Standard</a>, J. Šavlovskis &amp; K. Raits · <a href={ANATOMY_STANDARD_LICENSE} target="_blank" rel="noreferrer">CC BY-NC 4.0</a></p>;
- return <section className="standard-figures" aria-label="Anatomy Standard figures">
-  <h3>Illustrations</h3>
-  <button type="button" className="standard-figure-open" onClick={()=>setZoom(true)} aria-label={`Enlarge: ${figure.alt||page.title}`}><Figure figure={figure} showOverlay={overlay}/><Maximize2 size={14} className="standard-figure-zoom"/></button>
+ return <section className="standard-figures" aria-label={t.figures.section}>
+  <h3>{t.figures.title}</h3>
+  <button type="button" className="standard-figure-open" onClick={()=>setZoom(true)} aria-label={t.figures.enlarge(figure.alt||page.title)}><Figure figure={figure} showOverlay={overlay}/><Maximize2 size={14} className="standard-figure-zoom"/></button>
   {controls}
   {figure.caption&&<p className="standard-figure-caption">{figure.caption}</p>}
   {credit}

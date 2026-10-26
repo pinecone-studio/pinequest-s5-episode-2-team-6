@@ -18,14 +18,16 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 
 ## Run locally
 
-Requires Node.js 22.13 or newer. No API keys or accounts are needed.
+Requires Node.js 22.13 or newer. The 3D atlas needs no account. The Ask AI panel needs an LLM key: copy `.env.example` to `.env.local` and set `GEMINI_API_KEY` (or one of the other providers described below) before starting the dev server.
 
 ```sh
 npm ci
+cp .env.example .env.local
+# edit .env.local and add your key
 npm run dev
 ```
 
-Open http://localhost:3016. To build the static site, run `npm run build`; the output is in `dist/`.
+Open http://localhost:3016. The Vite dev server serves `/api/chat` from `server/chat.ts`, so the assistant works locally without a separate backend. To build the static site, run `npm run build`; the output is in `dist/`.
 
 ## Validate
 
@@ -34,6 +36,7 @@ npm run check
 node scripts/validate-atlas.mjs
 node scripts/validate-interactions.mjs
 node scripts/validate-assistant.mjs
+node scripts/validate-llm.mjs
 npm run build
 ```
 
@@ -51,7 +54,7 @@ This is an educational explorer, not a diagnostic or surgical tool.
 
 Geometry is merged into batches. Per-structure GPU textures control translation, visibility, and selection, while component geometry supports accurate picking. Exploded layouts pack only the visible pieces. Rendering updates when the scene changes; orbit controls remain responsive without thousands of separate draw calls.
 
-The optional WebMCP tools expose anatomy search and inspection in compatible browsers. The visible interface works without them.
+The optional WebMCP tools expose anatomy search and inspection in compatible browsers. The visible interface works without them. The Ask AI panel talks to the server-side LLM bridge in `server/chat.ts`; provider keys stay on the server.
 
 ## Usage counter
 
@@ -71,7 +74,37 @@ The landing page and the atlas are built for phones, tablets and desktops. The l
 
 ## The assistant, tours and quiz
 
-The site is static and needs no API key, so "Ask AI" is answered locally by a deterministic engine that reads the same reference notes the interface shows: the structure and bone atlases, the innervation notes, and the system list. It can explain the selected structure, name the nerve that supplies it, highlight a named group such as the rotator cuff, rotate the model, switch the floating labels, or hand over to a tour or the quiz. Every reply is grounded in this atlas and lists the actions it performed.
+"Ask AI" is an LLM chat backed by a small server-side endpoint, `api/chat.ts`, with the shared implementation in `server/chat.ts`. It accepts free-form questions, streams the answer into the panel, and answers in Mongolian while keeping anatomical, medical and Latin terminology in its original form. The selected structure and the matching atlas notes are sent as context, so answers stay grounded in the same reference data the detail panel shows.
+
+The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens tours or the quiz. Those actions are shown as chips under the answer.
+
+### LLM providers
+
+Set one provider in `.env.local` for development and in the Vercel project's Environment Variables for deployment. Keys are read only on the server and are never sent to the browser.
+
+```sh
+# Gemini (default when GEMINI_API_KEY is set)
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-3.6-flash
+
+# OpenAI
+LLM_PROVIDER=openai
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1-mini
+
+# OpenRouter
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=...
+OPENROUTER_MODEL=google/gemini-3.6-flash
+
+# Any OpenAI-compatible server, such as Ollama or vLLM
+LLM_PROVIDER=openai-compatible
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_API_KEY=ollama
+LLM_MODEL=llama3.1
+```
+
+`LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
 ## Rebuilding geometry
 
@@ -79,7 +112,9 @@ The repository includes browser-ready geometry. Rebuilding it is optional: obtai
 
 ## Deploy
 
-Import this repository into Vercel as a Vite project. The included `vercel.json` configures `npm ci`, `npm run build`, and the `dist` output directory. It can also be served by a static host.
+Import this repository into Vercel as a Vite project. The included `vercel.json` configures `npm ci`, `npm run build`, the `dist` output directory, and the `/api/chat` function. Add the LLM environment variable (`GEMINI_API_KEY`, or `LLM_PROVIDER` plus the matching key) in the Vercel project settings before deploying. The `vercel.json` rewrite excludes `/api`, so the chat function is not swallowed by the single-page-app fallback.
+
+A static host can still serve the atlas, but the LLM chat needs a runtime that executes `api/chat.ts`. On other Node hosts, expose the shared `handleChatRequest` handler from `server/chat.ts` at `/api/chat`.
 
 ## License
 

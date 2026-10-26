@@ -4,7 +4,8 @@ import {ArrowDown,ArrowUpRight,BookOpen,Box,Cpu,Database,Layers,PersonStanding} 
 import {figureData} from './figure-data';
 import ParticleLogo from './particles';
 import {useLandingMotion} from './motion';
-import {COPY,LANGS,loadLang,saveLang} from './copy';
+import {COPY,LANGS} from './copy';
+import {useLang} from '../locale';
 import {startTimer,trackDepth,trackEngaged,trackVisit,useUsage} from '../usage';
 import './landing.css';
 
@@ -28,7 +29,7 @@ const STACK=[
 
 export default function LandingPage(){
   const root=useRef<HTMLDivElement>(null);
-  const [lang,setLang]=useState(loadLang);
+  const {lang,setLang}=useLang();
   const [figureReady,setFigureReady]=useState(false);
   const t=COPY[lang];
   const {usage,totals}=useUsage();
@@ -36,7 +37,6 @@ export default function LandingPage(){
   // Any call to action counts as the visitor using the page.
   const engage=()=>trackEngaged();
   useLandingMotion(root,lang);
-  useEffect(()=>{saveLang(lang);document.documentElement.lang=lang;},[lang]);
   useEffect(()=>{figureData().catch(()=>{});},[]);
   // Count the visit, bank the time on the page and follow how far the visitor scrolls.
   useEffect(()=>{trackVisit();return startTimer();},[]);

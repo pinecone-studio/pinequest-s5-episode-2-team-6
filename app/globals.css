@@ -324,3 +324,27 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
 .slice-axis button.active{background:#263b48;color:#fff}
 @media(max-width:767px){.dock-tabs button{height:34px;min-height:34px;font-size:12px}.slice-axis button{height:34px;min-height:34px;font-size:11.5px}}
 @media(prefers-reduced-motion:reduce){.ai-panel,.learning-panel{animation:none}}
+
+/* Detail sheet: fits its content until expanded or resized by its edge grips (desktop and tablet). */
+.sheet-grip,.sheet-expand{display:none!important}
+@media(min-width:768px) and (min-height:601px){
+ .detail-sheet{bottom:auto!important;height:var(--detail-height,auto)!important;max-height:calc(100dvh - 283px)}
+ .detail-sheet[data-height]{max-height:calc(100dvh - 161px)}
+ .detail-sheet[data-width]{width:var(--detail-width)!important;max-width:calc(100vw - var(--detail-right,80px) - 24px)!important}
+ .detail-sheet[data-right]{right:var(--detail-right)!important}
+ .detail-sheet .eyebrow{padding-right:48px}
+ .sheet-expand{display:inline-flex!important;position:absolute;top:10px;right:48px;min-width:36px;min-height:36px;color:#5f6f7c}
+ .sheet-grip{display:flex!important;position:absolute;align-items:center;justify-content:center;touch-action:none}
+ .sheet-grip::before{content:'';border-radius:3px;background:#18253638;transition:background .15s,width .15s,height .15s}
+ .sheet-grip-bottom{left:16px;right:16px;bottom:0;height:22px;cursor:ns-resize}
+ .sheet-grip-bottom::before{width:44px;height:5px}
+ .sheet-grip-left,.sheet-grip-right{top:52px;bottom:22px;width:16px;cursor:ew-resize}
+ .sheet-grip-left{left:0}.sheet-grip-right{right:0}
+ .sheet-grip-left::before,.sheet-grip-right::before{width:5px;height:44px}
+ .sheet-grip:hover::before,.sheet-grip:focus-visible::before{background:#263b4888}
+ .sheet-grip-bottom:hover::before,.detail-sheet[data-resizing=bottom] .sheet-grip-bottom::before{width:56px;background:#263b4888}
+ .sheet-grip-left:hover::before,.detail-sheet[data-resizing=left] .sheet-grip-left::before,.sheet-grip-right:hover::before,.detail-sheet[data-resizing=right] .sheet-grip-right::before{height:56px;background:#263b4888}
+ .sheet-grip:focus-visible{outline:none}.sheet-grip:focus-visible::before{background:#263b48}
+ .detail-sheet[data-resizing]{user-select:none;-webkit-user-select:none}
+ .detail-sheet[data-resizing=bottom]{cursor:ns-resize}.detail-sheet[data-resizing=left],.detail-sheet[data-resizing=right]{cursor:ew-resize}
+}

@@ -64,7 +64,7 @@ export default function LandingPage(){
       <Suspense fallback={null}><Figure scroller={root} onReady={()=>setFigureReady(true)}/></Suspense>
 
       <header className="lp-header">
-        <Link to="/" className="lp-logo"><span className="lp-mark" aria-hidden/>Human Atlas</Link>
+        <Link to="/" className="lp-logo"><span className="lp-mark" aria-hidden/>Anatomn</Link>
         <div className="lp-index" aria-hidden><span data-letter>( A )</span><span data-counter>[ 001 / 005 ]</span></div>
         <nav className="lp-actions" aria-label={t.nav.account}>
           <div className="lp-lang" role="group" aria-label={t.nav.language}>
@@ -148,7 +148,7 @@ export default function LandingPage(){
         </section>
 
         <section className="lp-finale" data-pose="finale" data-index>
-          <ParticleLogo text="Human Atlas"/>
+          <ParticleLogo text="Anatomn"/>
           <h2 className="lp-finale-title lp-echo">{t.finale.title[0]}<br/>{t.finale.title[1]}</h2>
           <p className="lp-finale-note">{t.finale.note} <a href="/ATTRIBUTION.md">{t.finale.credits}</a></p>
           <p className="lp-finale-tag">{t.finale.tag}<b>{t.finale.tagStrong}</b></p>
@@ -156,7 +156,7 @@ export default function LandingPage(){
       </main>
 
       <footer className="lp-footer">
-        <span>Human Atlas © {new Date().getFullYear()}</span>
+        <span>Anatomn © {new Date().getFullYear()}</span>
         <nav aria-label={t.footer.label}>
           <Link to="/atlas" onClick={engage}>{t.footer.atlas}</Link>
           <Link to="/signup">{t.footer.signup}</Link>

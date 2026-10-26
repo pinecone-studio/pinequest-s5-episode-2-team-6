@@ -10,6 +10,7 @@ import {SYSTEMS,type Atlas,type SceneState,type SystemId} from './anatomy';
 import {isDark,mixColor,type Appearance} from './appearance';
 import {LANDMARKS} from './landmarks';
 import {peeledSystems} from './layers';
+import {perfusionTint} from './plaque-model';
 import type {AnchorChannel} from './anchor';
 interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
 export default function AnatomyScene({atlas,state,appearance,activations,anchor,onSelect,onProgress,onError}:Props){
@@ -78,13 +79,14 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
     // Muscular system gets a stronger educational contraction; others only tint.
     const contractScale=system==='muscular'?1:0.15;
     shader.uniforms.uContractScale={value:contractScale};
-    shader.vertexShader='attribute float partIndex; uniform sampler2D partState; uniform sampler2D selectionState; uniform sampler2D activationState; uniform sampler2D partCenter; uniform float stateWidth; uniform float uTime; uniform float uContractScale; varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.vertexShader;
+    shader.vertexShader='attribute float partIndex; uniform sampler2D partState; uniform sampler2D selectionState; uniform sampler2D activationState; uniform sampler2D partCenter; uniform float stateWidth; uniform float uTime; uniform float uContractScale; varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.vertexShader;
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
 vec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5);
 vec4 state = texture2D(partState, stateUv);
 partVisible = state.w;
 partSelected = texture2D(selectionState, stateUv).r;
 partActivated = texture2D(activationState, stateUv).r;
+partTint = texture2D(selectionState, stateUv).gba;
 vec3 partOrigin = texture2D(partCenter, stateUv).xyz;
 vec3 delta = transformed - partOrigin;
 float act = partActivated * uContractScale;
@@ -94,13 +96,14 @@ float shorten = act * 0.055;
 // Belly swell (radial) + slight shortening along body-up for a contraction cue.
 transformed = partOrigin + vec3(delta.x * (1.0 + bulge), delta.y * (1.0 - shorten), delta.z * (1.0 + bulge));
 transformed += state.xyz;`);
-    shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated;\n'+shader.fragmentShader;
+    shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);
 float heat = partActivated;
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.2, 0.14), heat * 0.88);
-diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;`);
+diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;
+diffuseColor.rgb = mix(diffuseColor.rgb, partTint, step(0.001, dot(partTint, partTint)));`);
     shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
 roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    };materials.push(m);return m;
@@ -160,7 +163,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
   };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
-   const changed=lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate||lastState?.peel!==s.peel;
+   const changed=lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate||lastState?.peel!==s.peel||lastState?.perfusion!==s.perfusion;
    const moving=Math.abs(amount-s.explode)>.0001;
    if(moving){amount=T.MathUtils.damp(amount,s.explode,8,dt);dirty=true;}
    const slice=s.slice??{on:false,depth:0,axis:'x'};
@@ -198,6 +201,8 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
      if(amount<=.45){const t=amount/.45;const group=SYSTEMS.findIndex(sys=>sys.id===p.system);const angle=group/SYSTEMS.length*Math.PI*2;dx=Math.sin(angle)*t*.48;dy=(c.y-.85)*t*.28;dz=Math.cos(angle)*t*.48;}
      else {const t=(amount-.45)/.55,group=SYSTEMS.findIndex(sys=>sys.id===p.system),angle=group/SYSTEMS.length*Math.PI*2;dx=T.MathUtils.lerp(Math.sin(angle)*.48,destination.x-c.x,t);dy=T.MathUtils.lerp((c.y-.85)*.28,destination.y-c.y,t);dz=T.MathUtils.lerp(Math.cos(angle)*.48,-c.z,t);}
      const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected?255:0;
+     // Unused selection channels carry a transient linear RGB tint for one kidney.
+     selectedData.set(perfusionTint(s.perfusion,p.id),i*4+1);
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
@@ -207,7 +212,10 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    const isolateKey=s.isolate?s.selected.join(',')+':'+s.reset+':'+s.inspectorOpen+':'+camera.aspect:'';
    if(isolateKey!==lastIsolate||(s.isolate&&moving)){
     if(s.isolate){const box=new T.Box3();atlas.parts.forEach((p,i)=>{if(s.selected.includes(p.id))box.union(bounds[i].clone().translate(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])));});
-     if(!box.isEmpty()){const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());const w=el.clientWidth,h=el.clientHeight,mobile=w<768,landscape=w>h&&h<=600;let left=20,right=w-20,top=mobile?175:110,bottom=h-170;if(s.inspectorOpen){if(landscape){right=w-335;top=100;bottom=h-125;}else if(mobile){const sheet=document.querySelector('.detail-sheet')?.getBoundingClientRect(),header=document.querySelector('.identity')?.getBoundingClientRect();top=(header?.bottom??94)+16;bottom=(sheet?.top??h*.58-139)-16;}else{right=w-370;left=w>1100?285:25;}}const availableWidth=Math.max(150,right-left),availableHeight=Math.max(40,bottom-top);camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);const distance=Math.max(.07,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.35);controls.maxDistance=Math.max(40,distance*2);controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.2,.1,1).normalize().multiplyScalar(distance));controls.update();dirty=true;}
+     if(!box.isEmpty()){const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());const w=el.clientWidth,h=el.clientHeight,mobile=w<768,landscape=w>h&&h<=600;let left=20,right=w-20,top=mobile?175:110,bottom=h-170;if(s.inspectorOpen){if(landscape){right=w-335;top=100;bottom=h-125;}else if(mobile){const sheet=document.querySelector('.detail-sheet')?.getBoundingClientRect(),header=document.querySelector('.identity')?.getBoundingClientRect();top=(header?.bottom??94)+16;bottom=(sheet?.top??h*.58-139)-16;}else{right=w-370;left=w>1100?285:25;}}
+      const panel=s.perfusion?document.querySelector('.plaque-panel')?.getBoundingClientRect():null;
+      if(panel){left=20;top=100;bottom=h-40;right=w-20;if(mobile&&!landscape)bottom=panel.top-12;else right=panel.left-12;}
+      const availableWidth=Math.max(150,right-left),availableHeight=Math.max(40,bottom-top);camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);const distance=Math.max(.07,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.35);controls.maxDistance=Math.max(40,distance*2);controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.2,.1,1).normalize().multiplyScalar(distance));controls.update();dirty=true;}
     }else if(lastIsolate){camera.clearViewOffset();fit(s.view,amount);}
     lastIsolate=isolateKey;
    }

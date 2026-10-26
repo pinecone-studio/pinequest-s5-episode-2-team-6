@@ -16,6 +16,7 @@ import {mergeTerms} from './anatomy-standard';
 import {StandardFigures,useStandardPage} from './standard-figures';
 import RomPanel from './rom/RomPanel';
 import PlaquePanel from './plaque-panel';
+import type {RenalPreview} from './plaque-model';
 import AiPanel from './ai-panel';
 import InfoCard from './info-card';
 import SheetResizer from './sheet-resizer';
@@ -35,6 +36,8 @@ const ROM_VISIBLE:SystemId[]=['skeletal','muscular'];
 const SEARCH_SUGGESTIONS=['heart','brain','liver','stomach','spleen','pancreas','urinary bladder','trachea',...BONE_SEARCH_SUGGESTIONS,'digastric','mylohyoid','tooth','molar tooth','canine tooth'];
 export default function Home(){
  const {lang,t}=useLang();
+ const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
+ const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(null);setCardDismissed(true);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
  const bgName=(color:string,fallback:string)=>t.backgrounds[color]??fallback;
  const peelLabel=(peel:number)=>peel<=0?t.fullBody:t.layers[LAYERS[Math.min(Math.max(0,peel),LAYERS.length-1)].id];
@@ -43,7 +46,7 @@ export default function Home(){
  const [atlas,setAtlas]=useState<Atlas|null>(null),[state,setState]=useState(initial),[progress,setProgress]=useState(0),[error,setError]=useState(''),[panel,setPanel]=useState<'layers'|'search'|'colors'|null>(null),[details,setDetails]=useState(false),[about,setAbout]=useState(false),[query,setQuery]=useState(''),[chosen,setChosen]=useState<Concept|null>(null),[romOpen,setRomOpen]=useState(false),[activations,setActivations]=useState<Record<string,number>>({});
  const [chatOpen,setChatOpen]=useState(false),[dock,setDock]=useState<'explode'|'layers'|'slice'>('explode'),[learning,setLearning]=useState<'tour'|'quiz'|null>(null),[cardDismissed,setCardDismissed]=useState(false);
  useEffect(()=>{const abort=new AbortController();setProgress(0);setError('');setAtlas(null);setChosen(null);setDetails(false);setState({...initial,visible:DEFAULT_VISIBLE});fetch('/models/atlas.json',{signal:abort.signal}).then(r=>{if(!r.ok)throw new Error('The anatomy catalogue could not be loaded.');return r.json();}).then(data=>setAtlas(data as Atlas)).catch(e=>{if(e.name!=='AbortError')setError(e.message);});return()=>abort.abort();},[]);
- useEffect(()=>{const key=(e:KeyboardEvent)=>{const typing=e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement;if(typing||e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='/'){e.preventDefault();setPanel('search');setDetails(false);}else if(e.key==='a'||e.key==='A'){e.preventDefault();setPanel(null);setDetails(false);setChatOpen(open=>!open);}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[]);
+ useEffect(()=>{const key=(e:KeyboardEvent)=>{const typing=e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement;if(typing||e.metaKey||e.ctrlKey||e.altKey||document.getElementById('plaque-lab'))return;if(e.key==='/'){e.preventDefault();setPanel('search');setDetails(false);}else if(e.key==='a'||e.key==='A'){e.preventDefault();setPanel(null);setDetails(false);setChatOpen(open=>!open);}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[]);
  const [appearance,setAppearance]=useState(loadAppearance);
  useEffect(()=>{saveAppearance(appearance);document.querySelector('meta[name=theme-color]')?.setAttribute('content',appearance.background);},[appearance]);
  // Opening the atlas and inspecting a structure are the two things worth counting.
@@ -150,10 +153,10 @@ export default function Home(){
  const isolateSelection=()=>setState(s=>({...s,isolate:true,explode:0}));
  const setView=(view:View)=>setState(s=>({...s,view,reset:s.reset+1,rotate:false}));
  const caption=romOpen?t.captionRom:sliceState.on?t.captionSlice:state.isolate?(chosen?.name??t.captionSelected):(state.peel??0)>0?t.captionPeeled(peelLabel(state.peel??0),state.peel??0):state.explode>.95?t.captionInventory:state.explode>.05?t.captionSeparated:t.captionAdult;
- return <main className={`studio ${isDark(appearance.background)?'on-dark':''} ${chatOpen?'chat-open':''}`}>
-  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} onSelect={choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
+ return <main className={`studio ${perfusion?'plaque-open':''} ${isDark(appearance.background)?'on-dark':''} ${chatOpen?'chat-open':''}`}>
+  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:perfusion.ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} onSelect={perfusion?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
-  <PlaquePanel atlas={atlas} onFocus={ids=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(null);setChosen(null);setState(s=>({...s,selected:ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,reset:s.reset+1}));}}/>
+  <PlaquePanel atlas={atlas} onPreview={previewPlaque}/>
   <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1>Human Atlas<Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><LangSwitch/><Button variant="ghost" className={learning==='tour'?'active':''} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button></div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={panel==='search'?'active':''} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>

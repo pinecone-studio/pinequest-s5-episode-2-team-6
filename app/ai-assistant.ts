@@ -9,6 +9,7 @@ import {SYSTEMS,explanation,type Atlas,type Concept,type SystemId,type View} fro
 import {resolveBoneAtlas} from './bone-atlas';
 import {resolveStructureAtlas} from './structure-atlas';
 import {resolveStructureFact,type StructureFact} from './structure-facts';
+import type {Lang} from './landing/copy';
 
 export interface AssistantSelection {
   name: string;
@@ -36,15 +37,17 @@ export interface AssistantReply {
 }
 
 /** Named groups that a question can point at instead of a single concept. */
-export const TOPIC_GROUPS: {id: string; label: string; members: string[]}[] = [
+export const TOPIC_GROUPS: {id: string; label: string; aliases?: string[]; members: string[]}[] = [
   {
     id: 'rotator cuff',
     label: 'rotator cuff',
+    aliases: ['эргүүлэгч', 'мөрний булчин'],
     members: ['supraspinatus', 'infraspinatus', 'teres minor', 'subscapularis'],
   },
   {
     id: 'blood flow',
     label: 'blood flow',
+    aliases: ['цусны урсгал'],
     members: ['heart', 'ascending aorta', 'arch of aorta', 'descending aorta', 'pulmonary artery', 'pulmonary vein', 'superior vena cava', 'inferior vena cava'],
   },
   {
@@ -218,8 +221,10 @@ export function findConcepts(atlas: Atlas, query: string, limit = 6): Concept[] 
 /** Members of a named topic group that exist in the atlas. */
 export function findGroup(atlas: Atlas, query: string): {label: string; members: Concept[]} | null {
   const cleaned = normalize(query);
+  const spoken = query.toLowerCase();
   for (const group of TOPIC_GROUPS) {
-    if (!cleaned.includes(group.id)) continue;
+    const named = cleaned.includes(group.id) || group.aliases?.some(alias => spoken.includes(alias));
+    if (!named) continue;
     const members = group.members
       .map(name => atlas.concepts.find(concept => normalize(concept.name) === name))
       .filter((concept): concept is Concept => !!concept);
@@ -275,10 +280,11 @@ export function nervePieces(atlas: Atlas, nerve: string): string[] {
 
 function viewIntent(question: string): View | null {
   const text = normalize(question);
-  if (/\b(back|behind|rear|posterior)\b/.test(text)) return 'back';
-  if (/\b(side|lateral|profile)\b/.test(text)) return 'side';
-  if (/\b(front|anterior)\b/.test(text)) return 'front';
-  if (/\b(three[- ]quarter|3\/4|angle|diagonal)\b/.test(text)) return 'three-quarter';
+  const spoken = question.toLowerCase();
+  if (/\b(back|behind|rear|posterior)\b/.test(text) || spoken.includes('ар тал')) return 'back';
+  if (/\b(side|lateral|profile)\b/.test(text) || spoken.includes('хажуу')) return 'side';
+  if (/\b(front|anterior)\b/.test(text) || /урд тал|урдаас/.test(spoken)) return 'front';
+  if (/\b(three[- ]quarter|3\/4|angle|diagonal)\b/.test(text) || spoken.includes('гурван улирал')) return 'three-quarter';
   return null;
 }
 
@@ -294,68 +300,75 @@ function wantsLabelsOff(question: string): boolean {
 }
 
 function asksForQuiz(question: string): boolean {
-  return /\b(quiz|test me|question me|practice)\b/.test(normalize(question));
+  return /\b(quiz|test me|question me|practice)\b/.test(normalize(question)) || /сорил|шалгалт/.test(question.toLowerCase());
 }
 
 function asksForTour(question: string): string | null {
   const text = normalize(question);
-  if (!/\b(tour|guided|walk me through|show me around)\b/.test(text)) return null;
+  if (!/\b(tour|guided|walk me through|show me around)\b/.test(text) && !/аялал/.test(question.toLowerCase())) return null;
   const match = TOPIC_GROUPS.find(group => text.includes(group.id));
   return match?.id ?? 'skeleton';
 }
 
 /** Answer one question against the atlas and return the actions it implies. */
-export function askAtlas(question: string, ctx: AssistantContext): AssistantReply {
+export function askAtlas(question: string, ctx: AssistantContext, lang: Lang = 'en'): AssistantReply {
+  const say = (en: string, mn: string) => (lang === 'mn' ? mn : en);
   const trimmed = question.trim();
   if (!trimmed) {
-    return {text: 'Ask about any structure in the body — for example “what does this muscle do?” or “show me the rotator cuff”.', actions: []};
+    return {text: say('Ask about any structure in the body — for example “what does this muscle do?” or “show me the rotator cuff”.', 'Биеийн дурын бүтцийн талаар асуу. Жишээ нь «энэ булчин юу хийдэг вэ?», «мөрний эргүүлэгч булчинг харуул».'), actions: []};
   }
   const {atlas, selection} = ctx;
   const text = normalize(trimmed);
+  const spoken = trimmed.toLowerCase();
+  const wantsShow = /\b(show|highlight|find|point|where)\b/.test(text) || /харуул|тодруул|хаана/.test(spoken);
+  const aboutThis = /\b(this|it|selected|that one)\b/.test(text) || /энэ|үүнийг|сонгосон/.test(spoken);
+  const highlighted = (name: string) => say(`Highlighted ${name}`, `Тодруулсан ${name}`);
+  const showNerve = say('Show its nerve', 'Мэдрэлийг нь харуул');
 
   if (asksForQuiz(trimmed)) {
     return {
-      text: 'Starting a quiz. I will ask about functions, nerves and landmarks, and you pick the answer. Open the quiz from the header any time to continue.',
-      actions: [{kind: 'quiz', label: 'Quiz me'}],
+      text: say('Starting a quiz. I will ask about functions, nerves and landmarks, and you pick the answer. Open the quiz from the header any time to continue.', 'Сорил эхэллээ. Үйлдэл, мэдрэл, тэмдэглэгээний талаар асууна. Толгой хэсгээс сорилоо үргэлжлүүлж болно.'),
+      actions: [{kind: 'quiz', label: say('Quiz me', 'Сорил')}],
     };
   }
 
   const tour = asksForTour(trimmed);
   if (tour) {
     return {
-      text: `Starting a guided tour. Each stop highlights one structure and explains it; use Next to continue.`,
-      actions: [{kind: 'tour', tour, label: 'Guided tour'}],
+      text: say('Starting a guided tour. Each stop highlights one structure and explains it; use Next to continue.', 'Удирдамжтай аялал эхэллээ. Зогсоол бүр нэг бүтцийг тодруулж тайлбарлана. Цааш товчоор үргэлжлүүлнэ.'),
+      actions: [{kind: 'tour', tour, label: say('Guided tour', 'Удирдамжтай аялал')}],
     };
   }
 
   if (wantsLabelsOff(trimmed)) {
-    return {text: 'Hiding the floating labels.', actions: [{kind: 'labels', on: false, label: 'Labels off'}]};
+    return {text: say('Hiding the floating labels.', 'Хөвөгч шошгыг нууж байна.'), actions: [{kind: 'labels', on: false, label: say('Labels off', 'Шошго унтарсан')}]};
   }
   if (asksAboutLabels(trimmed)) {
-    return {text: 'Floating labels are on. Each landmark carries its own name in the model.', actions: [{kind: 'labels', on: true, label: 'Labels on'}]};
+    return {text: say('Floating labels are on. Each landmark carries its own name in the model.', 'Хөвөгч шошго ассан. Тэмдэглэгээ бүр загвар дээр өөрийн нэртэй.'), actions: [{kind: 'labels', on: true, label: say('Labels on', 'Шошго ассан')}]};
   }
 
   const view = viewIntent(trimmed);
   if (view) {
-    const label = view === 'three-quarter' ? 'View: three-quarter' : `View: ${view}`;
+    const viewName = view === 'three-quarter' ? say('three-quarter', 'гурван улирал') : say(view, view === 'front' ? 'урд' : view === 'back' ? 'ард' : 'хажуу');
     return {
-      text: `Turning the body to the ${view === 'three-quarter' ? 'three-quarter' : view} view.`,
-      actions: [{kind: 'view', view, label}],
+      text: say(`Turning the body to the ${view === 'three-quarter' ? 'three-quarter' : view} view.`, `Биеийг ${viewName} харагдац руу эргүүлж байна.`),
+      actions: [{kind: 'view', view, label: say(view === 'three-quarter' ? 'View: three-quarter' : `View: ${view}`, `Харагдац: ${viewName}`)}],
     };
   }
 
   const group = findGroup(atlas, trimmed);
-  if (group && /\b(show|highlight|find|point|where)\b/.test(text)) {
+  if (group && wantsShow) {
     const ids = group.members.flatMap(concept => concept.elements);
+    const names = group.members.map(concept => concept.name).join(', ');
     return {
-      text: `Highlighting the ${group.label}: ${group.members.map(concept => concept.name).join(', ')}.`,
-      actions: [{kind: 'highlight', ids, label: `Highlighted ${group.members.length}`}],
+      text: say(`Highlighting the ${group.label}: ${names}.`, `${group.label}-г тодрууллаа: ${names}.`),
+      actions: [{kind: 'highlight', ids, label: highlighted(String(group.members.length))}],
     };
   }
 
-  if (!selection && /\b(this|it|selected|that one)\b/.test(text)) {
+  if (!selection && aboutThis) {
     return {
-      text: 'Tap a structure in the model first and ask again, or name one directly — “the rotator cuff”, “the femur”, “the heart”.',
+      text: say('Tap a structure in the model first and ask again, or name one directly — “the rotator cuff”, “the femur”, “the heart”.', 'Эхлээд загвар дээрх бүтцийг товшиж дахин асуу, эсвэл нэрийг нь шууд хэл. Жишээ нь rotator cuff, femur, heart.'),
       actions: [],
     };
   }
@@ -366,42 +379,43 @@ export function askAtlas(question: string, ctx: AssistantContext): AssistantRepl
 
   if (selection) {
     const brief = describeStructure(atlas, selection.name);
-    const asksNerve = /\b(nerve|innervat|supply|innervation)\b/.test(text);
-    const asksFunction = /\b(function|do|does|work|action|move|moves|purpose|mean|means)\b/.test(text);
+    const asksNerve = /\b(nerve|innervat|supply|innervation)\b/.test(text) || /мэдрэл/.test(spoken);
+    const asksFunction = /\b(function|do|does|work|action|move|moves|purpose|mean|means)\b/.test(text) || /юу хий|үүрэг|үйлдэл/.test(spoken);
 
-    if (asksNerve || asksFunction || /\b(this|it|selected)\b/.test(text)) {
-      // A question that names another structure answers about that structure.
+    if (asksNerve || asksFunction || aboutThis) {
       const target = asked && !sameAsSelection ? asked : null;
       const targetBrief = target ? describeStructure(atlas, target.name) : brief;
       const targetIds = target ? target.elements : selection.elements;
       const actions: AssistantAction[] = [];
-      if (targetIds.length) actions.push({kind: 'highlight', ids: targetIds, label: `Highlighted ${targetBrief.name}`});
+      if (targetIds.length) actions.push({kind: 'highlight', ids: targetIds, label: highlighted(targetBrief.name)});
 
       if (asksNerve) {
         if (!targetBrief.nerve) {
           return {
-            text: `The atlas does not list a named nerve for ${targetBrief.name}. Its reference notes cover the structure's role instead.`,
+            text: say(`The atlas does not list a named nerve for ${targetBrief.name}. Its reference notes cover the structure's role instead.`, `${targetBrief.name}-д нэрлэсэн мэдрэл бүртгэлгүй. Лавлагаа нь бүтцийн үүргийг тайлбарлана.`),
             actions,
           };
         }
         const ids = nervePieces(atlas, targetBrief.nerve);
-        if (ids.length) actions.push({kind: 'highlight', ids, label: 'Show its nerve', select: false});
+        if (ids.length) actions.push({kind: 'highlight', ids, label: showNerve, select: false});
         return {
-          text: `${targetBrief.name} is innervated by the ${targetBrief.nerve}.${ids.length ? ' Those nerve pieces are highlighted in the model.' : ''}`,
+          text: say(
+            `${targetBrief.name} is innervated by the ${targetBrief.nerve}.${ids.length ? ' Those nerve pieces are highlighted in the model.' : ''}`,
+            `${targetBrief.name}-ийг ${targetBrief.nerve} мэдрүүлнэ.${ids.length ? ' Тэр мэдрэлийн хэсгүүдийг загвар дээр тодрууллаа.' : ''}`,
+          ),
           actions,
         };
       }
 
       if (targetBrief.nerve) {
         const nerveIds = nervePieces(atlas, targetBrief.nerve);
-        if (nerveIds.length) actions.push({kind: 'highlight', ids: nerveIds, label: 'Show its nerve', select: false});
+        if (nerveIds.length) actions.push({kind: 'highlight', ids: nerveIds, label: showNerve, select: false});
       }
       const functionText = targetBrief.function || targetBrief.overview;
-      const nerveText = targetBrief.nerve ? ` It is supplied by the ${targetBrief.nerve}.` : '';
-      return {
-        text: `${functionText}${nerveText}`,
-        actions,
-      };
+      const nerveText = targetBrief.nerve
+        ? say(` It is supplied by the ${targetBrief.nerve}.`, ` ${targetBrief.nerve}-ээр мэдрүүлнэ.`)
+        : '';
+      return {text: `${functionText}${nerveText}`, actions};
     }
   }
 
@@ -410,20 +424,22 @@ export function askAtlas(question: string, ctx: AssistantContext): AssistantRepl
     const brief = describeStructure(atlas, concept.name);
     const ids = concept.elements;
     const actions: AssistantAction[] = [];
-    if (ids.length) actions.push({kind: 'highlight', ids, label: `Highlighted ${concept.name}`});
+    if (ids.length) actions.push({kind: 'highlight', ids, label: highlighted(concept.name)});
     if (brief.nerve) {
       const nerveIds = nervePieces(atlas, brief.nerve);
-      if (nerveIds.length) actions.push({kind: 'highlight', ids: nerveIds, label: 'Show its nerve', select: false});
+      if (nerveIds.length) actions.push({kind: 'highlight', ids: nerveIds, label: showNerve, select: false});
     }
-    const extra = matches.length > 1 ? ` Related structures: ${matches.slice(1).map(item => item.name).join(', ')}.` : '';
-    return {
-      text: `${brief.overview}${extra}`,
-      actions,
-    };
+    const extra = matches.length > 1
+      ? say(` Related structures: ${matches.slice(1).map(item => item.name).join(', ')}.`, ` Холбоотой бүтэц: ${matches.slice(1).map(item => item.name).join(', ')}.`)
+      : '';
+    return {text: `${brief.overview}${extra}`, actions};
   }
 
   return {
-    text: `I could not match that to a structure in this atlas. I can explain the selected structure, highlight a named group such as the rotator cuff, rotate the model, or start a quiz.`,
+    text: say(
+      'I could not match that to a structure in this atlas. I can explain the selected structure, highlight a named group such as the rotator cuff, rotate the model, or start a quiz.',
+      'Үүнийг энэ атласын бүтэцтэй тааруулж чадсангүй. Сонгосон бүтцийг тайлбарлаж, rotator cuff зэрэг бүлгийг тодруулж, загварыг эргүүлж, сорил эхлүүлж чадна.',
+    ),
     actions: [],
   };
 }

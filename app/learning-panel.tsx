@@ -2,8 +2,9 @@ import {useEffect,useMemo,useState} from 'react';
 import {CheckCircle2,ChevronLeft,ChevronRight,GraduationCap,ListChecks,X,XCircle} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {findConcepts} from './ai-assistant';
-import {QUIZ,TOURS,type Tour} from './learning-data';
+import {quizFor,toursFor,TOURS,type Tour} from './learning-data';
 import type {Atlas,View} from './anatomy';
+import {useLang} from './locale';
 
 interface Props {
   mode: 'tour' | 'quiz' | null;
@@ -14,6 +15,9 @@ interface Props {
 }
 
 export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Props) {
+  const {lang, t} = useLang();
+  const tours = useMemo(() => toursFor(lang), [lang]);
+  const quiz = useMemo(() => quizFor(lang), [lang]);
   const [tourId, setTourId] = useState(TOURS[0].id);
   const [step, setStep] = useState(0);
   const [index, setIndex] = useState(0);
@@ -21,8 +25,8 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState(0);
 
-  const tour: Tour = useMemo(() => TOURS.find(item => item.id === tourId) ?? TOURS[0], [tourId]);
-  const question = QUIZ[index];
+  const tour: Tour = useMemo(() => tours.find(item => item.id === tourId) ?? tours[0], [tourId, tours]);
+  const question = quiz[index];
 
   useEffect(() => {
     setStep(0);
@@ -40,18 +44,18 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
   if (!mode) return null;
 
   if (mode === 'quiz') {
-    const finished = index >= QUIZ.length;
+    const finished = index >= quiz.length;
     const correct = score;
     return (
-      <section className="learning-panel glass" aria-label="Quiz">
+      <section className="learning-panel glass" aria-label={t.learn.quizPanel}>
         <header className="learning-head">
           <div>
             <p className="learning-kicker">
-              <ListChecks size={12} /> Practice
+              <ListChecks size={12} /> {t.learn.practice}
             </p>
-            <h2 className="learning-title">Quiz me</h2>
+            <h2 className="learning-title">{t.learn.quizTitle}</h2>
           </div>
-          <Button variant="ghost" className="icon-button" onClick={onClose} aria-label="Close quiz">
+          <Button variant="ghost" className="icon-button" onClick={onClose} aria-label={t.learn.closeQuiz}>
             <X size={18} />
           </Button>
         </header>
@@ -59,14 +63,14 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
         {finished ? (
           <div className="quiz-result">
             <strong>
-              {correct} / {QUIZ.length}
+              {correct} / {quiz.length}
             </strong>
             <p>
-              {correct === QUIZ.length
-                ? 'A clean sweep. You know this atlas well.'
-                : correct >= QUIZ.length / 2
-                  ? 'Solid work. Review the structures you missed and go again.'
-                  : 'Keep exploring the model, then try the tour to lock it in.'}
+              {correct === quiz.length
+                ? t.learn.perfect
+                : correct >= quiz.length / 2
+                  ? t.learn.half
+                  : t.learn.low}
             </p>
             <div className="learning-actions">
               <Button
@@ -79,15 +83,15 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
                   setScore(0);
                 }}
               >
-                Restart quiz
+                {t.learn.restart}
               </Button>
             </div>
           </div>
         ) : (
           <>
             <div className="quiz-meta">
-              <span>Question {index + 1} of {QUIZ.length}</span>
-              <span>{correct} correct</span>
+              <span>{t.learn.question(index + 1, quiz.length)}</span>
+              <span>{t.learn.correct(correct)}</span>
             </div>
             <p className="quiz-prompt">{question.prompt}</p>
             <div className="quiz-options">
@@ -121,7 +125,7 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
                     setPicked(null);
                     setIndex(current => current + 1);
                   }}>
-                    {index + 1 >= QUIZ.length ? 'See result' : 'Next question'}
+                    {index + 1 >= quiz.length ? t.learn.seeResult : t.learn.next}
                     <ChevronRight size={15} />
                   </Button>
                 </div>
@@ -130,7 +134,7 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
           </>
         )}
         <p className="learning-note">
-          {answers.length} answered so far. The atlas highlights the structure each answer points to.
+          {t.learn.answered(answers.length)}
         </p>
       </section>
     );
@@ -138,21 +142,21 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
 
   const current = tour.steps[Math.min(step, tour.steps.length - 1)];
   return (
-    <section className="learning-panel glass" aria-label="Guided tour">
+    <section className="learning-panel glass" aria-label={t.learn.tourPanel}>
       <header className="learning-head">
         <div>
           <p className="learning-kicker">
-            <GraduationCap size={12} /> Learning mode
+            <GraduationCap size={12} /> {t.learn.mode}
           </p>
-          <h2 className="learning-title">Guided tours</h2>
+          <h2 className="learning-title">{t.learn.tours}</h2>
         </div>
-        <Button variant="ghost" className="icon-button" onClick={onClose} aria-label="Close tours">
+        <Button variant="ghost" className="icon-button" onClick={onClose} aria-label={t.learn.closeTours}>
           <X size={18} />
         </Button>
       </header>
 
-      <div className="tour-picker" role="tablist" aria-label="Tours">
-        {TOURS.map(item => (
+      <div className="tour-picker" role="tablist" aria-label={t.learn.toursLabel}>
+        {tours.map(item => (
           <Button
             key={item.id}
             variant="ghost"
@@ -169,18 +173,18 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
       <p className="tour-summary">{tour.summary}</p>
       <div className="tour-step">
         <span className="tour-counter">
-          Step {step + 1} of {tour.steps.length}
+          {t.learn.step(step + 1, tour.steps.length)}
         </span>
         <h3>{current.title}</h3>
         <p>{current.text}</p>
         <Button variant="ghost" className="tour-show" onClick={() => onPick(current.concept)}>
-          Show it in the model
+          {t.learn.show}
         </Button>
       </div>
 
       <div className="learning-actions">
         <Button variant="ghost" className="learning-secondary" disabled={step === 0} onClick={() => setStep(value => Math.max(0, value - 1))}>
-          <ChevronLeft size={15} /> Back
+          <ChevronLeft size={15} /> {t.learn.back}
         </Button>
         <Button
           variant="ghost"
@@ -188,7 +192,7 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
           disabled={step >= tour.steps.length - 1}
           onClick={() => setStep(value => Math.min(tour.steps.length - 1, value + 1))}
         >
-          Next <ChevronRight size={15} />
+          {t.learn.nextStep} <ChevronRight size={15} />
         </Button>
       </div>
     </section>

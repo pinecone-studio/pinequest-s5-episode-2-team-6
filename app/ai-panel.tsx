@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState} from 'react';
 import {Send,Sparkles,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {ASSISTANT_PROMPTS,type AssistantAction} from './ai-assistant';
+import {type AssistantAction} from './ai-assistant';
+import {useLang} from './locale';
 
 export interface ChatMessage {
   id: string;
@@ -21,6 +22,7 @@ let counter = 0;
 const nextId = () => `m${(counter += 1)}`;
 
 export default function AiPanel({open, selection, ask, onClose}: Props) {
+  const {t} = useLang();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -47,34 +49,31 @@ export default function AiPanel({open, selection, ask, onClose}: Props) {
   };
 
   return (
-    <section className="ai-panel glass" aria-label="Ask the Atlas">
+    <section className="ai-panel glass" aria-label={t.ai.panel}>
       <header className="ai-header">
         <div className="ai-title-block">
           <p className="ai-kicker">
-            <Sparkles size={12} /> Atlas assistant
+            <Sparkles size={12} /> {t.ai.kicker}
           </p>
-          <h2 className="ai-title">Ask the Atlas</h2>
+          <h2 className="ai-title">{t.ai.title}</h2>
         </div>
-        <Button variant="ghost" className="icon-button ai-close" onClick={onClose} aria-label="Close assistant">
+        <Button variant="ghost" className="icon-button ai-close" onClick={onClose} aria-label={t.ai.close}>
           <X size={18} />
         </Button>
       </header>
 
       {selection && (
         <p className="ai-selection">
-          <span className="ai-selection-dot" /> Selected: {selection.name}
+          <span className="ai-selection-dot" /> {t.ai.selected}: {selection.name}
         </p>
       )}
 
       <div className="ai-messages" ref={listRef} role="log" aria-live="polite">
         {messages.length === 0 && (
           <div className="ai-intro">
-            <p>
-              Ask about any structure. I read the same reference notes the atlas shows, and I can rotate the
-              model or highlight pieces for you.
-            </p>
+            <p>{t.ai.intro}</p>
             <div className="ai-prompts">
-              {ASSISTANT_PROMPTS.map(prompt => (
+              {t.ai.prompts.map(prompt => (
                 <Button key={prompt} variant="ghost" className="ai-prompt" onClick={() => send(prompt)}>
                   {prompt}
                 </Button>
@@ -109,14 +108,14 @@ export default function AiPanel({open, selection, ask, onClose}: Props) {
           ref={inputRef}
           value={draft}
           onChange={event => setDraft(event.target.value)}
-          placeholder="Ask about any structure…"
-          aria-label="Ask the atlas a question"
+          placeholder={t.ai.placeholder}
+          aria-label={t.ai.ask}
         />
-        <Button type="submit" variant="ghost" className="ai-send" aria-label="Send question" disabled={!draft.trim()}>
+        <Button type="submit" variant="ghost" className="ai-send" aria-label={t.ai.send} disabled={!draft.trim()}>
           <Send size={16} />
         </Button>
       </form>
-      <p className="ai-note">Answers come from this atlas' own reference notes. Not a medical device.</p>
+      <p className="ai-note">{t.ai.note}</p>
     </section>
   );
 }

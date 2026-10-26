@@ -34,7 +34,7 @@ const SSE_HEADERS = {
   'x-accel-buffering': 'no',
 };
 
-const SYSTEM_PROMPT = `Та бол "Human Atlas" 3D анатомийн атласын AI туслах. Хэрэглэгч анатоми, физиологи, эрүүл мэнд, шинжлэх ухаан, сургалт, технологи, өдөр тутмын амьдрал зэрэг дурын сэдвээр чөлөөтэй асууж, дэлгэрэнгүй, ойлгомжтой хариулт авах ёстой.
+const SYSTEM_PROMPT = `Та бол "Anatomn" 3D анатомийн атласын AI туслах. Хэрэглэгч анатоми, физиологи, эрүүл мэнд, шинжлэх ухаан, сургалт, технологи, өдөр тутмын амьдрал зэрэг дурын сэдвээр чөлөөтэй асууж, дэлгэрэнгүй, ойлгомжтой хариулт авах ёстой.
 
 ## Хариултын хэл ба нэршил
 - Ямар хэлээр асуусан ч бүх хариултыг монгол хэлээр бич. Хэрэглэгч өөр хэлээр хариулахыг тодорхой хүсээгүй бол зөвхөн монгол хэлээр хариул.
@@ -396,7 +396,7 @@ async function callOpenAiCompatible(
   };
   if (config.provider === 'openrouter') {
     headers['HTTP-Referer'] = envValue(env, 'OPENROUTER_SITE_URL') || 'https://human-atlas-seven.vercel.app';
-    headers['X-Title'] = envValue(env, 'OPENROUTER_APP_NAME') || 'Human Atlas';
+    headers['X-Title'] = envValue(env, 'OPENROUTER_APP_NAME') || 'Anatomn';
   }
   return fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',

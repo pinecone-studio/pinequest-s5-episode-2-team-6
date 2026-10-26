@@ -40,6 +40,9 @@ reply = askAtlas('Шошгыг нуу', empty);
 assert.deepEqual(reply.actions[0], {kind: 'labels', on: false, label: 'Шошго унтраасан'});
 reply = askAtlas('Шошго харуул', empty);
 assert.deepEqual(reply.actions[0], {kind: 'labels', on: true, label: 'Шошго асаасан'});
+// "Тайлбарла" is the verb "explain", not a request to show labels.
+reply = askAtlas('Хиймэл оюун ухаан гэж юу вэ? Дэлгэрэнгүй тайлбарла', empty);
+assert.equal(reply.actions.length, 0);
 
 // Views rotate the model.
 reply = askAtlas('Turn to the back view', empty);

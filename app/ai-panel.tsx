@@ -102,7 +102,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
 
   const send = async (text: string) => {
     const question = text.trim();
-    if (!question || busy || !atlas) return;
+    if (!question || busy) return;
     setDraft('');
     const user: ChatMessage = {id: nextId(), role: 'user', text: question};
     const assistantId = nextId();
@@ -115,11 +115,13 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
     stickRef.current = true;
 
     let actions: AssistantAction[] = [];
-    try {
-      actions = askAtlas(question, {atlas, selection}).actions;
-      for (const action of actions) onAction(action);
-    } catch (error) {
-      console.error('[assistant] could not plan model actions', error);
+    if (atlas) {
+      try {
+        actions = askAtlas(question, {atlas, selection}).actions;
+        for (const action of actions) onAction(action);
+      } catch (error) {
+        console.error('[assistant] could not plan model actions', error);
+      }
     }
 
     const controller = new AbortController();
@@ -129,7 +131,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
         {
           messages: history,
           selection,
-          references: buildAssistantReferences(atlas, question),
+          references: atlas ? buildAssistantReferences(atlas, question) : [],
         },
         {
           signal: controller.signal,
@@ -176,7 +178,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
   };
 
   return (
-    <section className="ai-panel glass" aria-label="Атласын туслах">
+    <section className="ai-panel glass" aria-label="AI туслах">
       <header className="ai-header">
         <div className="ai-title-block">
           <p className="ai-kicker">
@@ -187,7 +189,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
               </span>
             )}
           </p>
-          <h2 className="ai-title">Атласын туслах</h2>
+          <h2 className="ai-title">AI туслах</h2>
         </div>
         {messages.length > 0 && (
           <Button variant="ghost" className="icon-button ai-clear" onClick={clear} aria-label="Чатыг цэвэрлэх" title="Чатыг цэвэрлэх">
@@ -212,10 +214,9 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
         {messages.length === 0 && (
           <div className="ai-intro">
             <p>
-              Анатомийн бүтэц, үйл ажиллагаа, мэдрэл, цусны хангамжийн талаар чөлөөтэй асуугаарай. Тайлбарыг монгол
-              хэлээр, латин нэршлийг хэвээр нь өгнө.
+              Юу ч асууж болно — анатоми, эрүүл мэнд, шинжлэх ухаан, сургалт, технологи, өдөр тутмын амьдрал.
+              Хариултыг дэлгэрэнгүй, монгол хэлээр, шаардлагатай латин нэршлийг хэвээр нь өгнө.
             </p>
-            {!atlas && <p className="ai-config-hint">Атлас ачаалж байна…</p>}
             {health?.configured === false && (
               <p className="ai-config-hint">
                 LLM холболт тохируулагдаагүй байна. Серверт <code>GEMINI_API_KEY</code>, <code>OPENAI_API_KEY</code> эсвэл <code>OPENROUTER_API_KEY</code> нэмнэ үү.
@@ -223,7 +224,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
             )}
             <div className="ai-prompts">
               {ASSISTANT_PROMPTS.map(prompt => (
-                <Button key={prompt} variant="ghost" className="ai-prompt" onClick={() => void send(prompt)} disabled={!atlas || busy}>
+                <Button key={prompt} variant="ghost" className="ai-prompt" onClick={() => void send(prompt)} disabled={busy}>
                   {prompt}
                 </Button>
               ))}
@@ -284,17 +285,16 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
               void send(draft);
             }
           }}
-          placeholder={atlas ? 'Анатомийн талаар асуугаарай…' : 'Атлас ачаалж байна…'}
-          aria-label="Атласын туслахаас асуух"
+          placeholder="Асуух зүйлээ энд бичнэ үү"
+          aria-label="AI туслахаас асуух"
           rows={1}
-          disabled={!atlas}
         />
         {busy ? (
           <Button type="button" variant="ghost" className="ai-send ai-stop" onClick={stop} aria-label="Хариултыг зогсоох">
             <Square size={14} />
           </Button>
         ) : (
-          <Button type="submit" variant="ghost" className="ai-send" aria-label="Асуулт илгээх" disabled={!draft.trim() || !atlas}>
+          <Button type="submit" variant="ghost" className="ai-send" aria-label="Асуулт илгээх" disabled={!draft.trim()}>
             <Send size={16} />
           </Button>
         )}

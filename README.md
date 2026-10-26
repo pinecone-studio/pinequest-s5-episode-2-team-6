@@ -11,7 +11,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Move from assembled anatomy to a spaced inventory of every visible piece.
 - Search anatomical names and source identifiers.
 - Isolate a selected structure and read its details.
-- Ask the Atlas assistant about any structure and let it rotate or highlight the model.
+- Ask the AI assistant anything and get a detailed Mongolian answer; anatomy questions can also rotate or highlight the model.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
 - Follow a guided tour, take the quiz, and switch floating labels on.
 - Use compact controls and detail panels on mobile.
@@ -79,7 +79,7 @@ The landing page and the atlas are built for phones, tablets and desktops. The l
 
 ## The assistant, tours and quiz
 
-"Ask AI" is an LLM chat backed by a small server-side endpoint, `api/chat.ts`, with the shared implementation in `server/chat.ts`. It accepts free-form questions, streams the answer into the panel, and answers in Mongolian while keeping anatomical, medical and Latin terminology in its original form. The selected structure and the matching atlas notes are sent as context, so answers stay grounded in the same reference data the detail panel shows.
+"Ask AI" is an LLM chat backed by a small server-side endpoint, `api/chat.ts`, with the shared implementation in `server/chat.ts`. It accepts any free-form question — anatomy or a general topic — and streams a detailed, structured answer in Mongolian. Medical, scientific and Latin terminology stays in its original form. When a structure is selected and the question matches atlas content, those notes are sent as context so anatomy answers stay grounded in the same reference data the detail panel shows; other questions are answered from the model's general knowledge. The system prompt asks for in-depth answers of roughly 400–900 words with headings, examples and a short conclusion, and the panel works even before the 3D atlas finishes loading. The default Gemini model is `gemini-3.5-flash-lite`, which starts streaming in about a second; set `GEMINI_MODEL=gemini-3.6-flash` if you prefer deeper reasoning over speed.
 
 The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens tours or the quiz. Those actions are shown as chips under the answer.
 
@@ -90,7 +90,7 @@ Set one provider in `.env.local` for development and in the Vercel project's Env
 ```sh
 # Gemini (default when GEMINI_API_KEY is set)
 GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 
 # OpenAI
 LLM_PROVIDER=openai
@@ -108,6 +108,8 @@ LLM_BASE_URL=http://localhost:11434/v1
 LLM_API_KEY=ollama
 LLM_MODEL=llama3.1
 ```
+
+Never commit `.env.local`; it is gitignored. Each teammate should create their own Gemini key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and add it to their local `.env.local`. If the team shares one key, send it through a private password manager or direct message — never through GitHub. For the deployed site, add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project's Environment Variables.
 
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 

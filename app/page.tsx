@@ -15,6 +15,7 @@ import {resolveStructureAtlas} from './structure-atlas';
 import {mergeTerms} from './anatomy-standard';
 import {StandardFigures,useStandardPage} from './standard-figures';
 import RomPanel from './rom/RomPanel';
+import PlaquePanel from './plaque-panel';
 import AiPanel from './ai-panel';
 import InfoCard from './info-card';
 import LearningPanel from './learning-panel';
@@ -151,6 +152,7 @@ export default function Home(){
  return <main className={`studio ${isDark(appearance.background)?'on-dark':''} ${chatOpen?'chat-open':''}`}>
   {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} onSelect={choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
+  <PlaquePanel atlas={atlas} onFocus={ids=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(null);setChosen(null);setState(s=>({...s,selected:ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,reset:s.reset+1}));}}/>
   <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1>Human Atlas<Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><LangSwitch/><Button variant="ghost" className={learning==='tour'?'active':''} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button></div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={panel==='search'?'active':''} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>

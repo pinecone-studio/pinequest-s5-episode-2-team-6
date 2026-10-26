@@ -18,7 +18,8 @@ import RomPanel from './rom/RomPanel';
 import AiPanel from './ai-panel';
 import InfoCard from './info-card';
 import LearningPanel from './learning-panel';
-import {askAtlas,describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
+import {describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
+import type {AssistantSelection} from './llm-types';
 import {AnchorChannel} from './anchor';
 import {LAYERS,MAX_PEEL,peeledSystems} from './layers';
 import {LangSwitch,useLang} from './locale';
@@ -106,6 +107,11 @@ export default function Home(){
   const found=describeStructure(atlas,chosen.name);
   return {name:chosen.name,latin:found.latin,system:selected?systemName(selected.system):found.system,function:found.function,nerve:found.nerve};
  },[atlas,chosen,lang,selected]);
+ const assistantSelection=useMemo<AssistantSelection|null>(()=>{
+  if(!atlas||!chosen||!selected)return null;
+  const found=describeStructure(atlas,chosen.name);
+  return {name:chosen.name,system:system?.name??'',conceptId:chosen.id,elements:state.selected,latin:found.latin||undefined,overview:found.overview||undefined,function:found.function||undefined,nerve:found.nerve||undefined};
+ },[atlas,chosen,selected,system,state.selected]);
  const applyAction=(action:AssistantAction)=>{
   if(action.kind==='view'){setState(s=>({...s,view:action.view,reset:s.reset+1,rotate:false}));return;}
   if(action.kind==='labels'){setState(s=>({...s,labels:action.on}));return;}
@@ -118,12 +124,6 @@ export default function Home(){
   if(concept&&action.kind!=='isolate'&&action.select!==false)setChosen({id:concept.id,name:concept.name,elements:concept.elements});
   setState(s=>({...s,selected:ids,isolate:action.kind==='isolate'}));
   setCardDismissed(false);
- };
- const ask=(question:string)=>{
-  if(!atlas)return {text:t.stillLoading,actions:[]};
-  const reply=askAtlas(question,{atlas,selection:chosen&&selected?{name:chosen.name,system:selected.system,conceptId:chosen.id,elements:state.selected}:null},lang);
-  for(const action of reply.actions)applyAction(action);
-  return reply;
  };
  const pickConcept=(name:string)=>{
   if(!atlas)return;
@@ -153,7 +153,7 @@ export default function Home(){
   <div className="vignette"/>
   <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1>Human Atlas<Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><LangSwitch/><Button variant="ghost" className={learning==='tour'?'active':''} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button></div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={panel==='search'?'active':''} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
-  <AiPanel open={chatOpen} selection={chosen&&selected?{name:chosen.name,system:system?systemName(system.id):''}:null} ask={ask} onClose={()=>setChatOpen(false)}/>
+  <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>
   <InfoCard brief={cardDismissed?null:brief} anchor={anchor} onAsk={()=>setChatOpen(true)} onHighlight={highlightConcept} onShowNerve={showNerve} onIsolate={isolateSelection} onClose={()=>setCardDismissed(true)}/>
   {learning&&<LearningPanel mode={learning} atlas={atlas} onClose={()=>setLearning(null)} onPick={pickConcept} onView={setView}/>}
   <RomPanel parts={romParts} open={romOpen} onClose={()=>setRomOpen(false)} onActivation={onActivation} onRomFocus={onRomFocus}/>

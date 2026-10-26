@@ -5,6 +5,7 @@ import {ASSISTANT_PROMPTS,askAtlas,type AssistantAction} from './ai-assistant';
 import {buildAssistantReferences} from './assistant-context';
 import {AssistantError,fetchAssistantHealth,streamAssistant} from './llm-client';
 import MarkdownText from './markdown-text';
+import {localName} from './mongolian-names';
 import type {Atlas} from './anatomy';
 import type {AssistantHealth,AssistantSelection,ChatTurn} from './llm-types';
 
@@ -204,7 +205,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
 
       {selection && (
         <p className="ai-selection">
-          <span className="ai-selection-dot" /> Сонгосон: {selection.name}
+          <span className="ai-selection-dot" /> Сонгосон: {localName(selection.name, 'mn')}
         </p>
       )}
 

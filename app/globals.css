@@ -394,3 +394,258 @@ h1 .edition{font-family:inherit;font-weight:500;font-size:10px;letter-spacing:.0
  .identity-tools .lang-switch{width:auto;height:38px}
  .identity-tools .lang-switch button{width:auto;min-width:32px;height:32px;padding:0 7px}
 }
+
+
+/* Plate theme: the atlas reads like a printed anatomical plate. Warm paper, ink rules, a serif
+   display face, mono indices and an oxblood accent; every panel is a square paper slip.
+   Tokens live on :root because sheets render in a portal outside .studio. */
+:root{--paper:#ebe4d6;--slip:#f6f1e7;--ink:#1c1915;--ink-2:#3d362d;--ink-3:#73695b;--rule:#1c191529;--rule-2:#1c191559;--blood:#9b2a1c;--blood-2:#7f1f13;--serif:'Cormorant Garamond',Georgia,serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;--print:4px 4px 0 #1c191517;--primary:#1c1915;--ring:#9b2a1c;color:var(--ink);background:var(--paper)}
+button:focus-visible,a:focus-visible{outline-color:var(--blood)}
+.glass{background:var(--slip);border:1px solid var(--rule-2);border-radius:2px;box-shadow:var(--print);backdrop-filter:none;-webkit-backdrop-filter:none}
+.on-dark .glass{background:var(--slip)}
+
+/* Stage: paper grain over the canvas and a double-ruled plate border with corner blocks. */
+.vignette{background:radial-gradient(ellipse at 50% 42%,transparent 40%,#4a35181a 100%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .11 0 0 0 0 .09 0 0 0 0 .07 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.3;mix-blend-mode:multiply}
+.stage-frame{position:absolute;inset:14px;pointer-events:none;border:1px solid var(--rule-2)}
+.stage-frame::after{content:'';position:absolute;inset:4px;border:1px solid var(--rule)}
+.stage-frame i{position:absolute;width:7px;height:7px;background:var(--ink)}
+.stage-frame i:nth-child(1){left:-4px;top:-4px}.stage-frame i:nth-child(2){right:-4px;top:-4px}.stage-frame i:nth-child(3){left:-4px;bottom:-4px}.stage-frame i:nth-child(4){right:-4px;bottom:-4px}
+.on-dark .stage-frame,.on-dark .stage-frame::after{border-color:#ffffff33}.on-dark .stage-frame i{background:#efe7d8}
+
+/* Masthead: serif title with an oxblood italic, mono metadata, square controls. */
+.identity{color:var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.2em;color:var(--ink-3)}
+.status-dot{width:6px;height:6px;border-radius:0;background:var(--blood);box-shadow:none;animation:plateBlink 2s steps(2) infinite}
+@keyframes plateBlink{50%{opacity:.2}}
+.identity h1{font-family:var(--serif);font-weight:500;font-size:62px;line-height:.92;letter-spacing:-.02em;gap:12px;margin:10px 0 12px;align-items:flex-start}
+.atlas-wordmark em{margin-right:.02em;font-style:italic;font-weight:500;color:var(--blood)}
+.on-dark .atlas-wordmark em{color:#e48a74}
+.identity h1 .edition{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;padding:2px 6px;margin-top:9px;border-radius:0;border-color:var(--rule-2);color:var(--ink-3);opacity:1}
+.on-dark .identity h1 .edition{color:#d9d1c2;border-color:#ffffff40}
+.identity-meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.identity-meta span{color:var(--blood)}
+.identity-tools{gap:0;margin-top:14px}
+.identity-tools>*+*{margin-left:-1px}
+.identity-tools button{height:34px;padding:0 12px;gap:8px;border-radius:0;border:1px solid var(--rule-2);background:var(--slip);color:var(--ink-2);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
+.identity-tools button:hover{background:#fff;color:var(--ink)}
+.identity-tools button.active{position:relative;background:var(--ink);border-color:var(--ink);color:var(--slip)}
+.on-dark .identity-tools button{background:var(--slip)}.on-dark .identity-tools button.active{background:var(--ink)}
+.lang-switch,.on-dark .lang-switch,.on-dark .identity-tools .lang-switch{height:34px;padding:0 3px;border-radius:0;border-color:var(--rule-2);background:var(--slip)}
+.lang-switch button,.identity-tools .lang-switch button{height:26px;border-radius:0;font-family:var(--mono);font-weight:500;color:var(--ink-3)}
+.lang-switch button.is-active,.lang-switch button.is-active:hover,.identity-tools .lang-switch button.is-active,.identity-tools .lang-switch button.is-active:hover{background:var(--ink);color:var(--slip)}
+
+/* Toolbar: a run of ruled cells; Ask AI is the one oxblood cell. */
+.top-actions{gap:0}
+.top-actions button{height:38px;padding:0 14px;gap:9px;border-radius:0;border:1px solid var(--rule-2);background:var(--slip);color:var(--ink-2);font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
+.top-actions button+button{margin-left:-1px}
+.top-actions button:hover{background:#fff;color:var(--ink)}
+.top-actions button.active{position:relative;background:var(--ink);border-color:var(--ink);color:var(--slip)}
+.top-actions .icon-button{width:38px;min-width:38px;height:38px;min-height:38px;padding:0}
+.top-actions kbd{margin-left:2px;padding:0 4px;border:1px solid currentColor;border-radius:0;font-family:var(--mono);font-size:9.5px;letter-spacing:0;opacity:.55}
+.top-actions .ask-button{position:relative;border-radius:0;background:var(--blood);border-color:var(--blood);color:#fbf2e8;font-weight:500}
+.top-actions .ask-button:hover{background:var(--blood-2);color:#fff}
+.top-actions .ask-button.active{background:var(--ink);border-color:var(--ink);color:var(--slip)}
+.on-dark .top-actions button{background:var(--slip)}.on-dark .top-actions button.active{background:var(--ink)}.on-dark .top-actions .ask-button{background:var(--blood)}.on-dark .top-actions .ask-button.active{background:var(--ink)}
+.studio .plaque-trigger{height:38px;border-radius:0;border:1px solid var(--rule-2);background:var(--slip);box-shadow:none;color:var(--ink-2);font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
+.studio .plaque-trigger:hover{background:#fff}
+.studio .plaque-trigger[aria-expanded=true]{background:var(--ink);border-color:var(--ink);color:var(--slip)}
+/* The Plaque lab button steps aside for panels that open in its corner. */
+.studio:has(.ai-panel,.search-panel,.colors-panel,.layers-panel.mobile-open,.rom-panel:not(.plaque-panel)) .plaque-trigger{visibility:hidden}
+
+/* Systems index: numbered entries, pigment chips (hatched when hidden), dotted leaders, tick boxes. */
+.panel-heading>span:first-child{font-family:var(--serif);font-size:26px;font-weight:500;font-style:italic;line-height:1;letter-spacing:-.01em;color:var(--ink)}
+.panel-heading .small-number{height:20px;border-radius:0;border:1px solid var(--rule-2);background:transparent;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-3)}
+.panel-heading .colors-trigger{height:24px;min-height:24px;border-radius:0;border:1px solid var(--rule-2);background:transparent;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.panel-heading .colors-trigger:hover,.panel-heading .colors-trigger[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--slip)}
+.layer-presets{gap:0;margin:14px 0 12px;padding:0;border:0;border-radius:0;background:none}
+.layer-presets button{height:28px;min-height:28px;border:1px solid var(--rule-2);border-radius:0;background:transparent;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.layer-presets button+button{margin-left:-1px}
+.layer-presets button[aria-pressed=true]{position:relative;background:var(--ink);border-color:var(--ink);color:var(--slip);box-shadow:none}
+.system-spectrum{display:flex;gap:1px;height:8px;padding:1px;margin:0 0 4px;flex-shrink:0;border:1px solid var(--rule-2)}
+.system-spectrum i{min-width:2px;opacity:.14;transition:opacity .3s}
+.system-spectrum i.on{opacity:1}
+.system-row{gap:10px;min-height:34px;border-bottom:1px solid var(--rule)}
+.system-row:last-child{border-bottom:0}
+.system-name{gap:8px;padding:0;border-radius:0;font-size:12.5px;color:var(--ink-3)}
+.system-name:hover{background:transparent!important;color:var(--ink)}
+.enabled .system-name{color:var(--ink)}
+.system-index{width:16px;flex-shrink:0;font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+.system-dot{width:10px;height:10px;border-radius:0;background:var(--sys);box-shadow:inset 0 0 0 1px #1c191540}
+.system-row:not(.enabled) .system-dot{background:repeating-linear-gradient(135deg,var(--sys) 0 1.5px,transparent 1.5px 3.5px);box-shadow:inset 0 0 0 1px var(--sys)}
+.system-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.system-leader{flex:1;min-width:8px;height:0;margin-top:7px;border-bottom:1px dotted var(--rule-2)}
+.system-count{margin-left:0;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.system-row [data-slot=switch]{width:16px;height:16px;border-radius:0;border:1px solid var(--ink-2);background:transparent;transform:none}
+.system-row [data-slot=switch][data-checked]{background:var(--ink);border-color:var(--ink)}
+.system-row [data-slot=switch-thumb]{position:relative;top:-1px;width:5px;height:9px;margin:auto;border-radius:0;border:solid transparent;border-width:0 1.5px 1.5px 0;background:transparent!important;translate:none!important;transform:none!important;rotate:45deg}
+.system-row [data-slot=switch][data-checked] [data-slot=switch-thumb]{border-color:var(--slip)}
+.panel-foot{gap:8px;border-top:1px solid var(--rule-2);font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+.panel-foot button{flex-shrink:0;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+
+/* Instrument strip: Roman-numbered tools, a hairline scale with an oxblood reading and a diamond cursor. */
+.bottom-dock{gap:12px;padding:14px 14px 12px}
+.dock-tabs{gap:0;padding:0;border:1px solid var(--rule-2);border-radius:0;background:none}
+.dock-tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:30px;min-height:30px;padding:0 8px;border-radius:0;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.dock-tabs button+button{border-left:1px solid var(--rule)}
+.dock-tabs button:hover{background:#1c19150a}
+.dock-tabs button.active{background:var(--ink);color:var(--slip);box-shadow:none}
+.dock-index{font-family:var(--serif);font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;opacity:.75}
+.explode-label{align-items:flex-end;gap:12px;margin-bottom:0;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.explode-label label{padding-bottom:4px}
+.explode-label output{max-width:62%;min-width:0;padding:0;border:0;background:none;font-family:var(--serif);font-size:36px;font-weight:500;line-height:.95;letter-spacing:-.02em;text-transform:none;text-align:right;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.explode-label output span{margin-left:2px;font-family:var(--serif);font-size:20px;font-style:italic;color:var(--blood)}
+.peel-control .explode-label output{font-size:24px;font-style:italic}
+.explode-control [data-slot=slider]{padding:10px 0 3px}
+.explode-control [data-slot=slider-track]{height:3px;border-radius:0;overflow:visible;background:linear-gradient(var(--ink),var(--ink)) center/100% 1px no-repeat}
+.explode-control [data-slot=slider-range]{background:var(--blood);box-shadow:none}
+.explode-control [data-slot=slider-thumb]{width:14px;height:14px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.explode-control [data-slot=slider-thumb]::before{content:'';position:absolute;inset:2px;background:var(--slip);border:1.5px solid var(--ink);rotate:45deg;transition:background .15s,border-color .15s}
+.explode-control [data-slot=slider-thumb]:is(:hover,:active,:focus-visible,:has(:focus-visible))::before{background:var(--blood);border-color:var(--blood)}
+.dock-ruler{height:8px;margin:0 7px;background:linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(50% - .5px),var(--ink) calc(50% - .5px) calc(50% + .5px),transparent calc(50% + .5px) calc(100% - 1px),var(--ink) calc(100% - 1px)) 0 0/100% 100% no-repeat,repeating-linear-gradient(90deg,var(--rule-2) 0 1px,transparent 1px calc(100% / var(--ticks))) 0 0/100% 55% no-repeat}
+.slider-endpoints{margin-top:5px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.dock-reset{gap:7px;padding:0 0 0 14px;border-left:1px solid var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.dock-reset svg{width:36px;height:36px;padding:9px;border:1px solid var(--rule-2);transition:background .18s,color .18s,rotate .5s}
+.dock-reset:hover{background:transparent!important}
+.dock-reset:hover svg{background:var(--ink);color:var(--slip);rotate:-180deg}
+.dock-layers{border-right-color:var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.slice-axis{gap:0;margin-top:8px}
+.slice-axis button{border-radius:0;border:1px solid var(--rule-2);background:transparent;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.slice-axis button+button{margin-left:-1px}
+.slice-axis button.active{position:relative;background:var(--ink);border-color:var(--ink);color:var(--slip)}
+/* The figure caption is a tab on the strip's top edge, so it clears the strip at every height. */
+.bottom-dock .scene-caption{bottom:100%;left:-1px;transform:none;display:flex;align-items:baseline;gap:10px;width:max-content;max-width:calc(100% + 2px);padding:6px 12px 4px;border:1px solid var(--rule-2);border-bottom-color:var(--slip);background:var(--slip);color:var(--ink);letter-spacing:0;white-space:nowrap;text-align:left}
+.fig-no{flex-shrink:0;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--blood)}
+.fig-text{min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:var(--serif);font-size:17px;font-style:italic;text-transform:lowercase}
+.fig-text::first-letter{text-transform:uppercase}
+
+/* Colophon */
+.studio-footer{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.studio-footer button{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.studio-footer b{margin:0 10px;color:var(--blood)}
+
+/* Loading: an ECG trace being drawn. */
+.loading{gap:18px;padding:22px 26px}
+.loading strong{font-family:var(--serif);font-size:25px;font-style:italic;font-weight:500;color:var(--ink)}
+.loading span{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.loading-track{height:3px;background:linear-gradient(var(--rule-2),var(--rule-2)) center/100% 1px no-repeat}
+.loading-track i{background:var(--blood)}
+.loading-pulse{color:var(--blood)}
+.loading-pulse path{stroke-dasharray:64;animation:plateTrace 1.6s linear infinite}
+@keyframes plateTrace{from{stroke-dashoffset:64}to{stroke-dashoffset:-64}}
+
+/* Details, about and search read like the notes beside a plate. */
+.detail-sheet{padding:26px 24px}
+.detail-accent{width:44px;height:4px;border-radius:0}
+.structure-title{font-family:var(--serif)!important;font-size:36px!important;font-weight:500!important;line-height:1!important;letter-spacing:-.015em}
+.structure-latin{font-family:var(--serif);font-size:18px;color:var(--blood)}
+.structure-description,.about-sheet [data-slot=sheet-description],.about-copy{font-family:var(--serif);font-size:18px!important;line-height:1.5;color:var(--ink-2)!important}
+.about-copy h3,.about-copy a,.context-note{font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.about-copy a,.source-link{color:var(--blood);text-decoration:underline;text-underline-offset:3px}
+.structure-meta{border-color:var(--rule-2);font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+.structure-meta strong{font-family:var(--mono);font-size:13px;letter-spacing:0;text-transform:none;color:var(--ink)}
+.bone-region-badge{border-radius:0;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.term-list h3,.standard-figures h3,.member-list h3{font-family:var(--mono);font-weight:500;color:var(--blood)}
+.term-list li,.member-list button{border-color:var(--rule)}
+.term-latin{font-family:var(--serif);font-size:15px}
+.standard-figure-open{border-radius:0}
+.primary-action,.learning-primary,.rom-primary:not(.rom-primary-stop),.ai-send:not(.ai-stop),.info-card-ask{border-radius:0;background:var(--ink);border-color:var(--ink)}
+.primary-action{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+.primary-action:hover,.primary-action.active,.learning-primary:hover,.rom-primary:not(.rom-primary-stop):hover{background:var(--blood);border-color:var(--blood)}
+.secondary-action{border-radius:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.about-sheet{border-radius:0}
+.search-panel [data-slot=input-group]{border-radius:0;background:#fff;border-color:var(--rule-2)}
+.anatomy-search-results{border-radius:0!important;background:var(--slip)!important;border:1px solid var(--rule-2)!important;box-shadow:var(--print)!important}
+.anatomy-search-results [data-slot=combobox-item]{border-radius:0;font-family:var(--serif);font-size:18px}
+.anatomy-search-results .small-number{font-family:var(--mono);font-size:10px}
+.search-note{font-family:var(--serif);font-size:15px;font-style:italic}
+.color-swatch,.color-row input,.color-row input::-webkit-color-swatch{border-radius:0}
+.color-swatch[aria-pressed=true],.color-swatch[data-active=true]{outline-color:var(--blood)}
+.colors-label{font-family:var(--mono);color:var(--blood)}
+.color-row{border-radius:0}
+
+/* Assistant, tours, ROM and plaque labs share the slips, serif titles and square controls. */
+.ai-title,.rom-title,.learning-title{font-family:var(--serif);font-size:30px;font-weight:500;font-style:italic;letter-spacing:-.01em}
+.ai-kicker,.rom-kicker,.learning-kicker,.tour-counter,.rom-gauge-label,.quiz-meta{font-family:var(--mono);font-weight:500;color:var(--blood)}
+.tour-step h3,.quiz-prompt,.rom-muscles-head h3,.plaque-panel h3{font-family:var(--serif);font-size:20px;font-weight:600}
+.quiz-result strong,.rom-gauge-value{font-family:var(--serif);font-weight:500}
+.ai-message,.ai-composer,.ai-send,.ai-prompt,.ai-selection,.ai-model-badge,.ai-action-chip,.ai-config-hint,.tour-chip,.tour-step,.tour-show,.quiz-option,.learning-secondary,.rom-status,.rom-steps,.rom-side-toggle,.rom-side-toggle button,.rom-video-wrap,.rom-primary,.rom-secondary,.rom-error,.rom-gauge-card,.rom-muscles-card,.rom-muscle-card,.rom-flex-chip,.rom-live-chip{border-radius:0}
+.ai-message-user{background:var(--ink)}
+.ai-message-assistant,.tour-step,.rom-steps,.rom-gauge-card{background:#fffaf2;border-color:var(--rule)}
+.ai-composer{background:#fff;border-color:var(--rule-2)}
+.tour-chip.active{background:var(--ink);border-color:var(--ink)}
+.info-card{border-radius:2px;background:var(--slip);border-color:var(--rule-2);box-shadow:var(--print);backdrop-filter:none;-webkit-backdrop-filter:none}
+.info-card-title strong{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.05;text-transform:capitalize}
+.info-card-latin{font-family:var(--serif);font-size:15px;color:var(--blood)}
+.info-card-system{font-family:var(--mono);font-size:9px;letter-spacing:.14em}
+.info-card-actions{border-color:var(--rule)}
+.info-card-chip{border-radius:0;background:transparent;border-color:var(--rule-2);font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+.info-card-ask{background:var(--blood);border-color:var(--blood);font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+.floating-label{border-radius:0;background:var(--slip);border-color:var(--rule-2);box-shadow:2px 2px 0 #1c19151a;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--ink)}
+.part-hover{border-radius:0;padding:6px 10px;background:var(--ink);color:var(--slip);font-family:var(--serif);font-size:17px;font-style:italic}
+
+/* Panels print in once, in reading order. */
+@keyframes platePrint{from{opacity:0;clip-path:inset(0 0 100% 0)}}
+.identity{animation:platePrint .9s cubic-bezier(.2,.7,.2,1) both}
+.top-actions{animation:platePrint .9s .1s cubic-bezier(.2,.7,.2,1) both}
+.layers-panel{animation:platePrint .9s .2s cubic-bezier(.2,.7,.2,1) both}
+.bottom-dock{animation:platePrint .9s .3s cubic-bezier(.2,.7,.2,1) both}
+
+/* Desktop and tablet: everything sits inside the plate border, and the strip turns into a ruled instrument. */
+@media(min-width:768px) and (min-height:601px){
+ .identity{left:34px;top:32px}
+ .top-actions{top:32px;right:34px}
+ .studio .plaque-trigger{top:80px;right:34px}
+ .studio.plaque-open .plaque-trigger{top:32px}
+ .layers-panel{left:34px;top:212px;width:262px;padding:16px 16px 0}
+ .bottom-dock{bottom:62px;width:min(600px,calc(100vw - 660px));gap:18px;padding:16px 16px 14px;align-items:stretch}
+ .dock-body{flex-direction:row;align-items:stretch;gap:16px}
+ .dock-tabs{flex-direction:column;justify-content:center;flex-shrink:0;width:128px;border:0;border-right:1px solid var(--rule);padding-right:14px}
+ .dock-tabs button{flex:none;justify-content:flex-start;gap:10px}
+ .dock-tabs button+button{border-left:0}
+ .dock-index{width:20px}
+ .explode-control{display:flex;flex-direction:column;justify-content:center}
+ .studio-footer{left:34px;right:34px;bottom:28px}
+ /* The details sheet starts below the Plaque lab button instead of covering it. */
+ .detail-sheet{top:130px!important;max-height:calc(100dvh - 330px)}
+ .detail-sheet[data-height]{max-height:calc(100dvh - 186px)}
+}
+/* Mid-width screens slide the strip left while the assistant or ROM lab holds the right edge. */
+@media(min-width:1101px) and (max-width:1350px) and (min-height:601px){
+ .studio:is(.chat-open,:has(.rom-panel:not(.plaque-panel))) .bottom-dock{width:min(600px,calc(100vw - 736px));left:calc(316px + (100vw - 736px) / 2)}
+}
+/* Narrower screens centre the strip in the space right of the systems index. */
+@media(min-width:768px) and (max-width:1100px) and (min-height:601px){
+ .identity h1{font-size:50px}
+ .layers-panel{left:28px;width:226px;padding-inline:12px}
+ .system-index{display:none}
+ .bottom-dock{width:min(500px,calc(100vw - 308px));left:calc(274px + (100vw - 308px) / 2)}
+ .dock-tabs{width:110px}
+}
+@media(max-width:767px){
+ .stage-frame{inset:6px}.stage-frame::after{inset:3px}.stage-frame i{width:5px;height:5px}
+ .identity h1{font-size:36px;gap:8px;margin:8px 0 8px}
+ .identity-tools{margin-top:10px}
+ .identity-tools button,.lang-switch,.identity-tools .lang-switch{height:38px}
+ .top-actions button,.top-actions .icon-button{width:40px;min-width:40px;height:40px;min-height:40px;padding:0;justify-content:center}
+ .layer-presets button{height:40px;min-height:40px}
+ .layers-panel.mobile-open{background:var(--slip);border-radius:2px}
+ .bottom-dock{padding:14px 12px 12px;gap:10px}
+ .dock-tabs button{height:36px;min-height:36px}
+ .dock-index{display:none}
+ .explode-label output{font-size:30px}
+ .fig-text{font-size:15px}
+ .detail-header .structure-title{font-size:26px!important}
+ /* Below the masthead row, and clear of the strip and its caption tab. */
+ .studio .plaque-trigger{top:calc(max(18px,env(safe-area-inset-top)) + 140px);right:max(12px,env(safe-area-inset-right))}
+ .layers-panel.mobile-open{bottom:calc(218px + env(safe-area-inset-bottom));max-height:calc(100dvh - 380px)}
+ .detail-sheet{bottom:calc(218px + env(safe-area-inset-bottom))!important;max-height:calc(100dvh - 390px)}
+ .learning-panel{bottom:calc(218px + env(safe-area-inset-bottom));max-height:calc(100dvh - 390px)}
+}
+@media(max-width:480px){.identity h1 .edition{display:none}}
+@media(max-width:350px){.identity h1{font-size:30px}.identity-tools button{padding:0}}
+
+/* Mongolian names: sentence case instead of title case, with the atlas (English) name kept underneath. */
+:lang(mn) :is(.structure-title,.info-card-title strong,.search-result-name,.part-hover){text-transform:none!important}
+.search-result-name{display:flex;flex-direction:column;gap:1px;min-width:0}
+.search-result-alt{font-family:var(--mono);font-size:10px;letter-spacing:.02em;text-transform:none;color:var(--ink-3)}
+.structure-alt{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--ink-3)}

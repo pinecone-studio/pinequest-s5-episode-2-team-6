@@ -12,10 +12,10 @@ import {LANDMARKS} from './landmarks';
 import {peeledSystems} from './layers';
 import {perfusionTint} from './plaque-model';
 import type {AnchorChannel} from './anchor';
-interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
-export default function AnatomyScene({atlas,state,appearance,activations,anchor,onSelect,onProgress,onError}:Props){
- const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{});
- latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};
+interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;label?:(name:string)=>string;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
+export default function AnatomyScene({atlas,state,appearance,activations,anchor,label,onSelect,onProgress,onError}:Props){
+ const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{}),nameOf=useRef(label);
+ latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};nameOf.current=label;
  useEffect(()=>{
   const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',layoutKey='',amount=0;
   let lastState:SceneState|null=null,lastLook:Appearance|null=null;let lastActivationKey='';
@@ -31,7 +31,8 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   scene.add(new T.HemisphereLight(0xffffff,0xa7acb2,1.05));
   const key=new T.DirectionalLight(0xfffaf4,2.3);key.position.set(-2,4,3);scene.add(key);
   const rim=new T.DirectionalLight(0xe9f0ff,1.8);rim.position.set(2,2,-3);scene.add(rim);
-  const ground=new T.Mesh(new T.CircleGeometry(30,96),new T.MeshStandardMaterial({roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.019;scene.add(ground);
+  const groundLit=new T.MeshStandardMaterial({roughness:1}),groundFlat=new T.MeshBasicMaterial({toneMapped:false});
+  const ground=new T.Mesh<T.CircleGeometry,T.Material>(new T.CircleGeometry(30,96),groundLit);ground.rotation.x=-Math.PI/2;ground.position.y=-.019;scene.add(ground);
   const platform=new T.Mesh(new T.CylinderGeometry(.68,.7,.028,100),new T.MeshStandardMaterial({metalness:.12,roughness:.67}));platform.position.y=-.016;scene.add(platform);
   const ring=new T.Mesh(new T.RingGeometry(.63,.632,128),new T.MeshBasicMaterial({transparent:true,opacity:.4,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.001;scene.add(ring);
   const innerRing=new T.Mesh(new T.RingGeometry(.55,.551,128),new T.MeshBasicMaterial({transparent:true,opacity:.16,side:T.DoubleSide}));innerRing.rotation.x=-Math.PI/2;innerRing.position.y=.001;scene.add(innerRing);
@@ -44,6 +45,8 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   const centerTexture=new T.DataTexture(centerData,width,1,T.RGBAFormat,T.FloatType);centerTexture.needsUpdate=true;
   const smoothAct=new Float32Array(atlas.parts.length);
   const contractShaders:{uniforms:Record<string,T.IUniform>}[]=[];
+  // Selection highlight shared by every system's program: focus fades the rest of the body, flash pings a new pick.
+  const highlight={uFocus:{value:0},uFlash:{value:0},uFade:{value:new T.Color()}};
   const offsets:T.Vector3[]=[],bounds=atlas.parts.map(p=>new T.Box3(new T.Vector3().fromArray(p.bounds[0]),new T.Vector3().fromArray(p.bounds[1])));
   // Overall body extent drives the cross-section plane range.
   const extent=new T.Box3();for(const box of bounds)extent.union(box);
@@ -74,7 +77,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
    const m=new T.MeshStandardMaterial({color:SYSTEMS.find(s=>s.id===system)?.color??'#aebbb8',metalness:.08,roughness:.53,side:T.DoubleSide,transparent:system==='integumentary',opacity:system==='integumentary'?.1:1,depthWrite:system!=='integumentary'});
    m.customProgramCacheKey=()=>'rom-contract-v2';
    m.onBeforeCompile=shader=>{
-    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};
+    shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};Object.assign(shader.uniforms,highlight);
     contractShaders.push(shader);
     // Muscular system gets a stronger educational contraction; others only tint.
     const contractScale=system==='muscular'?1:0.15;
@@ -96,21 +99,55 @@ float shorten = act * 0.055;
 // Belly swell (radial) + slight shortening along body-up for a contraction cue.
 transformed = partOrigin + vec3(delta.x * (1.0 + bulge), delta.y * (1.0 - shorten), delta.z * (1.0 + bulge));
 transformed += state.xyz;`);
-    shader.fragmentShader='varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
+    shader.fragmentShader='uniform float uFocus; uniform float uFlash; uniform vec3 uFade; varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.85, 0.78), partSelected * 0.35);
+// Selected parts keep their own color; the rest of the body recedes toward the backdrop.
+float recede = uFocus * (1.0 - partSelected);
+float luma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(luma), uFade, 0.6), recede * 0.75);
 float heat = partActivated;
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.2, 0.14), heat * 0.88);
 diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;
 diffuseColor.rgb = mix(diffuseColor.rgb, partTint, step(0.001, dot(partTint, partTint)));`);
+    // A warm rim traces the selection's silhouette, brighter for a moment right after it is picked.
+    shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+float rim = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.2);
+totalEmissiveRadiance += vec3(1.0, 0.62, 0.22) * partSelected * (rim * (0.9 + 1.6 * uFlash) + 0.12 * uFlash);`);
     shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
 roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    };materials.push(m);return m;
   };
   const mats=new Map(SYSTEMS.map(s=>[s.id,materialFor(s.id)]));
-  // Floor tones follow the chosen backdrop so the horizon stays soft on light and dark backgrounds.
-  const paint=(a:Appearance)=>{const dark=isDark(a.background);renderer.setClearColor(a.background);ground.material.color.set(mixColor(a.background,'#000000',dark?.6:.12));ground.material.envMapIntensity=dark?0:1;platform.material.color.set(mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(dark?'#9aa6b2':'#8c969f');innerRing.material.color.set(dark?'#7d8a97':'#a4aeb8');mats.forEach((m,id)=>m.color.set(a.colors[id]));dirty=true;};
+  // Parts of a selection hidden behind other anatomy show through as a gold silhouette. Unselected vertices are
+  // thrown off-screen, and the greater-depth test keeps the pass to fragments something else is covering.
+  const xray=new T.ShaderMaterial({
+   uniforms:{partState:{value:partTexture},selectionState:{value:selectionTexture},stateWidth:{value:width},uFocus:highlight.uFocus,uFlash:highlight.uFlash},
+   vertexShader:`attribute float partIndex; uniform sampler2D partState; uniform sampler2D selectionState; uniform float stateWidth; varying vec3 vNormalView; varying vec3 vViewPosition;
+#include <clipping_planes_pars_vertex>
+void main(){
+ vec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5);
+ vec4 state = texture2D(partState, stateUv);
+ if (texture2D(selectionState, stateUv).r < 0.5 || state.w < 0.5) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+ vec4 mvPosition = modelViewMatrix * vec4(position + state.xyz, 1.0);
+ vViewPosition = -mvPosition.xyz;
+ vNormalView = normalize(normalMatrix * normal);
+ gl_Position = projectionMatrix * mvPosition;
+ #include <clipping_planes_vertex>
+}`,
+   fragmentShader:`uniform float uFocus; uniform float uFlash; varying vec3 vNormalView; varying vec3 vViewPosition;
+#include <clipping_planes_pars_fragment>
+void main(){
+ #include <clipping_planes_fragment>
+ float rim = pow(1.0 - abs(dot(normalize(vNormalView), normalize(vViewPosition))), 1.6);
+ gl_FragColor = vec4(1.0, 0.66, 0.26, uFocus * (0.16 + 0.55 * rim + 0.25 * uFlash));
+}`,
+   transparent:true,depthWrite:false,depthFunc:T.GreaterDepth,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-4,clipping:true,toneMapped:false,
+  });
+  const xrayLayer=new T.Group();xrayLayer.visible=false;scene.add(xrayLayer);
+  // Light backdrops get an unlit floor in the backdrop's own color, so the paper runs behind the figure without a horizon;
+  // dark backdrops keep a lit floor. Rings take their tone from the backdrop.
+  const paint=(a:Appearance)=>{const dark=isDark(a.background);renderer.setClearColor(a.background);groundLit.color.set(mixColor(a.background,'#000000',.6));groundLit.envMapIntensity=0;groundFlat.color.set(a.background);ground.material=dark?groundLit:groundFlat;highlight.uFade.value.set(a.background);platform.material.color.set(mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(dark?'#9aa6b2':mixColor(a.background,'#000000',.5));innerRing.material.color.set(dark?'#7d8a97':mixColor(a.background,'#000000',.35));mats.forEach((m,id)=>m.color.set(a.colors[id]));dirty=true;};
   let loaded=0;
   const loadChunk=async(ci:number)=>{
    const chunk=atlas.chunks[ci],compressed=!!chunk.gzip&&typeof DecompressionStream!=='undefined';const response=await fetch(compressed?chunk.gzip!:chunk.url,{signal:abort.signal});const buffer=await decodeModelResponse(response,chunk.bytes,compressed);if(disposed)return;
@@ -124,7 +161,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
     g.setAttribute('partIndex',new T.BufferAttribute(new Float32Array(p.vertexCount).fill(i),1));
     const list=groups.get(p.system)??[];list.push(g);groups.set(p.system,list);
    });
-   groups.forEach((gs,system)=>{const geometry=mergeGeometries(gs,false);if(!geometry)throw new Error('Could not assemble anatomy geometry.');geometries.push(geometry);const mesh=new T.Mesh(geometry,mats.get(system as never));mesh.frustumCulled=false;scene.add(mesh);});
+   groups.forEach((gs,system)=>{const geometry=mergeGeometries(gs,false);if(!geometry)throw new Error('Could not assemble anatomy geometry.');geometries.push(geometry);const mesh=new T.Mesh(geometry,mats.get(system as never));mesh.frustumCulled=false;scene.add(mesh);const ghost=new T.Mesh(geometry,xray);ghost.frustumCulled=false;ghost.renderOrder=2;xrayLayer.add(ghost);});
    lastState=null;loaded++;onProgress(Math.round(loaded/atlas.chunks.length*100));dirty=true;
   };
   (async()=>{try{let cursor=0;await Promise.all(Array.from({length:3},async()=>{while(cursor<atlas.chunks.length){const i=cursor++;await loadChunk(i);}}));if(!disposed){ready=true;dirty=true;}}catch(e){if(!disposed)onError(e instanceof Error?e.message:'Could not load the anatomy.');}})();
@@ -138,7 +175,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
   const resize=()=>{layoutKey='';lastState=null;renderer.setPixelRatio(Math.min(devicePixelRatio,el.clientWidth<768||el.clientHeight<600?1.5:2));camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight);fit(latest.current.view,amount);};const observer=new ResizeObserver(resize);observer.observe(el);
   const raycaster=new T.Raycaster(),pointer=new T.Vector2(),tap=new PointerTap(),worldBox=new T.Box3(),hitPoint=new T.Vector3();
   const down=(e:PointerEvent)=>{hover.hidden=true;tap.down(e.pointerId,e.clientX,e.clientY,e.pointerType==='touch'?12:5);};
-  const move=(e:PointerEvent)=>{tap.move(e.pointerId,e.clientX,e.clientY);if(e.buttons||amount<.5||e.pointerType==='touch'){hover.hidden=true;return;}const rect=el.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top,index=findTarget(x,y,12);hover.hidden=index<0;renderer.domElement.style.cursor=index<0?'grab':'pointer';if(index>=0){hover.textContent=atlas.parts[index].name;hover.style.left=`${Math.max(8,Math.min(x+14,el.clientWidth-260))}px`;hover.style.top=`${Math.max(8,Math.min(y+18,el.clientHeight-55))}px`;}};
+  const move=(e:PointerEvent)=>{tap.move(e.pointerId,e.clientX,e.clientY);if(e.buttons||amount<.5||e.pointerType==='touch'){hover.hidden=true;return;}const rect=el.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top,index=findTarget(x,y,12);hover.hidden=index<0;renderer.domElement.style.cursor=index<0?'grab':'pointer';if(index>=0){hover.textContent=nameOf.current?.(atlas.parts[index].name)??atlas.parts[index].name;hover.style.left=`${Math.max(8,Math.min(x+14,el.clientWidth-260))}px`;hover.style.top=`${Math.max(8,Math.min(y+18,el.clientHeight-55))}px`;}};
   const cancel=(e:PointerEvent)=>tap.cancel(e.pointerId);
   const up=(e:PointerEvent)=>{
    const validTap=tap.up(e.pointerId,e.clientX,e.clientY);if(!validTap||!ready)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);
@@ -147,7 +184,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    if(found<0&&amount>.45)found=findTarget(e.clientX-rect.left,e.clientY-rect.top,e.pointerType==='touch'?24:16);if(found>=0){hover.hidden=true;select.current(atlas.parts[found].id);}
   };
   renderer.domElement.addEventListener('pointerdown',down);renderer.domElement.addEventListener('pointermove',move);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
-  const clock=new T.Clock();let lastExtent=-1,lastSliceKey='',lastLabelKey='';
+  const clock=new T.Clock();let lastExtent=-1,lastSliceKey='',lastLabelKey='',lastSelected:string[]|null=null,flashStart=-10,lastNameOf:Props['label']|null=null;
   const partIndex=new Map(atlas.parts.map((p,i)=>[p.id,i]));
   const labelPoint=new T.Vector3(),offsetVec=new T.Vector3();
   // Cross-section: a single clipping plane walks through the body extent.
@@ -159,7 +196,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
     const cut=min+(max-min)*Math.max(0,Math.min(1,state.depth));
     clipPlane.normal.set(axis==='x'?-1:0,0,axis==='z'?-1:0);clipPlane.constant=-cut;
    }
-   if(on!==sliceApplied){mats.forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
+   if(on!==sliceApplied){[...mats.values(),xray].forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
   };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
@@ -169,6 +206,15 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
    const slice=s.slice??{on:false,depth:0,axis:'x'};
    const sliceKey=`${slice.on?1:0}:${slice.depth.toFixed(3)}:${slice.axis}`;
    if(sliceKey!==lastSliceKey){applySlice(slice);lastSliceKey=sliceKey;dirty=true;}
+   // Ease the focus fade in and out, and replay the flash whenever a new selection lands.
+   const focusTarget=s.selected.length&&!s.isolate?1:0;
+   if(Math.abs(highlight.uFocus.value-focusTarget)>.002){highlight.uFocus.value=T.MathUtils.damp(highlight.uFocus.value,focusTarget,10,dt);dirty=true;}else highlight.uFocus.value=focusTarget;
+   if(s.selected!==lastSelected){if(focusTarget)flashStart=clock.elapsedTime;lastSelected=s.selected;}
+   const flash=Math.max(0,1-(clock.elapsedTime-flashStart)/.9);
+   if(flash>0||highlight.uFlash.value>0){highlight.uFlash.value=flash*flash;dirty=true;}
+   xrayLayer.visible=highlight.uFocus.value>.01;
+   // Floating labels follow the interface language.
+   if(nameOf.current!==lastNameOf){lastNameOf=nameOf.current;for(const landmark of landmarks)landmark.node.textContent=nameOf.current?.(landmark.name)??landmark.name;dirty=true;}
    const labelKey=s.labels?'on':'off';
    if(labelKey!==lastLabelKey){lastLabelKey=labelKey;dirty=true;}
    const activationMap=latestActivations.current;
@@ -200,7 +246,8 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
      const c=centers[i],destination=offsets[i];let dx=0,dy=0,dz=0;
      if(amount<=.45){const t=amount/.45;const group=SYSTEMS.findIndex(sys=>sys.id===p.system);const angle=group/SYSTEMS.length*Math.PI*2;dx=Math.sin(angle)*t*.48;dy=(c.y-.85)*t*.28;dz=Math.cos(angle)*t*.48;}
      else {const t=(amount-.45)/.55,group=SYSTEMS.findIndex(sys=>sys.id===p.system),angle=group/SYSTEMS.length*Math.PI*2;dx=T.MathUtils.lerp(Math.sin(angle)*.48,destination.x-c.x,t);dy=T.MathUtils.lerp((c.y-.85)*.28,destination.y-c.y,t);dz=T.MathUtils.lerp(Math.cos(angle)*.48,-c.z,t);}
-     const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected?255:0;
+     // Isolation already singles the selection out, so isolated parts drop the highlight tint and keep their own color.
+     const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected&&!s.isolate?255:0;
      // Unused selection channels tint only the selected renal arterial tree.
      selectedData.set(perfusionTint(s.perfusion,p.id),i*4+1);
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
@@ -253,7 +300,7 @@ roughnessFactor = mix(roughnessFactor, 0.32, partActivated * 0.55);`);
 
   };animate();
   const contextLost=(e:Event)=>{e.preventDefault();onError('The 3D session was paused by your device. Reload to continue.');};renderer.domElement.addEventListener('webglcontextlost',contextLost);
-  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();centerTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();labelLayer.remove();renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());scene.traverse(o=>{if(o instanceof T.Mesh&&!geometries.includes(o.geometry)){o.geometry.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose());}});groundLit.dispose();groundFlat.dispose();env.dispose();partTexture.dispose();selectionTexture.dispose();activationTexture.dispose();centerTexture.dispose();markerGeometry.dispose();markerMaterial.dispose();hover.remove();labelLayer.remove();renderer.dispose();renderer.domElement.remove();};
  },[atlas]);
  return <div className="scene" ref={host}/>;
 }

@@ -113,6 +113,8 @@ Never commit `.env.local`; it is gitignored. Each teammate should create their o
 
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
+If OpenAI returns `insufficient_quota` / `credit_balance_exhausted`, add credits to that OpenAI project; the panel shows this as `provider_quota` instead of a generic rate-limit error.
+
 ## Rebuilding geometry
 
 The optimizer preserves source triangles and normals for arterial, venous, cardiac,

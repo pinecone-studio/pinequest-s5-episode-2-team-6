@@ -33,6 +33,7 @@ function assistantErrorMessage(code: string): string {
     return 'LLM холболт тохируулагдаагүй байна. .env.local файлд GEMINI_API_KEY, OPENAI_API_KEY эсвэл OPENROUTER_API_KEY нэмээд серверээ дахин эхлүүлнэ үү.';
   }
   if (code === 'provider_auth') return 'LLM API түлхүүр буруу эсвэл хүчингүй байна. Серверийн тохиргоог шалгана уу.';
+  if (code === 'provider_quota') return 'LLM provider-ийн кредит эсвэл квот дууссан байна. OpenAI billing хэсэгт кредит нэмээд дахин оролдоно уу.';
   if (code === 'provider_model') return 'Тохируулсан LLM загвар олдсонгүй. GEMINI_MODEL эсвэл бусад *_MODEL тохиргоог шалгана уу.';
   if (code === 'rate_limited') return 'Хүсэлт хэт олон байна. Нэг минутын дараа дахин оролдоно уу.';
   if (code === 'provider_busy') return 'LLM загвар түр ачаалалтай байна. Хэдэн секундын дараа дахин оролдоно уу.';

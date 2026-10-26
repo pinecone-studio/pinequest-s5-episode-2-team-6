@@ -482,13 +482,36 @@ function jsonError(status: number, code: string, message: string, headers: Recor
   });
 }
 
-function extractProviderError(raw: string): string {
+interface ProviderErrorDetails {
+  message: string;
+  type: string;
+  code: string;
+}
+
+function extractProviderErrorDetails(raw: string): ProviderErrorDetails {
   try {
-    const parsed = JSON.parse(raw) as {error?: {message?: string}; message?: string};
-    return String(parsed.error?.message ?? parsed.message ?? raw).slice(0, 500);
+    const parsed = JSON.parse(raw) as {
+      error?: {message?: string; type?: string; code?: string};
+      message?: string;
+      type?: string;
+      code?: string;
+    };
+    return {
+      message: String(parsed.error?.message ?? parsed.message ?? raw).slice(0, 500),
+      type: String(parsed.error?.type ?? parsed.type ?? ''),
+      code: String(parsed.error?.code ?? parsed.code ?? ''),
+    };
   } catch {
-    return raw.slice(0, 500);
+    return {message: raw.slice(0, 500), type: '', code: ''};
   }
+}
+
+function isQuotaExhausted(error: ProviderErrorDetails): boolean {
+  return (
+    error.type === 'insufficient_quota' ||
+    error.code === 'credit_balance_exhausted' ||
+    /no credits remaining|insufficient_quota|credit_balance_exhausted/i.test(error.message)
+  );
 }
 
 function checkRateLimit(request: Request, env: LlmEnv): number | null {
@@ -554,7 +577,8 @@ export async function handleChatRequest(request: Request, env: LlmEnv = process.
 
     if (!providerResponse.ok) {
       const rawError = await providerResponse.text();
-      console.error('[assistant] provider error', providerResponse.status, extractProviderError(rawError));
+      const providerError = extractProviderErrorDetails(rawError);
+      console.error('[assistant] provider error', providerResponse.status, providerError.message);
       if (providerResponse.status === 401 || providerResponse.status === 403) {
         return jsonError(502, 'provider_auth', 'The LLM provider rejected the API key.');
       }
@@ -562,6 +586,9 @@ export async function handleChatRequest(request: Request, env: LlmEnv = process.
         return jsonError(502, 'provider_model', 'The configured LLM model was not found.');
       }
       if (providerResponse.status === 429) {
+        if (isQuotaExhausted(providerError)) {
+          return jsonError(402, 'provider_quota', 'The LLM provider account has no remaining credits.', {'retry-after': '60'});
+        }
         return jsonError(429, 'rate_limited', 'The LLM provider rate limit was reached.', {'retry-after': '60'});
       }
       if (providerResponse.status === 503) {

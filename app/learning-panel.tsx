@@ -1,10 +1,11 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {CheckCircle2,ChevronLeft,ChevronRight,GraduationCap,ListChecks,X,XCircle} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {findConcepts} from './ai-assistant';
 import {quizFor,toursFor,TOURS,type Tour} from './learning-data';
 import type {Atlas,View} from './anatomy';
 import {useLang} from './locale';
+import {saveQuizResult} from '../lib/quiz-store';
 
 interface Props {
   mode: 'tour' | 'quiz' | null;
@@ -27,6 +28,20 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
 
   const tour: Tour = useMemo(() => tours.find(item => item.id === tourId) ?? tours[0], [tourId, tours]);
   const question = quiz[index];
+  const saved = useRef(false);
+  const finished = mode === 'quiz' && index >= quiz.length;
+
+  // Signed-in users get one saved result per completed run; guests just see the score.
+  useEffect(() => {
+    if (!finished) {
+      saved.current = false;
+      return;
+    }
+    if (saved.current) return;
+    saved.current = true;
+    const details = Object.fromEntries(answers.map((answer, i) => [String(i), answer ?? -1]));
+    void saveQuizResult(score, quiz.length, details);
+  }, [finished, score, answers, quiz.length]);
 
   useEffect(() => {
     setStep(0);
@@ -44,7 +59,6 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
   if (!mode) return null;
 
   if (mode === 'quiz') {
-    const finished = index >= quiz.length;
     const correct = score;
     return (
       <section className="learning-panel glass" aria-label={t.learn.quizPanel}>

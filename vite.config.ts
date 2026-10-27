@@ -56,5 +56,5 @@ function assistantApiPlugin(env:LlmEnv):Plugin{
 
 export default defineConfig(({mode})=>{
  const env={...process.env,...loadEnv(mode,process.cwd(),'')} as LlmEnv;
- return {root:path('./web'),publicDir:path('./public'),plugins:[react(),assistantApiPlugin(env)],resolve:{alias:{'@':path('./')}},css:{postcss:{plugins:[tailwindcss()]}},server:{watch:{usePolling:true}},build:{outDir:path('./dist'),emptyOutDir:true}};
+ return {root:path('./web'),envDir:path('./'),publicDir:path('./public'),plugins:[react(),assistantApiPlugin(env)],resolve:{alias:{'@':path('./')}},css:{postcss:{plugins:[tailwindcss()]}},server:{watch:{usePolling:true}},build:{outDir:path('./dist'),emptyOutDir:true}};
 });

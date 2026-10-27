@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {LangSwitch,useLang} from '../locale';
+import {supabase,supabaseConfigured} from '../../lib/supabase';
 
 export default function SignupPage(){
   const {t}=useLang();
@@ -24,11 +25,32 @@ export default function SignupPage(){
     if(password!==confirm){setError(t.auth.mismatch);return;}
     setLoading(true);
     try{
-      // TODO: энд жинхэнэ бүртгэлийн дуудлага орно (Clerk, Supabase г.м.)
-      await new Promise(r=>setTimeout(r,500));
-      navigate('/login');
-    }catch{
-      setError(t.auth.signupFailed);
+      if(!supabaseConfigured){
+        // Env vars missing: the page still works in demo mode (no backend).
+        await new Promise(r=>setTimeout(r,500));
+        navigate('/login');
+        return;
+      }
+      const result=await supabase.auth.signUp({
+        email,
+        password,
+        options:{
+          data:{name}, // copied into the profiles table by a DB trigger
+          // Keep the user on the site after confirming the email.
+          emailRedirectTo:`${window.location.origin}/login`,
+        },
+      });
+      if(result.error)throw result.error;
+      // Email confirmation off (the Supabase default is on): the session
+      // already exists, so the new user goes straight to the account page.
+      // With confirmation on, the login page shows the check-your-email note.
+      if(result.data.session){
+        navigate('/account',{state:{notice:t.auth.created}});
+      }else{
+        navigate('/login',{state:{notice:t.auth.verifyEmail}});
+      }
+    }catch(err){
+      setError(err instanceof Error&&err.message?t.auth.signupFailed+' — '+err.message:t.auth.signupFailed);
     }finally{
       setLoading(false);
     }

@@ -31,9 +31,10 @@ Open http://localhost:3016. The Vite dev server serves `/api/chat` from `server/
 
 ## Validate
 
-Open **Plaque lab** in the atlas for the renal-artery teaching demo: adjust diameter
-narrowing and segment length, compare relative kidney flow, and locate the supplied
-artery and kidney in 3D. Run `node scripts/validate-plaque.mjs` for model checks.
+Open **Plaque lab**, choose a renal artery or branch from the dropdown or by clicking
+its 3D mesh, then adjust diameter narrowing and segment length. The selected vessel
+changes flow color; the cutaway and metrics show lumen area and relative flow loss.
+Run `node scripts/validate-plaque.mjs` for model checks.
 The dimensionless circuit is illustrative and does not predict clinical outcomes.
 
 ```sh

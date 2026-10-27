@@ -1,11 +1,11 @@
 .plaque-trigger{position:absolute;top:88px;right:24px;z-index:29;background:#fff;color:#244a45}
-.plaque-panel{position:absolute;z-index:30;right:24px;top:88px;bottom:24px;width:min(400px,calc(100vw - 48px));overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;color:#253d43;background:#f7faf9;border:1px solid #d7e3df;border-radius:14px}
-.plaque-panel header,.perfusion-legend{display:flex;align-items:center;justify-content:space-between;gap:8px}.plaque-panel h2{font-weight:650}.perfusion-legend span{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.rom-panel.plaque-panel{z-index:30}.plaque-panel select{max-width:75%;min-width:0}.plaque-panel .rom-title{font-weight:650}
+.perfusion-legend{display:flex;align-items:center;justify-content:space-between;gap:8px}.perfusion-legend span{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 .studio.plaque-open .layers-panel,.studio.plaque-open .view-controls,.studio.plaque-open .bottom-dock,.studio.plaque-open .top-actions,.studio.plaque-open .identity-tools{visibility:hidden}
 .plaque-panel section{border:1px solid #d7e3df;border-radius:12px;padding:14px;background:white}.plaque-panel h3{font-weight:650;margin-bottom:12px}
 .plaque-panel label{display:flex;justify-content:space-between;align-items:center;gap:12px}.plaque-panel input[type=range]{width:100%;accent-color:#32796d;min-height:32px}
 .plaque-panel select{padding:8px;border:1px solid #b8cbc5;border-radius:6px}.plaque-panel svg{width:100%;display:block}.plaque-panel svg text{font-size:11px;fill:#364d50}
-.plaque-panel p{font-size:12px;line-height:1.6;margin-top:8px;color:#526769}.plaque-panel dl{display:grid;grid-template-columns:1fr auto;gap:8px}.plaque-panel dd{font-weight:700}.plaque-panel a{text-decoration:underline}.plaque-panel summary{cursor:pointer;margin-top:10px}
-@media(max-width:767px){.plaque-trigger{top:112px;right:12px}.plaque-panel{padding:16px;left:12px;right:12px;top:auto;bottom:12px;width:auto;height:48dvh}.studio.plaque-open .identity-tools{visibility:hidden}}
-@media(max-height:600px) and (orientation:landscape){.plaque-panel{left:auto;top:12px;bottom:12px;width:45vw;height:auto}}
+.plaque-panel section p,.plaque-panel>p{font-size:12px;line-height:1.6;color:#526769}.plaque-panel dl{display:grid;grid-template-columns:1fr auto;gap:8px}.plaque-panel dd{font-weight:700}.plaque-panel a{text-decoration:underline}.plaque-panel summary{cursor:pointer;margin-top:10px}
+@media(max-width:767px){.plaque-trigger{top:112px;right:12px}.rom-panel.plaque-panel{top:auto;bottom:12px;height:48dvh;max-height:48dvh}}
+@media(max-height:600px) and (orientation:landscape){.rom-panel.plaque-panel{left:auto;top:12px;bottom:12px;width:45vw;height:auto;max-height:calc(100dvh - 24px)}}
 @media(prefers-reduced-motion:reduce){.plaque-panel circle{display:none}}

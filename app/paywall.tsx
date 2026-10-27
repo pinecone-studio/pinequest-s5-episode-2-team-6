@@ -9,7 +9,7 @@ import {useLang} from './locale';
 const copy={
   en:{
     title:'Premium feature',
-    lead:'ROM Lab and the Plaque Lab are part of Premium. The main atlas — every system, search, the tour, and the quiz — stays free.',
+    lead:'ROM Lab and the Plaque Lab are part of Premium. The main atlas — every system, search and the quiz — stays free.',
     perks:()=>(
       <ul className="list-disc pl-5">
         <li>Range-of-motion lab: move in front of the camera and watch muscles light up</li>
@@ -21,7 +21,7 @@ const copy={
   },
   mn:{
     title:'Premium боломж',
-    lead:'ROM Lab болон Plaque Lab нь Premium багцын хэсэг. Гол атлас — бүх систем, хайлт, аялал, сорил — үнэгүй.',
+    lead:'ROM Lab болон Plaque Lab нь Premium багцын хэсэг. Гол атлас — бүх систем, хайлт, сорил — үнэгүй.',
     perks:()=>(
       <ul className="list-disc pl-5">
         <li>Хөдөлгөөний далайцын лаб: камерын өмнө хөдөлж, ажилласан булчинг 3D дээр харна</li>

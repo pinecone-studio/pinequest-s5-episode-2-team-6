@@ -1,5 +1,6 @@
 // Track the signed-in user's role and premium status. The atlas uses
-// `premium` to lock ROM Lab and Plaque Lab; the account page also reads
+// `premium` to lock ROM Lab and Plaque Lab (its /plaque route waits for
+// `ready` and `loading` before deciding); the account page also reads
 // the latest subscription row for renewal dates.
 import {useEffect,useState} from 'react';
 import {supabase} from '../lib/supabase';
@@ -19,8 +20,10 @@ export interface SubscriptionState{
 
 export function useSubscription():SubscriptionState{
   const {ready,user}=useAuth();
-  const [state,setState]=useState<Omit<SubscriptionState,'ready'|'refresh'>>({
-    loading:false,isAdmin:false,premium:false,expiresAt:null,
+  // `owner` is the user the state was looked up for, so a newly signed-in user reads as loading
+  // from the very first render instead of briefly looking like a free account.
+  const [state,setState]=useState<Omit<SubscriptionState,'ready'|'refresh'>&{owner:string|null}>({
+    loading:false,isAdmin:false,premium:false,expiresAt:null,owner:null,
   });
   // Bumping this counter forces a fresh lookup (payments confirm → refresh).
   const [version,setVersion]=useState(0);
@@ -28,7 +31,7 @@ export function useSubscription():SubscriptionState{
   useEffect(()=>{
     let alive=true;
     if(!user){
-      setState({loading:false,isAdmin:false,premium:false,expiresAt:null});
+      setState({loading:false,isAdmin:false,premium:false,expiresAt:null,owner:null});
       return;
     }
     setState(s=>({...s,loading:true}));
@@ -46,14 +49,17 @@ export function useSubscription():SubscriptionState{
         isAdmin:Boolean(profile?.is_admin),
         premium:active.length>0,
         expiresAt:active[0]?.expires_at??null,
+        owner:user.id,
       });
     })();
     return ()=>{alive=false;};
   },[user,version]);
 
+  const {owner,...rest}=state;
   return {
     ready,
-    ...state,
+    ...rest,
+    loading:rest.loading||(user?.id??null)!==owner,
     refresh:()=>setVersion(v=>v+1),
   };
 }

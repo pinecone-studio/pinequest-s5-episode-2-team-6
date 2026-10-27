@@ -1,6 +1,7 @@
 import {SYSTEMS,type SystemId} from './anatomy';
 export interface Appearance {background:string;colors:Record<SystemId,string>}
-// Glass is the default: the 3D canvas turns transparent over a blue gradient and the panels turn to frosted glass.
+// Glass is the default: the 3D canvas turns transparent over a blue gradient. The other backdrops paint the room
+// one flat colour; the frosted glass interface is the same for all of them.
 export const GLASS='#4f84c4';
 export const isGlass=(color:string)=>color===GLASS;
 export const BACKGROUNDS=[{name:'Glass',color:GLASS},{name:'Paper',color:'#ebe4d6'},{name:'Studio',color:'#f2f3f3'},{name:'Warm',color:'#efe8de'},{name:'Mist',color:'#e2eaf0'},{name:'Slate',color:'#3a4551'},{name:'Midnight',color:'#11171e'},{name:'Black',color:'#000000'}];

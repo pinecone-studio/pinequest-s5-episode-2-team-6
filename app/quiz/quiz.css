@@ -1,0 +1,126 @@
+/* Quiz screen. Scoped under .qz because globals.css styles bare h1/button/a for the atlas. A blue room and
+   frosted glass, as in the atlas: one column, one question per screen, big tap targets, and on a phone
+   the next button stays pinned above the home indicator. Button rules repeat with :hover because globals.css
+   repaints hovered buttons. */
+.qz{
+ --qz-lime:#dcf55a;--qz-lime-ink:#25310a;--qz-coral:#ff9a86;--qz-coral-ink:#3a0d05;
+ --qz-muted:rgb(255 255 255/.8);--qz-faint:rgb(255 255 255/.6);
+ --qz-edge:linear-gradient(140deg,rgb(255 255 255/.62),rgb(255 255 255/.08) 38%,rgb(255 255 255/.06) 62%,rgb(255 255 255/.34));
+ --qz-fill:linear-gradient(150deg,rgb(255 255 255/.24),rgb(255 255 255/.07));
+ --qz-shadow:0 22px 44px -18px rgb(14 42 92/.5);
+ --qz-pad:16px;
+ position:fixed;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;isolation:isolate;
+ color:#fff;background:#4f84c4;font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+}
+.qz h1,.qz h2{display:block;margin:0;font-family:'Inter Tight',Inter,sans-serif;font-weight:600;letter-spacing:-.015em;line-height:1.2;color:inherit}
+.qz h1:focus{outline:none}
+.qz p{margin:0}
+.qz a{text-decoration:none}
+.qz :is(button,a):focus-visible{outline:2px solid var(--qz-lime);outline-offset:3px}
+
+.qz-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:
+ radial-gradient(55% 40% at 50% 18%,rgb(214 234 255/.55),transparent 72%),
+ radial-gradient(80% 55% at 0% 0%,rgb(158 200 246/.75),transparent 62%),
+ radial-gradient(70% 55% at 100% 100%,rgb(24 60 134/.75),transparent 70%),
+ linear-gradient(180deg,#7caade 0%,#548ac9 46%,#3a6db1 100%)}
+.qz-bg i{position:absolute;border-radius:50%;filter:blur(60px)}
+.qz-bg i:nth-child(1){width:70vmax;height:42vmax;left:-28vmax;top:42%;background:rgb(32 72 150/.45);transform:rotate(-24deg)}
+.qz-bg i:nth-child(2){width:46vmax;height:46vmax;right:-20vmax;top:-12vmax;background:rgb(255 255 255/.22)}
+
+.qz .qz-glass,.qz button.qz-glass:hover{
+ border:1px solid transparent;background:var(--qz-fill) padding-box,var(--qz-edge) border-box;
+ box-shadow:inset 0 1px 0 rgb(255 255 255/.32),var(--qz-shadow);
+ -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);
+}
+
+.qz-shell{display:flex;flex-direction:column;gap:12px;width:min(100%,640px);min-height:100%;margin:0 auto;padding:calc(var(--site-nav-h) + env(safe-area-inset-top) + 14px) var(--qz-pad) calc(24px + env(safe-area-inset-bottom))}
+.qz-shell.is-intro{justify-content:center}
+.qz-card{border-radius:28px;padding:22px 20px}
+.qz-kicker{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--qz-muted)}
+
+/* Buttons */
+.qz .qz-primary,.qz button.qz-primary:hover{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:54px;padding:0 22px;border:0;border-radius:999px;font-size:16px;font-weight:600;background:var(--qz-lime);color:var(--qz-lime-ink);box-shadow:0 10px 26px rgb(220 245 90/.38);transition:filter .2s,background .2s}
+.qz button.qz-primary:hover{filter:brightness(1.05)}
+.qz button.qz-primary:disabled{opacity:1;filter:none;background:rgb(255 255 255/.16);color:var(--qz-faint);box-shadow:inset 0 0 0 1px rgb(255 255 255/.22);cursor:default}
+.qz .qz-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:54px;padding:0 22px;border-radius:999px;font-size:15px;font-weight:600;color:#fff}
+
+/* Intro */
+.qz-intro{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:26px 22px 22px}
+.qz-icon{display:grid;place-items:center;width:54px;height:54px;margin-bottom:4px;border-radius:18px;background:var(--qz-lime);color:var(--qz-lime-ink);box-shadow:0 10px 26px rgb(220 245 90/.4)}
+.qz-intro h1{font-size:30px}
+.qz-lead{font-size:15px;line-height:1.55;color:var(--qz-muted)}
+.qz-facts{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px;padding:0;list-style:none}
+.qz-facts li{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid rgb(255 255 255/.24);background:rgb(255 255 255/.14);font-size:13px;font-weight:500}
+.qz-note{align-self:center;font-size:12.5px;line-height:1.45;text-align:center;color:var(--qz-faint)}
+.qz .qz-note a{font-weight:600;color:#fff;text-decoration:underline;text-underline-offset:3px}
+
+/* Question */
+.qz-top{display:flex;align-items:center;gap:10px}
+.qz .qz-quit{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;padding:0;border-radius:50%;color:#fff}
+.qz-steps{flex:1;display:flex;gap:4px;min-width:0}
+.qz-steps i{flex:1;height:6px;border-radius:99px;background:rgb(255 255 255/.22);transition:background .25s}
+.qz-steps i.is-current{background:rgb(255 255 255/.75)}
+.qz-steps i.is-right{background:var(--qz-lime)}
+.qz-steps i.is-wrong{background:var(--qz-coral)}
+.qz-score{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;height:34px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.qz-question{display:flex;flex-direction:column;gap:10px;padding:20px 20px 22px}
+.qz-question h1{font-size:21px;line-height:1.32}
+.qz-options{display:flex;flex-direction:column;gap:10px}
+.qz .qz-option{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 16px 10px 10px;border-radius:20px;font-size:15.5px;font-weight:500;line-height:1.35;text-align:left;color:#fff}
+.qz button.qz-option:hover:not(:disabled){background:linear-gradient(150deg,rgb(255 255 255/.36),rgb(255 255 255/.14)) padding-box,var(--qz-edge) border-box;color:#fff}
+.qz button.qz-option:active:not(:disabled){transform:scale(.985)}
+.qz button.qz-option:disabled{opacity:1;cursor:default;color:#fff}
+/* Marked answers turn solid with dark ink so they read on any part of the room. */
+.qz button.qz-option.is-right{background:var(--qz-lime);color:var(--qz-lime-ink);box-shadow:0 10px 26px -8px rgb(220 245 90/.6)}
+.qz button.qz-option.is-wrong{background:var(--qz-coral);color:var(--qz-coral-ink);box-shadow:0 10px 26px -8px rgb(255 120 100/.55)}
+.qz button.qz-option.is-muted{opacity:.5}
+.qz-letter{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:12px;background:rgb(255 255 255/.18);font-size:14px;font-weight:600}
+.qz-option-text{flex:1;min-width:0}
+.qz-option.is-right .qz-letter{background:var(--qz-lime-ink);color:var(--qz-lime)}
+.qz-option.is-wrong .qz-letter{background:var(--qz-coral-ink);color:var(--qz-coral)}
+.qz-review li.is-right .qz-letter{background:var(--qz-lime);color:var(--qz-lime-ink)}
+.qz-review li.is-wrong .qz-letter{background:var(--qz-coral);color:var(--qz-coral-ink)}
+.qz-feedback{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px 18px 16px;border-radius:22px}
+.qz-feedback strong{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;font-size:13.5px;font-weight:600}
+.qz-feedback.is-right strong{background:var(--qz-lime);color:var(--qz-lime-ink)}
+.qz-feedback.is-wrong strong{background:var(--qz-coral);color:var(--qz-coral-ink)}
+.qz-feedback p{font-size:14.5px;line-height:1.55;color:#fff}
+.qz-link{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:rgb(255 255 255/.18);border:1px solid rgb(255 255 255/.3);font-size:13.5px;font-weight:600;color:#fff}
+/* The next button rides at the bottom of the screen over a fade of the room's floor colour. */
+.qz-next{position:sticky;bottom:0;z-index:2;margin:auto calc(-1*var(--qz-pad)) calc(-24px - env(safe-area-inset-bottom));padding:18px var(--qz-pad) calc(14px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgb(58 109 177/0),rgb(58 109 177/.9) 45%)}
+
+/* Result */
+.qz-result{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 22px 22px;text-align:center}
+.qz-ring{--pct:0;position:relative;display:grid;place-items:center;width:148px;height:148px;margin:4px 0}
+.qz-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--qz-lime) calc(var(--pct)*1turn),rgb(255 255 255/.2) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 12px),#000 calc(100% - 11px));mask:radial-gradient(farthest-side,transparent calc(100% - 12px),#000 calc(100% - 11px))}
+.qz-ring strong{font-family:'Inter Tight',Inter,sans-serif;font-size:46px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.qz-ring strong span{font-size:20px;font-weight:500;color:var(--qz-faint)}
+.qz-result h1{max-width:30ch;font-size:18px;font-weight:500;line-height:1.45}
+.qz-actions{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:4px}
+.qz-review{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.qz-review h2{padding:0 4px;font-size:17px}
+.qz-review ol{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.qz-review li{display:flex;align-items:flex-start;gap:12px;padding:14px 12px 14px 14px;border-radius:20px}
+.qz-review li>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.qz-review .qz-letter{width:30px;height:30px;border-radius:10px}
+.qz-review-q{font-size:14.5px;font-weight:500;line-height:1.4}
+.qz-review-a{font-size:13px;line-height:1.45;color:var(--qz-muted)}
+.qz-review-a span{color:var(--qz-faint)}
+.qz-review-a.is-answer{color:#fff}
+.qz-review-3d{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;border-radius:50%;background:rgb(255 255 255/.16);color:#fff}
+
+@keyframes qzRise{from{opacity:0;transform:translateY(8px)}}
+.qz-card,.qz-options,.qz-feedback{animation:qzRise .32s cubic-bezier(.2,.7,.2,1) both}
+.qz-options{animation-delay:.05s}
+
+@media(min-width:560px){.qz-actions{flex-direction:row}.qz-actions>*{flex:1}}
+@media(min-width:768px){
+ .qz-shell{gap:14px;padding-top:calc(var(--site-nav-h) + 32px)}
+ .qz-card{padding:30px 32px}
+ .qz-intro{padding:34px 36px 28px}
+ .qz-intro h1{font-size:40px}
+ .qz-question h1{font-size:26px}
+ .qz .qz-option{min-height:64px;font-size:16px}
+}
+@media(max-width:360px){.qz{--qz-pad:12px}.qz-intro h1{font-size:26px}.qz-question h1{font-size:19px}.qz-score{padding:0 10px}}
+@media(prefers-reduced-motion:reduce){.qz *{animation:none!important;transition:none!important}}

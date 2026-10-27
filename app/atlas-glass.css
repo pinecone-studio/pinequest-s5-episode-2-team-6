@@ -1,8 +1,7 @@
-/* Glass theme for the atlas, matching the body check screen: a blue room behind a transparent canvas,
+/* Glass theme for the atlas, matching the quiz screen: a blue room behind a transparent canvas,
    frosted blue panels, white type, pill controls and one lime accent. It sits on top of the plate theme
-   in globals.css and applies while <html> carries .atlas-glass (the Glass backdrop, the default); the
-   other backdrops in the Colors panel bring the plate look back. Sheets render in a portal outside
-   .studio, which is why everything is scoped from <html>. */
+   in globals.css and applies while <html> carries .atlas-glass, which the atlas sets for every backdrop.
+   Sheets render in a portal outside .studio, which is why everything is scoped from <html>. */
 .atlas-glass{
  --g-lime:#dcf55a;--g-lime-2:#e8fb86;--g-lime-ink:#25310a;
  --g-ink:#fff;--g-ink-2:rgb(255 255 255/.9);--g-ink-3:rgb(255 255 255/.72);
@@ -36,34 +35,33 @@
 .atlas-glass .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 48%,rgb(14 40 92/.3) 100%);opacity:1;mix-blend-mode:normal}
 .atlas-glass .stage-frame{display:none}
 
+/* Another backdrop from the Colors panel keeps this interface and only repaints the room (inline on .atlas-page,
+   and the canvas clears to it). The pieces that sat straight on the blue room take the panels' blue instead of
+   clear white glass, so their white type reads on light and dark colours alike. */
+.atlas-glass.atlas-custom{--g-fill:var(--g-panel);--g-fill-2:linear-gradient(160deg,rgb(84 130 204/.86),rgb(44 82 150/.9))}
+.atlas-glass.atlas-custom .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 52%,rgb(0 0 0/.16) 100%)}
+.atlas-glass.atlas-custom .site-nav.is-glass{background:var(--g-panel) padding-box,var(--g-edge) border-box}
+.atlas-glass.atlas-custom .studio-footer button{padding:5px 11px;border-radius:999px;background:var(--g-panel);box-shadow:var(--g-shadow)}
+
 /* Glass surfaces. Every panel shares one material; the edge highlight is the second background. */
 .atlas-glass :is(.glass,.info-card){border:1px solid transparent;border-radius:26px;background:var(--g-panel) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.28),var(--g-shadow);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff}
 .atlas-glass .layers-panel.mobile-open{background:var(--g-panel) padding-box,var(--g-edge) border-box;border-radius:26px}
 
 /* Masthead */
-.atlas-glass .identity{color:#fff;text-shadow:0 1px 14px rgb(14 40 92/.25)}
 .atlas-glass .eyebrow{font-family:var(--g-sans);font-weight:600;letter-spacing:.16em;color:var(--g-ink-2)}
-.atlas-glass .status-dot{border-radius:50%;background:var(--g-lime);box-shadow:0 0 0 3px rgb(220 245 90/.25),0 0 10px rgb(220 245 90/.8);animation:none}
-.atlas-glass .identity h1{font-family:var(--g-display);font-weight:600;font-size:46px;line-height:1;letter-spacing:-.035em;align-items:center;margin:10px 0 10px}
-.atlas-glass .atlas-wordmark em{font-style:normal;font-weight:600;color:var(--g-lime)}
-.atlas-glass .identity h1 .edition{margin-top:0;padding:3px 8px;border-radius:999px;border:1px solid var(--g-line-2);background:var(--g-chip);font-family:var(--g-sans);font-size:10px;font-weight:600;letter-spacing:.06em;color:#fff;text-shadow:none}
-.atlas-glass .identity-meta{font-family:var(--g-sans);font-size:11.5px;color:var(--g-ink-2)}
-.atlas-glass .identity-meta span{color:var(--g-lime)}
-.atlas-glass .identity-tools{gap:8px}
-.atlas-glass .identity-tools>*+*{margin-left:0}
 
 /* Pill controls: masthead tools, toolbar and the Plaque lab button */
-.atlas-glass :is(.identity-tools>button,.top-actions>button,.studio .plaque-trigger){border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 10px 24px -14px rgb(14 42 92/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
+.atlas-glass .top-actions>button{border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 10px 24px -14px rgb(14 42 92/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
 .atlas-glass .top-actions>button+button{margin-left:6px}
-.atlas-glass :is(.identity-tools>button,.top-actions>button,.studio .plaque-trigger):hover{background:var(--g-fill-2) padding-box,var(--g-edge) border-box;color:#fff}
+.atlas-glass .top-actions>button:hover{background:var(--g-fill-2) padding-box,var(--g-edge) border-box;color:#fff}
 .atlas-glass .top-actions .ask-button{background:#fff;color:#1d4079;font-weight:600}
 .atlas-glass .top-actions .ask-button:hover{background:#eef5ff;color:#1d4079}
-.atlas-glass :is(.identity-tools>button.active,.top-actions>button.active,.studio .plaque-trigger[aria-expanded=true]){background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.42)}
+.atlas-glass .top-actions>button.active{background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.42)}
 .atlas-glass .top-actions kbd{border-radius:5px;border-color:currentColor;font-family:var(--g-sans);opacity:.6}
 .atlas-glass .lang-switch{border:1px solid transparent;border-radius:999px;padding:0 3px;background:var(--g-fill) padding-box,var(--g-edge) border-box;-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
-.atlas-glass :is(.lang-switch,.identity-tools .lang-switch) button{border-radius:999px;font-family:var(--g-sans);font-weight:600;color:var(--g-ink-2);text-shadow:none}
-.atlas-glass :is(.lang-switch,.identity-tools .lang-switch) button:hover{background:var(--g-chip);color:#fff}
-.atlas-glass :is(.lang-switch,.identity-tools .lang-switch) button.is-active{background:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass .lang-switch button{border-radius:999px;font-family:var(--g-sans);font-weight:600;color:var(--g-ink-2);text-shadow:none}
+.atlas-glass .lang-switch button:hover{background:var(--g-chip);color:#fff}
+.atlas-glass .lang-switch button.is-active{background:var(--g-lime);color:var(--g-lime-ink)}
 
 /* Systems index */
 .atlas-glass .panel-heading>span:first-child{font-family:var(--g-display);font-size:21px;font-weight:600;font-style:normal;letter-spacing:-.015em;color:#fff}
@@ -110,14 +108,10 @@
 .atlas-glass .dock-layers{border-right-color:var(--g-line)}
 .atlas-glass .dock-reset svg{border-radius:50%;border-color:var(--g-line-2);background:var(--g-chip)}
 .atlas-glass .dock-reset:hover svg{background:var(--g-lime);color:var(--g-lime-ink)}
-.atlas-glass .bottom-dock .scene-caption{bottom:calc(100% + 8px);left:0;gap:8px;padding:6px 14px;border:1px solid transparent;border-radius:999px;background:var(--g-panel) padding-box,var(--g-edge) border-box;box-shadow:0 10px 24px -14px rgb(14 42 92/.6);color:#fff}
-.atlas-glass .fig-no{font-family:var(--g-sans);font-weight:600;letter-spacing:.1em;color:var(--g-lime)}
-.atlas-glass .fig-text{font-family:var(--g-display);font-size:14px;font-style:normal;font-weight:500}
 
 /* Colophon and loading */
 .atlas-glass .studio-footer{font-family:var(--g-sans);font-size:10.5px;letter-spacing:.02em;text-transform:none;color:var(--g-ink-2)}
 .atlas-glass .studio-footer button{font-family:var(--g-sans);font-size:10.5px;letter-spacing:0;text-transform:none;color:#fff}
-.atlas-glass .studio-footer b{color:var(--g-lime)}
 .atlas-glass .loading strong{font-family:var(--g-display);font-size:20px;font-style:normal;font-weight:600;color:#fff}
 .atlas-glass .loading span{font-family:var(--g-sans);font-size:11px;letter-spacing:.02em;text-transform:none;color:var(--g-ink-3)}
 .atlas-glass .loading-track{height:4px;border-radius:99px;background:rgb(255 255 255/.2)}
@@ -172,9 +166,9 @@
 
 /* Assistant */
 .atlas-glass :is(.ai-title,.rom-title,.learning-title){font-family:var(--g-display);font-size:23px;font-weight:600;font-style:normal;letter-spacing:-.025em;color:#fff}
-.atlas-glass :is(.ai-kicker,.rom-kicker,.learning-kicker,.tour-counter,.rom-gauge-label,.quiz-meta){font-family:var(--g-sans);font-weight:600;color:var(--g-lime)}
-.atlas-glass :is(.tour-step h3,.quiz-prompt,.rom-muscles-head h3,.plaque-panel h3){font-family:var(--g-display);font-weight:600;color:#fff}
-.atlas-glass :is(.quiz-result strong,.rom-gauge-value){font-family:var(--g-display);font-weight:600;color:#fff}
+.atlas-glass :is(.ai-kicker,.rom-kicker,.learning-kicker,.tour-counter,.rom-gauge-label){font-family:var(--g-sans);font-weight:600;color:var(--g-lime)}
+.atlas-glass :is(.tour-step h3,.rom-muscles-head h3,.plaque-panel h3){font-family:var(--g-display);font-weight:600;color:#fff}
+.atlas-glass .rom-gauge-value{font-family:var(--g-display);font-weight:600;color:#fff}
 .atlas-glass :is(.ai-model-badge,.ai-selection){border-radius:999px;background:var(--g-chip);border:1px solid var(--g-line);color:var(--g-ink-2)}
 .atlas-glass .ai-message{border-radius:18px}
 .atlas-glass .ai-message-user{background:#fff;color:#1d4079;border-bottom-right-radius:6px}
@@ -195,8 +189,8 @@
 .atlas-glass .ai-intro p{color:var(--g-ink-2)}
 .atlas-glass .ai-config-hint{border-radius:14px;border-color:rgb(255 214 130/.45);background:rgb(255 214 130/.16);color:#ffe9c2!important}
 .atlas-glass .ai-config-hint code{background:rgb(255 255 255/.16)}
-.atlas-glass :is(.ai-prompt,.tour-chip,.tour-show,.info-card-chip,.learning-secondary,.rom-secondary){border:1px solid var(--g-line-2);border-radius:999px;background:var(--g-chip);color:#fff;font-family:var(--g-sans);letter-spacing:0;text-transform:none}
-.atlas-glass :is(.ai-prompt,.tour-chip,.tour-show,.info-card-chip,.learning-secondary,.rom-secondary):hover{background:var(--g-chip-2);color:#fff}
+.atlas-glass :is(.ai-prompt,.info-card-chip,.learning-secondary,.rom-secondary){border:1px solid var(--g-line-2);border-radius:999px;background:var(--g-chip);color:#fff;font-family:var(--g-sans);letter-spacing:0;text-transform:none}
+.atlas-glass :is(.ai-prompt,.info-card-chip,.learning-secondary,.rom-secondary):hover{background:var(--g-chip-2);color:#fff}
 .atlas-glass .ai-action-chip{border-radius:999px;border-color:rgb(220 245 90/.45);background:rgb(220 245 90/.16);color:var(--g-lime)}
 .atlas-glass .ai-composer{border-radius:24px;border-color:var(--g-line-2);background:var(--g-chip)}
 .atlas-glass .ai-composer textarea{color:#fff}
@@ -217,15 +211,9 @@
 .atlas-glass .floating-label{border:1px solid rgb(255 255 255/.4);border-radius:999px;background:rgb(52 96 170/.74);box-shadow:0 4px 14px rgb(14 42 92/.3);font-family:var(--g-sans);font-size:11px;font-weight:500;letter-spacing:0;color:#fff}
 .atlas-glass .part-hover{border:1px solid rgb(255 255 255/.35);border-radius:999px;padding:6px 13px;background:rgb(28 60 124/.86);box-shadow:0 8px 24px rgb(14 42 92/.4);color:#fff;font-family:var(--g-sans);font-size:13px;font-style:normal;font-weight:500}
 
-/* Tours and quiz */
-.atlas-glass .tour-chip.active{background:var(--g-lime);border-color:var(--g-lime);color:var(--g-lime-ink)}
-.atlas-glass :is(.tour-summary,.tour-step p,.quiz-feedback p,.quiz-result p){color:var(--g-ink-2)}
+/* First visit introduction */
+.atlas-glass .tour-step p{color:var(--g-ink-2)}
 .atlas-glass .tour-step{border-radius:18px;background:var(--g-chip)}
-.atlas-glass .learning-note{color:var(--g-ink-3)}
-.atlas-glass .quiz-option{border-radius:16px;border-color:var(--g-line-2);background:var(--g-chip);color:#fff}
-.atlas-glass .quiz-option:hover{background:var(--g-chip-2)}
-.atlas-glass .quiz-option.is-correct{border-color:rgb(220 245 90/.65);background:rgb(220 245 90/.2);color:#f3ffc6}
-.atlas-glass .quiz-option.is-wrong{border-color:rgb(255 150 130/.6);background:rgb(255 120 100/.2);color:#ffd9d2}
 
 /* ROM and plaque labs */
 .atlas-glass .rom-subtitle{color:var(--g-ink-2)}
@@ -265,7 +253,6 @@
 
 /* Panels rise in once instead of the plate's print reveal. */
 @keyframes glassIn{from{opacity:0;transform:translateY(10px)}}
-.atlas-glass .identity{animation:glassIn .7s cubic-bezier(.2,.7,.2,1) both}
 .atlas-glass .top-actions{animation:glassIn .7s .08s cubic-bezier(.2,.7,.2,1) both}
 .atlas-glass .layers-panel{animation:glassIn .7s .16s cubic-bezier(.2,.7,.2,1) both}
 .atlas-glass .bottom-dock{animation:glassIn .7s .24s cubic-bezier(.2,.7,.2,1) both}
@@ -275,17 +262,12 @@
  .atlas-glass .dock-tabs{border-radius:20px;padding:4px;border:1px solid var(--g-line)}
  .atlas-glass .dock-tabs button{border-radius:14px}
 }
-@media(min-width:768px) and (max-width:1100px) and (min-height:601px){
- .atlas-glass .identity h1{font-size:40px}
-}
 @media(max-width:767px){
- .atlas-glass .identity h1{font-size:32px}
  .atlas-glass .detail-header .structure-title{font-size:23px!important}
  .atlas-glass .explode-label output{font-size:26px}
  .atlas-glass .bottom-dock{border-radius:26px}
 }
-@media(max-width:350px){.atlas-glass .identity h1{font-size:27px}}
-@media(prefers-reduced-motion:reduce){.atlas-glass :is(.identity,.top-actions,.layers-panel,.bottom-dock){animation:none}}
+@media(prefers-reduced-motion:reduce){.atlas-glass :is(.top-actions,.layers-panel,.bottom-dock){animation:none}}
 
 /* Details inside the labs and the about sheet */
 .atlas-glass :is(.rom-muscles-head h3,.plaque-panel h3){font-size:15px}

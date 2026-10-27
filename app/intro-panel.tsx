@@ -1,14 +1,53 @@
-import {useEffect} from 'react';
-import {ChevronLeft,ChevronRight,Compass,GraduationCap,Hand,MousePointerClick,Search,Sparkles,X} from 'lucide-react';
+import {useEffect,useState,type ComponentType} from 'react';
+import {Activity,Box,Check,ChevronLeft,ChevronRight,Compass,Hand,House,Info,ListChecks,Menu,MousePointerClick,PersonStanding,Pointer,Search,SlidersHorizontal,Smartphone,Sparkles,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {useLang} from './locale';
 
-// First visit walkthrough: four short steps (turn, tap, search, ask), then an offer to start a guided tour.
-// It sits in the tour panel's slot so the hand-off to the tour happens in place. Closing it is remembered
-// on this device; the footer's "How to use" button brings it back.
+// First visit walkthrough. A desktop gets four short steps (turn, tap, search, ask); a phone gets its own
+// guide, because there the controls are icons without labels: gestures, the bottom tools, what each icon at
+// the top opens, the menu, and adding the site to the home screen. Closing it is remembered on this device;
+// the footer's "How to use" button brings it back.
 const KEY = 'anatomn-intro-seen';
-export const INTRO_STEPS = 4;
-const ICONS = [Hand, MousePointerClick, Search, Sparkles];
+
+// The control a step is about; the atlas rings it while the step is shown.
+export type IntroTarget = 'search' | 'ask' | 'dock' | 'top' | 'nav';
+type Icon = ComponentType<{size?: number}>;
+interface StepShape {
+  icon: Icon;
+  // The first steps are about the body itself, so a marker sits on the figure.
+  spot?: 'drag' | 'tap';
+  target?: IntroTarget;
+  // Icons shown beside the step's legend labels, in the same order as the copy.
+  legend?: Icon[];
+}
+const DESKTOP: StepShape[] = [
+  {icon: Hand, spot: 'drag'},
+  {icon: MousePointerClick, spot: 'tap'},
+  {icon: Search, target: 'search'},
+  {icon: Sparkles, target: 'ask'},
+];
+const PHONE: StepShape[] = [
+  {icon: Hand, spot: 'drag'},
+  {icon: Pointer, spot: 'tap'},
+  {icon: SlidersHorizontal, target: 'dock'},
+  {icon: Sparkles, target: 'top', legend: [Sparkles, PersonStanding, Search, Info]},
+  {icon: Menu, target: 'nav', legend: [House, Box, Activity, ListChecks]},
+  {icon: Smartphone},
+];
+export const introSteps = (phone: boolean) => (phone ? PHONE : DESKTOP);
+
+// The atlas switches to its phone layout (icon-only buttons, the bottom sheet) at these sizes.
+const PHONE_LAYOUT = '(max-width:767px),(max-height:600px) and (orientation:landscape)';
+export function usePhoneLayout() {
+  const [phone, setPhone] = useState(() => matchMedia(PHONE_LAYOUT).matches);
+  useEffect(() => {
+    const query = matchMedia(PHONE_LAYOUT);
+    const change = () => setPhone(query.matches);
+    query.addEventListener('change', change);
+    return () => query.removeEventListener('change', change);
+  }, []);
+  return phone;
+}
 
 export function introSeen() {
   try {
@@ -28,20 +67,25 @@ export function markIntroSeen() {
 }
 
 interface Props {
-  // 0 to INTRO_STEPS - 1 are the steps; INTRO_STEPS is the guided tour offer.
+  // Index into the steps for this layout.
   step: number;
+  phone: boolean;
   // Another panel holds the same spot on a phone, so the introduction waits until it closes.
   tucked: boolean;
   onStep: (step: number) => void;
   onClose: () => void;
-  onTour: () => void;
 }
 
-export default function IntroPanel({step, tucked, onStep, onClose, onTour}: Props) {
+export default function IntroPanel({step, phone, tucked, onStep, onClose}: Props) {
   const {t} = useLang();
-  const ready = step >= INTRO_STEPS;
-  const current = t.intro.steps[Math.min(step, INTRO_STEPS - 1)];
-  const Icon = ready ? GraduationCap : ICONS[step];
+  const steps = introSteps(phone);
+  const copy = phone ? t.intro.phoneSteps : t.intro.steps;
+  // Turning a phone can switch layouts mid-walkthrough; the shorter list then holds the last step.
+  const index = Math.min(step, steps.length - 1);
+  const last = index === steps.length - 1;
+  const shape = steps[index];
+  const current: {title: string; text: string; legend?: string[]} = copy[index];
+  const Icon = shape.icon;
   const close = () => {
     markIntroSeen();
     onClose();
@@ -58,9 +102,8 @@ export default function IntroPanel({step, tucked, onStep, onClose, onTour}: Prop
 
   return (
     <>
-      {/* The first two steps are about the body itself, so a marker sits on the figure. */}
-      {step < 2 && (
-        <div className={`intro-spot ${step === 0 ? 'is-drag' : 'is-tap'} ${tucked ? 'is-tucked' : ''}`} aria-hidden>
+      {shape.spot && (
+        <div className={`intro-spot is-${shape.spot} ${tucked ? 'is-tucked' : ''}`} aria-hidden>
           <Icon size={24} />
         </div>
       )}
@@ -68,7 +111,7 @@ export default function IntroPanel({step, tucked, onStep, onClose, onTour}: Prop
         <header className="learning-head">
           <div>
             <p className="learning-kicker">
-              <Compass size={12} /> {t.intro.kicker}
+              <Compass size={12} /> {phone ? t.intro.phoneKicker : t.intro.kicker}
             </p>
             <h2 className="learning-title">{t.intro.welcome}</h2>
           </div>
@@ -79,49 +122,47 @@ export default function IntroPanel({step, tucked, onStep, onClose, onTour}: Prop
 
         <div className="tour-step" aria-live="polite">
           <div className="intro-progress">
-            <span className="tour-counter">{ready ? t.intro.readyKicker : t.learn.step(step + 1, INTRO_STEPS)}</span>
+            <span className="tour-counter">{t.intro.step(index + 1, steps.length)}</span>
             <span className="intro-dots" aria-hidden>
-              {Array.from({length: INTRO_STEPS}, (_, i) => <i key={i} className={i <= step ? 'on' : ''} />)}
+              {steps.map((_, i) => <i key={i} className={i <= index ? 'on' : ''} />)}
             </span>
           </div>
           <h3 className="intro-step-title">
-            <Icon size={17} /> {ready ? t.intro.readyTitle : current.title}
+            <Icon size={17} /> {current.title}
           </h3>
-          <p>{ready ? t.intro.readyText : current.text}</p>
+          <p>{current.text}</p>
+          {shape.legend && current.legend && (
+            <ul className="intro-legend">
+              {shape.legend.map((LegendIcon, i) => (
+                <li key={i}>
+                  <span aria-hidden>
+                    <LegendIcon size={15} />
+                  </span>
+                  {current.legend?.[i]}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="learning-actions">
-          {ready ? (
-            <>
-              <Button variant="ghost" className="learning-secondary" onClick={close}>
-                {t.intro.explore}
-              </Button>
-              <Button
-                variant="ghost"
-                className="learning-primary"
-                onClick={() => {
-                  markIntroSeen();
-                  onTour();
-                }}
-              >
-                <GraduationCap size={15} /> {t.intro.tour}
-              </Button>
-            </>
+          {index === 0 ? (
+            <Button variant="ghost" className="learning-secondary" onClick={close}>
+              {t.intro.skip}
+            </Button>
           ) : (
-            <>
-              {step === 0 ? (
-                <Button variant="ghost" className="learning-secondary" onClick={close}>
-                  {t.intro.skip}
-                </Button>
-              ) : (
-                <Button variant="ghost" className="learning-secondary" onClick={() => onStep(step - 1)}>
-                  <ChevronLeft size={15} /> {t.learn.back}
-                </Button>
-              )}
-              <Button variant="ghost" className="learning-primary" onClick={() => onStep(step + 1)}>
-                {t.learn.nextStep} <ChevronRight size={15} />
-              </Button>
-            </>
+            <Button variant="ghost" className="learning-secondary" onClick={() => onStep(index - 1)}>
+              <ChevronLeft size={15} /> {t.intro.back}
+            </Button>
+          )}
+          {last ? (
+            <Button variant="ghost" className="learning-primary" onClick={close}>
+              <Check size={15} /> {t.intro.done}
+            </Button>
+          ) : (
+            <Button variant="ghost" className="learning-primary" onClick={() => onStep(index + 1)}>
+              {t.intro.next} <ChevronRight size={15} />
+            </Button>
           )}
         </div>
       </section>

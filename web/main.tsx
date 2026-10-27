@@ -10,6 +10,7 @@ import '../app/globals.css';
 const Home=lazy(()=>import('../app/page'));
 const LoginPage=lazy(()=>import('../app/login/page'));
 const SignupPage=lazy(()=>import('../app/signup/page'));
+const BodyPage=lazy(()=>import('../app/body/page'));
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/atlas" element={<Home/>}/>
         <Route path="/login" element={<LoginPage/>}/>
         <Route path="/signup" element={<SignupPage/>}/>
+        <Route path="/body" element={<BodyPage/>}/>
       </Routes>
     </Suspense>
     </LangProvider>

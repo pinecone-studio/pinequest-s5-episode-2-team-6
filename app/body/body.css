@@ -1,0 +1,154 @@
+/* Body check screen. Scoped under .bc because globals.css styles bare h1/button/a for the atlas.
+   A soft blue room, one muscle figure, frosted glass cards and a single lime accent. */
+.bc{
+ --bc-lime:#dcf55a;--bc-lime-ink:#25310a;--bc-ink:#fff;--bc-muted:rgb(255 255 255/.76);--bc-faint:rgb(255 255 255/.56);
+ --bc-edge:linear-gradient(140deg,rgb(255 255 255/.62),rgb(255 255 255/.08) 38%,rgb(255 255 255/.06) 62%,rgb(255 255 255/.34));
+ --bc-fill:linear-gradient(150deg,rgb(255 255 255/.24),rgb(255 255 255/.07));
+ --bc-shadow:0 22px 44px -18px rgb(14 42 92/.5);
+ /* --bc-top is the band above the figure: the shared navigation, then the page header below it. */
+ --bc-pad:16px;--bc-top:calc(64px + var(--site-nav-h) + env(safe-area-inset-top));
+ /* The figure fills most of a phone, stays inside its width and never grows past 720px. */
+ --fig-h:min(68svh,calc((100vw - 16px)*1.475),720px);
+ position:fixed;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;isolation:isolate;
+ color:var(--bc-ink);background:#4f84c4;font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+}
+.bc h1,.bc h2{margin:0;font-family:'Inter Tight',Inter,sans-serif;font-weight:600;letter-spacing:-.015em;line-height:1.15;color:inherit}
+.bc p{margin:0}
+.bc a{text-decoration:none}
+.bc button:not([data-slot]):hover{color:inherit}
+.bc :is(button,a):focus-visible{outline:2px solid var(--bc-lime);outline-offset:3px}
+
+/* The room: a light top, deeper corners and two soft shapes for depth */
+.bc-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:
+ radial-gradient(55% 40% at 50% 30%,rgb(214 234 255/.6),transparent 72%),
+ radial-gradient(80% 55% at 0% 0%,rgb(158 200 246/.75),transparent 62%),
+ radial-gradient(70% 55% at 100% 100%,rgb(24 60 134/.75),transparent 70%),
+ linear-gradient(180deg,#7caade 0%,#548ac9 46%,#3a6db1 100%)}
+.bc-bg i{position:absolute;border-radius:50%;filter:blur(60px)}
+.bc-bg i:nth-child(1){width:70vmax;height:42vmax;left:-28vmax;top:38%;background:rgb(32 72 150/.45);transform:rotate(-24deg)}
+.bc-bg i:nth-child(2){width:46vmax;height:46vmax;right:-20vmax;top:-12vmax;background:rgb(255 255 255/.22)}
+.bc-bg i:nth-child(3){width:min(80vw,620px);aspect-ratio:1;left:50%;top:14%;transform:translateX(-50%);background:radial-gradient(circle,rgb(255 255 255/.28),transparent 66%);filter:blur(10px)}
+
+/* Frosted glass. The fill and a brighter top-left edge come from two backgrounds; the selector
+   includes :hover because globals.css repaints hovered buttons. */
+.bc .bc-glass,.bc button.bc-glass:hover{
+ border:1px solid transparent;background:var(--bc-fill) padding-box,var(--bc-edge) border-box;
+ box-shadow:inset 0 1px 0 rgb(255 255 255/.32),var(--bc-shadow);
+ -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);
+}
+
+.bc-shell{position:relative;min-height:100%}
+
+/* Stage: header, figure, markers. It stays put on phones while the cards slide over it. */
+.bc-stage{position:sticky;top:0;z-index:1;padding-top:var(--bc-top)}
+.bc-top{position:absolute;top:0;left:0;right:0;z-index:4;height:var(--bc-top);padding:calc(var(--site-nav-h) + env(safe-area-inset-top)) var(--bc-pad) 0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bc-me{display:flex;align-items:center;gap:11px;min-width:0}
+.bc-me h1{font-size:17px}
+.bc-me p{font-size:12px;color:var(--bc-faint);margin-top:2px;white-space:nowrap}
+.bc-avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;color:#fff}
+
+.bc-figure{position:relative;height:var(--fig-h);aspect-ratio:794/1171;margin:0 auto;perspective:1200px;--px:0;--py:0;animation:bcFloat 7s ease-in-out infinite}
+.bc-figure-tilt{position:absolute;inset:0;transform:translate3d(calc(var(--px)*7px),calc(var(--py)*5px),0) rotateY(calc(var(--px)*4deg)) rotateX(calc(var(--py)*-2deg));transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.bc-figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;
+ filter:drop-shadow(0 26px 40px rgb(16 44 98/.38)) saturate(1.04);
+ -webkit-mask:linear-gradient(180deg,#000 72%,transparent 99%);mask:linear-gradient(180deg,#000 72%,transparent 99%)}
+.bc-leaders{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.bc-leaders line{stroke:rgb(255 255 255/.82);stroke-width:1.2;vector-effect:non-scaling-stroke;animation:bcDraw .5s ease-out both}
+
+.bc-dot,.bc-dot:hover{position:absolute;z-index:2;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;display:grid;place-items:center;background:none!important}
+.bc-dot::before{content:'';width:11px;height:11px;border-radius:50%;background:transparent;border:1.5px solid #fff;box-shadow:0 0 0 4px rgb(255 255 255/.16),0 2px 8px rgb(10 40 90/.4)}
+.bc-dot:not(.is-on){animation:bcPulse 1.5s ease-in-out infinite}
+.bc-dot.is-on::before{border:0;background:radial-gradient(circle,#f6ffd0 0 30%,var(--bc-lime) 34%);box-shadow:0 0 0 3px rgb(220 245 90/.32),0 0 16px 3px rgb(220 245 90/.7)}
+.bc-dot.is-on::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid rgb(220 245 90/.7);animation:bcRing 2.6s ease-out infinite}
+
+.bc-chip,.bc button.bc-chip:hover{position:absolute;z-index:3;transform:translate(-50%,-100%);padding:7px 13px;border-radius:999px;font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap;color:#fff;animation:bcPop .35s cubic-bezier(.2,.8,.2,1.2) both}
+.bc .bc-chip.is-open{background:linear-gradient(150deg,rgb(255 255 255/.42),rgb(255 255 255/.18)) padding-box,var(--bc-edge) border-box}
+
+.bc-badge,.bc button.bc-badge:hover{position:absolute;z-index:2;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.bc button.bc-badge[aria-pressed=true]{background:var(--bc-lime);color:var(--bc-lime-ink);box-shadow:0 8px 26px rgb(220 245 90/.5)}
+
+.bc-hint{position:absolute;z-index:4;left:50%;top:calc(var(--bc-top) + 6px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:5px 5px 5px 15px;border-radius:999px;font-size:13px;white-space:nowrap;animation:bcPop .3s ease both}
+.bc-hint button,.bc-hint button:hover{height:32px;padding:0 13px;border-radius:999px;background:var(--bc-lime);color:var(--bc-lime-ink);font-weight:600;font-size:12px}
+
+/* Cards */
+.bc-cards{position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;max-width:560px;margin:calc(var(--fig-h)*-.4) auto 0;padding:0 var(--bc-pad) calc(104px + env(safe-area-inset-bottom))}
+.bc-row{display:grid;grid-template-columns:1fr 66px;gap:12px}
+.bc-card{position:relative;border-radius:30px;padding:18px 18px 16px;color:#fff;text-align:left}
+.bc-card-head{display:flex;align-items:center;gap:10px}
+.bc-card h2{font-size:19px}
+.bc-card p{margin-top:9px;font-size:14px;line-height:1.45;color:var(--bc-muted)}
+.bc-icon{width:34px;height:34px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:rgb(255 255 255/.16);border:1px solid rgb(255 255 255/.3)}
+.bc-start{display:flex;align-items:center;justify-content:center;height:46px;margin-top:15px;border-radius:999px;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(180deg,rgb(255 255 255/.3),rgb(255 255 255/.14));border:1px solid rgb(255 255 255/.4);box-shadow:inset 0 1px 0 rgb(255 255 255/.4);transition:background .2s,transform .2s}
+.bc-start:hover{background:linear-gradient(180deg,rgb(255 255 255/.4),rgb(255 255 255/.2))}
+.bc-start:active,.bc-primary:active{transform:scale(.98)}
+.bc-add,.bc button.bc-add:hover{display:grid;place-items:center;padding:0;border-radius:30px;color:#fff}
+.bc button.bc-add[aria-pressed=true]{background:var(--bc-lime);color:var(--bc-lime-ink)}
+.bc-heart{min-height:172px;padding-right:46%;overflow:visible}
+.bc-link{display:inline-flex;align-items:center;gap:5px;margin-top:14px;font-size:13px;font-weight:600;color:var(--bc-lime)}
+.bc-link:hover{text-decoration:underline;text-underline-offset:3px}
+.bc-heart-art{position:absolute;right:-12px;bottom:-24px;width:56%;height:136%}
+.bc-heart-art::before{content:'';position:absolute;inset:18% 14%;border-radius:50%;background:radial-gradient(closest-side,rgb(46 126 255/.5),transparent);filter:blur(14px);pointer-events:none}
+.bc-heart-canvas{width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.bc-heart-canvas:active{cursor:grabbing}
+.bc-heart-canvas canvas{display:block;width:100%;height:100%}
+
+/* Pain point sheet: a bottom sheet on phones, the top card of the column on wide screens */
+.bc-sheet{position:fixed;z-index:7;left:10px;right:10px;bottom:calc(82px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;max-height:calc(100svh - var(--bc-top) - 100px);overflow-y:auto;overscroll-behavior:contain;border-radius:30px;padding:18px;display:flex;flex-direction:column;gap:16px;animation:bcSheet .32s cubic-bezier(.2,.8,.2,1) both}
+.bc .bc-sheet{background:linear-gradient(160deg,rgb(120 165 225/.62),rgb(60 105 175/.6)) padding-box,var(--bc-edge) border-box}
+.bc-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.bc-sheet h2{font-size:24px;margin-top:4px;outline:none}
+.bc-eyebrow{display:block;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--bc-faint)}
+.bc-round,.bc-round:hover{width:40px;height:40px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgb(255 255 255/.16)!important;border:1px solid rgb(255 255 255/.28)}
+.bc-level{display:grid;grid-template-columns:1fr auto;align-items:baseline;row-gap:10px;font-size:13px;color:var(--bc-muted)}
+.bc-level output{font:600 22px/1 'Inter Tight',Inter,sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+.bc-level output small{font:500 12px Inter,sans-serif;color:var(--bc-muted);margin-left:2px}
+.bc-level input{grid-column:1/-1;-webkit-appearance:none;appearance:none;width:100%;height:30px;margin:0;background:transparent;cursor:pointer;--level:.5}
+.bc-level input::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--bc-lime) calc(var(--level)*100%),rgb(255 255 255/.22) 0)}
+.bc-level input::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--bc-lime) calc(var(--level)*100%),rgb(255 255 255/.22) 0)}
+.bc-level input::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-8px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 10px rgb(10 40 90/.4),0 0 0 5px rgb(220 245 90/.35)}
+.bc-level input::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 10px rgb(10 40 90/.4),0 0 0 5px rgb(220 245 90/.35)}
+.bc-level input:focus-visible{outline:2px solid var(--bc-lime);outline-offset:2px;border-radius:99px}
+.bc-muscles ul{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.bc-muscles a{display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 12px;border-radius:999px;font-size:13px;color:#fff;background:rgb(255 255 255/.14);border:1px solid rgb(255 255 255/.24);transition:background .2s}
+.bc-muscles a:hover{background:rgb(255 255 255/.26)}
+.bc-sheet-actions{display:flex;gap:8px}
+.bc-primary{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:48px;border-radius:999px;font-size:15px;font-weight:600;background:var(--bc-lime);color:var(--bc-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.35);transition:transform .2s,filter .2s}
+.bc-primary:hover{filter:brightness(1.05)}
+.bc-quiet,.bc-quiet:hover{height:48px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:#fff;background:rgb(255 255 255/.14)!important;border:1px solid rgb(255 255 255/.28)}
+.bc-note{font-size:12px;line-height:1.5;color:var(--bc-faint)}
+
+/* Dock */
+.bc-dock{position:fixed;z-index:6;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:8px;padding:6px;border-radius:999px}
+.bc-dock a{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgb(255 255 255/.1);border:1px solid rgb(255 255 255/.22);transition:background .2s,transform .2s}
+.bc-dock a:hover{background:rgb(255 255 255/.22)}
+.bc-dock a:active{transform:scale(.94)}
+.bc-dock a.is-active{background:var(--bc-lime);border-color:transparent;color:var(--bc-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.45)}
+
+@keyframes bcFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes bcPulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}
+@keyframes bcRing{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.1);opacity:0}}
+@keyframes bcPop{from{opacity:0;scale:.85}to{opacity:1;scale:1}}
+@keyframes bcDraw{from{opacity:0}to{opacity:1}}
+@keyframes bcSheet{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+/* Wide screens: the figure in the middle, the cards (and the open pain point) in a column beside it */
+@media (min-width:900px){
+ .bc{--bc-pad:28px;--fig-h:min(calc(100svh - 150px),900px)}
+ .bc-shell{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,390px);gap:28px;align-items:center;max-width:1320px;min-height:100svh;margin:0 auto;padding:0 var(--bc-pad)}
+ .bc-stage{position:relative;padding:var(--bc-top) 0 40px}
+ .bc-top{position:fixed;padding-inline:28px}
+ .bc-cards{margin:0;padding:calc(var(--bc-top) + 8px) 0 110px;max-width:none;width:100%}
+ .bc-sheet{position:relative;inset:auto;max-width:none;max-height:none;margin:0;overflow:visible}
+}
+@media (min-width:1200px){
+ .bc-shell{grid-template-columns:minmax(0,1fr) 400px;gap:56px}
+}
+@media (max-width:359px){
+ .bc{--bc-pad:12px}
+ .bc-chip{font-size:12px;padding:6px 10px}
+ .bc-dock a{width:46px;height:46px}
+}
+@media (prefers-reduced-motion:reduce){
+ .bc *,.bc *::before,.bc *::after{animation:none!important;transition:none!important}
+ .bc-figure-tilt{transform:none}
+}

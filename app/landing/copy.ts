@@ -3,7 +3,6 @@ export type Lang='en'|'mn';
 export const LANGS:{id:Lang;label:string;name:string}[]=[{id:'mn',label:'MN',name:'Монгол'},{id:'en',label:'EN',name:'English'}];
 
 const en={
-  nav:{account:'Account',language:'Language',signIn:'Sign in',open:'Open atlas'},
   hero:{lines:['Redefining how','the body is learned','in 3D'],lead:'An interactive atlas of the human body. Rotate, peel back and explode 2,763 real structures, then ask the built-in assistant to explain what you see.',cta:'Open the 3D atlas',signup:'Create a free account',scroll:'Scroll to explore'},
   strip:'Built on open anatomy and the open web',
   words:{label:'What you can do',items:[
@@ -28,7 +27,6 @@ const en={
 };
 
 const mn:typeof en={
-  nav:{account:'Бүртгэл',language:'Хэл',signIn:'Нэвтрэх',open:'Атлас нээх'},
   hero:{lines:['Хүний биеийг','шинэ түвшинд','3D-ээр судал'],lead:'Хүний биеийн интерактив атлас. 2,763 бодит бүтцийг эргүүлж, давхарга давхаргаар нь хуулж, задлан хараад, харсан бүхнээ суурилуулсан туслахаас асуугаарай.',cta:'3D атлас нээх',signup:'Үнэгүй бүртгүүлэх',scroll:'Гүйлгэж үзэх'},
   strip:'Нээлттэй анатомийн өгөгдөл, нээлттэй вэб технологи дээр бүтээв',
   words:{label:'Юу хийж болох вэ',items:[

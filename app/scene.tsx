@@ -7,7 +7,7 @@ import {createExplosionLayout} from './explosion-layout';
 import {decodeModelResponse} from './model-download';
 import {PointerTap} from './pointer-tap';
 import {SYSTEMS,type Atlas,type SceneState,type SystemId} from './anatomy';
-import {isDark,mixColor,type Appearance} from './appearance';
+import {isDark,isGlass,mixColor,type Appearance} from './appearance';
 import {LANDMARKS} from './landmarks';
 import {peeledSystems} from './layers';
 import {perfusionTint} from './plaque-model';
@@ -19,9 +19,11 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
  useEffect(()=>{
   const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',layoutKey='',amount=0;
   let lastState:SceneState|null=null,lastLook:Appearance|null=null;let lastActivationKey='';
+  // Glass backdrops clear to transparent so the page's gradient shows through, and drop the ground.
+  let glass=false;
   const abort=new AbortController();
   let renderer:T.WebGLRenderer;
-  try{renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});}catch{onError('This browser could not start the 3D viewer. Please try a browser with WebGL enabled.');return;}
+  try{renderer=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch{onError('This browser could not start the 3D viewer. Please try a browser with WebGL enabled.');return;}
   renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.localClippingEnabled=true;el.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Interactive human anatomy. Drag to orbit, pinch or scroll to zoom, and tap a structure to inspect it.');
   const scene=new T.Scene(),camera=new T.PerspectiveCamera(34,1,.005,100),controls=new OrbitControls(camera,renderer.domElement);
@@ -102,14 +104,15 @@ transformed += state.xyz;`);
     shader.fragmentShader='uniform float uFocus; uniform float uFlash; uniform vec3 uFade; varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+// A per-part tint replaces the system color first, so tinted parts still recede and heat like the rest.
+diffuseColor.rgb = mix(diffuseColor.rgb, partTint, step(0.001, dot(partTint, partTint)));
 // Selected parts keep their own color; the rest of the body recedes toward the backdrop.
 float recede = uFocus * (1.0 - partSelected);
 float luma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(luma), uFade, 0.6), recede * 0.75);
 float heat = partActivated;
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.2, 0.14), heat * 0.88);
-diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;
-diffuseColor.rgb = mix(diffuseColor.rgb, partTint, step(0.001, dot(partTint, partTint)));`);
+diffuseColor.rgb += vec3(0.28, 0.06, 0.03) * heat * heat;`);
     // A warm rim traces the selection's silhouette, brighter for a moment right after it is picked.
     shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
 float rim = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.2);
@@ -147,7 +150,7 @@ void main(){
   const xrayLayer=new T.Group();xrayLayer.visible=false;scene.add(xrayLayer);
   // Light backdrops get an unlit floor in the backdrop's own color, so the paper runs behind the figure without a horizon;
   // dark backdrops keep a lit floor. Rings take their tone from the backdrop.
-  const paint=(a:Appearance)=>{const dark=isDark(a.background);renderer.setClearColor(a.background);groundLit.color.set(mixColor(a.background,'#000000',.6));groundLit.envMapIntensity=0;groundFlat.color.set(a.background);ground.material=dark?groundLit:groundFlat;highlight.uFade.value.set(a.background);platform.material.color.set(mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(dark?'#9aa6b2':mixColor(a.background,'#000000',.5));innerRing.material.color.set(dark?'#7d8a97':mixColor(a.background,'#000000',.35));mats.forEach((m,id)=>m.color.set(a.colors[id]));dirty=true;};
+  const paint=(a:Appearance)=>{const dark=isDark(a.background);glass=isGlass(a.background);renderer.setClearColor(a.background,glass?0:1);groundLit.color.set(mixColor(a.background,'#000000',.6));groundLit.envMapIntensity=0;groundFlat.color.set(a.background);ground.material=dark?groundLit:groundFlat;highlight.uFade.value.set(a.background);platform.material.color.set(glass?mixColor(a.background,'#16346a',.35):mixColor(a.background,'#000000',dark?.3:.015));ring.material.color.set(glass?'#ffffff':dark?'#9aa6b2':mixColor(a.background,'#000000',.5));innerRing.material.color.set(glass?'#ffffff':dark?'#7d8a97':mixColor(a.background,'#000000',.35));mats.forEach((m,id)=>m.color.set(a.colors[id]));dirty=true;};
   let loaded=0;
   const loadChunk=async(ci:number)=>{
    const chunk=atlas.chunks[ci],compressed=!!chunk.gzip&&typeof DecompressionStream!=='undefined';const response=await fetch(compressed?chunk.gzip!:chunk.url,{signal:abort.signal});const buffer=await decodeModelResponse(response,chunk.bytes,compressed);if(disposed)return;
@@ -186,6 +189,9 @@ void main(){
   renderer.domElement.addEventListener('pointerdown',down);renderer.domElement.addEventListener('pointermove',move);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
   const clock=new T.Clock();let lastExtent=-1,lastSliceKey='',lastLabelKey='',lastSelected:string[]|null=null,flashStart=-10,lastNameOf:Props['label']|null=null;
   const partIndex=new Map(atlas.parts.map((p,i)=>[p.id,i]));
+  // The liver sits in the digestive system but keeps a liver-brown tissue color instead of the system tone.
+  const liver=new T.Color('#8e4a3c'),liverTint=[liver.r,liver.g,liver.b].map(value=>Math.round(value*255));
+  const tissueTints=atlas.parts.map(p=>/^(hepatovenous segment |caudate lobe of liver$)/i.test(p.name)?liverTint:[0,0,0]);
   const labelPoint=new T.Vector3(),offsetVec=new T.Vector3();
   // Cross-section: a single clipping plane walks through the body extent.
   const applySlice=(slice:SceneState['slice'])=>{
@@ -248,8 +254,8 @@ void main(){
      else {const t=(amount-.45)/.55,group=SYSTEMS.findIndex(sys=>sys.id===p.system),angle=group/SYSTEMS.length*Math.PI*2;dx=T.MathUtils.lerp(Math.sin(angle)*.48,destination.x-c.x,t);dy=T.MathUtils.lerp((c.y-.85)*.28,destination.y-c.y,t);dz=T.MathUtils.lerp(Math.cos(angle)*.48,-c.z,t);}
      // Isolation already singles the selection out, so isolated parts drop the highlight tint and keep their own color.
      const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected&&!s.isolate?255:0;
-     // Unused selection channels tint only the selected renal arterial tree.
-     selectedData.set(perfusionTint(s.perfusion,p.id),i*4+1);
+     // Unused selection channels tint the selected renal arterial tree, or give the liver its own tissue color.
+     const perfused=perfusionTint(s.perfusion,p.id);selectedData.set(perfused.some(Boolean)?perfused:tissueTints[i],i*4+1);
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
@@ -259,14 +265,14 @@ void main(){
    const isolateKey=s.isolate?s.selected.join(',')+':'+s.reset+':'+s.inspectorOpen+':'+camera.aspect:'';
    if(isolateKey!==lastIsolate||(s.isolate&&moving)){
     if(s.isolate){const box=new T.Box3();atlas.parts.forEach((p,i)=>{if(s.selected.includes(p.id))box.union(bounds[i].clone().translate(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])));});
-     if(!box.isEmpty()){const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());const w=el.clientWidth,h=el.clientHeight,mobile=w<768,landscape=w>h&&h<=600;let left=20,right=w-20,top=mobile?175:110,bottom=h-170;if(s.inspectorOpen){if(landscape){right=w-335;top=100;bottom=h-125;}else if(mobile){const sheet=document.querySelector('.detail-sheet')?.getBoundingClientRect(),header=document.querySelector('.identity')?.getBoundingClientRect();top=(header?.bottom??94)+16;bottom=(sheet?.top??h*.58-139)-16;}else{right=w-370;left=w>1100?285:25;}}
+     if(!box.isEmpty()){const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());const w=el.clientWidth,h=el.clientHeight,origin=el.getBoundingClientRect(),mobile=w<768,landscape=w>h&&h<=600;let left=20,right=w-20,top=mobile?175:110,bottom=h-170;if(s.inspectorOpen){if(landscape){right=w-335;top=100;bottom=h-125;}else if(mobile){const sheet=document.querySelector('.detail-sheet')?.getBoundingClientRect(),header=document.querySelector('.identity')?.getBoundingClientRect();top=(header?header.bottom-origin.top:94)+16;bottom=(sheet?sheet.top-origin.top:h*.58-139)-16;}else{right=w-370;left=w>1100?285:25;}}
       const panel=s.perfusion?document.querySelector('.plaque-panel')?.getBoundingClientRect():null;
-      if(panel){left=20;top=100;bottom=h-40;right=w-20;if(mobile&&!landscape)bottom=panel.top-12;else right=panel.left-12;}
+      if(panel){left=20;top=100;bottom=h-40;right=w-20;if(mobile&&!landscape)bottom=panel.top-origin.top-12;else right=panel.left-origin.left-12;}
       const availableWidth=Math.max(150,right-left),availableHeight=Math.max(40,bottom-top);camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);const distance=Math.max(.07,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.35);controls.maxDistance=Math.max(40,distance*2);controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.2,.1,1).normalize().multiplyScalar(distance));controls.update();dirty=true;}
     }else if(lastIsolate){camera.clearViewOffset();fit(s.view,amount);}
     lastIsolate=isolateKey;
    }
-   controls.enableRotate=amount<.8;controls.mouseButtons.LEFT=amount<.8?T.MOUSE.ROTATE:T.MOUSE.PAN;controls.touches.ONE=amount<.8?T.TOUCH.ROTATE:T.TOUCH.PAN;ground.visible=platform.visible=ring.visible=innerRing.visible=amount<.5&&!s.isolate;markers.visible=amount>.75;controls.autoRotate=s.rotate&&!s.isolate&&amount<.4;controls.autoRotateSpeed=.65;controls.update();if(controls.autoRotate)dirty=true;
+   controls.enableRotate=amount<.8;controls.mouseButtons.LEFT=amount<.8?T.MOUSE.ROTATE:T.MOUSE.PAN;controls.touches.ONE=amount<.8?T.TOUCH.ROTATE:T.TOUCH.PAN;ground.visible=platform.visible=ring.visible=innerRing.visible=amount<.5&&!s.isolate;if(glass)ground.visible=false;markers.visible=amount>.75;controls.autoRotate=s.rotate&&!s.isolate&&amount<.4;controls.autoRotateSpeed=.65;controls.update();if(controls.autoRotate)dirty=true;
    if(dirty){renderer.render(scene,camera);targets=[];if(amount>.45){const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);atlas.parts.forEach((p,i)=>{if(data[i*4+3]<.5||(hasSolid&&p.system==='integumentary'))return;let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;for(let corner=0;corner<8;corner++){projected.set(p.bounds[(corner&1)?1:0][0]+data[i*4],p.bounds[(corner&2)?1:0][1]+data[i*4+1],p.bounds[(corner&4)?1:0][2]+data[i*4+2]).project(camera);const x=(projected.x+1)*el.clientWidth/2,y=(1-projected.y)*el.clientHeight/2;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}projected.copy(centers[i]).add(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])).project(camera);if(projected.z< -1||projected.z>1)return;targets.push({index:i,x:(projected.x+1)*el.clientWidth/2,y:(1-projected.y)*el.clientHeight/2,left,right,top,bottom});});}}
    if(dirty){
     // Floating labels and the info card anchor follow the model on screen.

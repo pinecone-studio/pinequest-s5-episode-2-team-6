@@ -10,6 +10,9 @@ const {askAtlas, describeStructure, findConcepts, nervePieces} = await import('.
 const {resolveStructureFact} = await import('../app/structure-facts.ts');
 const {LAYERS, MAX_PEEL, peelSummary, peeledSystems} = await import('../app/layers.ts');
 const {QUIZ, TOURS} = await import('../app/learning-data.ts');
+const {BONE_ATLAS, boneOverview} = await import('../app/bone-atlas.ts');
+const {STRUCTURE_ATLAS, structureOverview} = await import('../app/structure-atlas.ts');
+const {EXPLANATIONS, SYSTEMS, explanation} = await import('../app/anatomy.ts');
 
 const atlas = JSON.parse(await readFile(new URL('../public/models/atlas.json', import.meta.url)));
 const empty = {atlas, selection: null};
@@ -124,4 +127,13 @@ for (const question of QUIZ) {
   assert.ok(question.explain.length > 20);
 }
 
-console.log('Assistant replies, structure facts, layer peeling and learning content checks passed.');
+// The detail panel has Mongolian text for every reference entry and explanation.
+const mongolian = (english, translated, label) => {
+  assert.match(translated, /[А-Яа-яЁёӨөҮү]/, `missing Mongolian text: ${label}`);
+  assert.notEqual(translated, english, `Mongolian text repeats the English: ${label}`);
+};
+for (const entry of BONE_ATLAS) mongolian(entry.overview, boneOverview(entry, 'mn'), `bone ${entry.id}`);
+for (const entry of STRUCTURE_ATLAS) mongolian(entry.overview, structureOverview(entry, 'mn'), `structure ${entry.id}`);
+for (const [name, text] of Object.entries(EXPLANATIONS)) mongolian(text, explanation(name, SYSTEMS[0].id, 'mn'), `explanation ${name}`);
+
+console.log('Assistant replies, structure facts, layer peeling, learning content and Mongolian detail text checks passed.');

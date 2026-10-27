@@ -1,3 +1,4 @@
+import type {Lang} from './landing/copy';
 export type SystemId = 'skeletal'|'dental'|'muscular'|'arterial'|'venous'|'nervous'|'digestive'|'respiratory'|'urinary'|'reproductive'|'lymphatic'|'endocrine'|'integumentary'|'connective'|'sensory'|'cardiac';
 export const SYSTEMS: {id:SystemId;name:string;color:string;description:string}[] = [
  {id:'skeletal',name:'Skeleton',color:'#e2d9ba',description:'Bones form the supporting framework of the body, protect organs, and provide attachment points for muscles. Their internal tissue also stores minerals and produces blood cells.'},
@@ -49,8 +50,35 @@ export const EXPLANATIONS:Record<string,string> = {
  'articular capsule of knee joint':'A complex capsular sleeve around the femur, tibia, and patella. Posteriorly it thickens into the oblique popliteal ligament, continued from the semimembranosus tendon, and the arcuate popliteal ligament, which arches over the popliteus tendon passing inside the capsule.',
  'intervertebral disk':'An elastic ring joining two vertebral bodies. Laminated bands of collagen—the annulus fibrosus—enclose the gel-like nucleus pulposus, distributing compression across the spine.',
 };
-export function explanation(name:string,system:SystemId){
+// Mongolian text for the detail panel. Names follow mongolian-names.ts and need review by an anatomy instructor;
+// the English entries stay the reference the assistant reads.
+export const EXPLANATIONS_MN:Record<string,string> = {
+ 'heart':'Цээжинд байрлах булчинлаг шахуурга. Баруун тал нь цусыг уушги руу, зүүн тал нь их эргэлтээр бүх бие рүү шахна.',
+ 'liver':'Өрцний баруун талын доор байрлах том эрхтэн. Шимэгдсэн шим тэжээлийг боловсруулж, цөс ялгаруулж, цусаар зөөгдөх олон уураг нийлэгжүүлнэ.',
+ 'brain':'Мэдрэлийн системийн төв эрхтэн. Харилцан холбогдсон хэсгүүд нь мэдрэхүй, хөдөлгөөн, ой санамж, хэл яриа болон биеийн үйл ажиллагааны зохицуулалтыг хангана.',
+ 'stomach':'Улаан хоолой ба нарийн гэдэсний хооронд байрлах булчинлаг хөндий. Хоолыг хадгалж, хүчил ба ферменттэй холиод арван хоёр нугалаа гэдэс рүү шилжүүлнэ.',
+ 'spleen':'Хэвлийн зүүн дээд хэсэгт байрлах лимфийн эрхтэн. Цусыг шүүж, хуучирсан цусны эсийг устгаж, дархлааны хариу урвалд оролцоно.',
+ 'pancreas':'Хоол боловсруулах болон дотоод шүүрлийн үүрэгтэй хэвлийн эрхтэн. Нарийн гэдсэнд фермент ялгаруулж, инсулин, глюкагон зэрэг дааврыг цусанд гаргана.',
+ 'urinary bladder':'Аарцагт байрлах булчинлаг сав бөгөөд бөөрнөөс шээсний сувгаар (ureter) ирсэн шээсийг хуримтлуулна.',
+ 'trachea':'Мөгөөрсөн хоолойг гуурсан хоолойтой холбодог гол амьсгалын зам. Мөгөөрсөн цагиргууд нь амьсгалах үед замыг нээлттэй байлгана.',
+ 'diaphragm':'Цээж ба хэвлийг тусгаарладаг өргөн булчин. Агшихдаа цээжний эзэлхүүнийг нэмэгдүүлж, агаарыг уушгинд татахад тусална.',
+ 'digastric':'Хоёр гэдэстэй, хэлэн доорх ясны дээр байрлах булчин. Урд гэдэс нь доод эрүүний хоёр гэдэст хонхроос, арын гэдэс нь хөхлөг ховилоос эхэлнэ; нийтлэг шөрмөс нь хэлэн доорх ясан дээрх фиброз гогцоогоор дамжина. Хэлэн доорх ясыг тогтворжуулж өргөх ба хэлэн доорх яс бэхлэгдсэн үед урд гэдэс нь эрүүг буулгана.',
+ 'mylohyoid':'Доод эрүүний mylohyoid шугамаас дунд оёдол ба хэлэн доорх ясны бие хүртэл сунасан хавтгай булчин. Амны хөндийн булчинлаг ёроолыг үүсгэж, залгих болон ярих үед хэлэн доорх ясыг урагш өргөнө.',
+ 'geniohyoid':'Дунд шугамын хажуугаар доод эрүүний эрүүний өргөснөөс (spina mentalis) хэлэн доорх ясны бие хүртэл сунасан нарийн булчин. Хэлэн доорх ясыг урагш хамгийн хүчтэй татдаг бөгөөд залгих үйлийн эхэнд ажиллана.',
+ 'stylohyoid':'Чамархайн ясны processus styloideus-ээс хэлэн доорх ясны бага эвэр орчим хүртэл сунасан нимгэн булчин. Хэлэн доорх ясыг дээш, хойш татах ба хоёр гэдэст булчингийн шөрмөсийг дамжуулахын тулд хоёр хуваагдана.',
+ 'medial meniscus':'Шилбэний дотор талын гадаргуу дээрх хавирган сар хэлбэрийн фиброз мөгөөрс. Шилбэний хажуугийн холбоостой бат холбогдсон тул хоёр менискээс бага хөдөлгөөнтэй бөгөөд илүү олон урагддаг.',
+ 'lateral meniscus':'Шилбэний гадна талын гадаргуугийн ихэнхийг бүрхсэн хавирган сар хэлбэрийн фиброз мөгөөрс. Бага шилбэний хажуугийн холбооноос тодорхой зайтай тул өвдөг хөдлөхөд чөлөөтэй гулсана.',
+ 'anterior cruciate ligament':'Шилбэний урд хэсгээс гуяны ясны гадна товгорын дотор тал хүртэл үргэлжлэх өвдөгний төвийн холбоос. Шилбэ урагш гулсахыг хязгаарлаж, сунгасан өвдгийг түгжих эргэлтийг чиглүүлнэ.',
+ 'posterior cruciate ligament':'Өвдөгний төвийн илүү бат бөх холбоос бөгөөд гуяны ясны доор шилбэ хойш шилжихийг эсэргүүцнэ. Ширхгүүд нь нугалах явцад мушгирч дахин чангарна.',
+ 'transverse ligament of knee':'Хоёр менискийн урд эврийг холбож, шилбэний гадаргуу дээгүүр хамт гулсуулдаг жижиг холбоос.',
+ 'meniscotibial ligament':'Менискийн ирмэг ба эврийг шилбэний хавтгай гадаргууд бэхэлдэг богино титэм холбоос.',
+ 'meniscopatellar ligament':'Менискийг тойгийн зах болон түүнийг тулдаг шөрмөстэй холбосон нарийн холбоос.',
+ 'articular capsule of knee joint':'Гуяны яс, шилбэ, тойгийг хүрээлсэн нарийн бүтэцтэй уут. Ар талдаа хагас хальслаг булчингийн шөрмөсний үргэлжлэл болох тахимын ташуу холбоос, мөн уутан дотуур дамжих тахимын булчингийн шөрмөсний дээгүүр нумарсан тахимын нуман холбоос болж зузаарна.',
+ 'intervertebral disk':'Хоёр нугаламын биеийг холбодог уян цагираг. Давхарласан коллагены туузууд буюу фиброз цагираг (annulus fibrosus) гель төст цөмийг (nucleus pulposus) бүрхэж, нурууны дагуух даралтыг тараана.',
+};
+export function explanation(name:string,system:SystemId,lang:Lang='en'){
   const normalized=name.toLowerCase().replace(/^(left|right) /,'');
-  return EXPLANATIONS[normalized] ?? EXPLANATIONS[name.toLowerCase()] ?? SYSTEMS.find(s=>s.id===system)?.description ?? '';
+  const mn=lang==='mn'?EXPLANATIONS_MN[normalized]??EXPLANATIONS_MN[name.toLowerCase()]:undefined;
+  return mn ?? EXPLANATIONS[normalized] ?? EXPLANATIONS[name.toLowerCase()] ?? SYSTEMS.find(s=>s.id===system)?.description ?? '';
 }
 export function hasExplanation(name:string){return Boolean(EXPLANATIONS[name.toLowerCase().replace(/^(left|right) /,'')] ?? EXPLANATIONS[name.toLowerCase()]);}

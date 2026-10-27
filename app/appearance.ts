@@ -1,6 +1,9 @@
 import {SYSTEMS,type SystemId} from './anatomy';
 export interface Appearance {background:string;colors:Record<SystemId,string>}
-export const BACKGROUNDS=[{name:'Paper',color:'#ebe4d6'},{name:'Studio',color:'#f2f3f3'},{name:'Warm',color:'#efe8de'},{name:'Mist',color:'#e2eaf0'},{name:'Slate',color:'#3a4551'},{name:'Midnight',color:'#11171e'},{name:'Black',color:'#000000'}];
+// Glass is the default: the 3D canvas turns transparent over a blue gradient and the panels turn to frosted glass.
+export const GLASS='#4f84c4';
+export const isGlass=(color:string)=>color===GLASS;
+export const BACKGROUNDS=[{name:'Glass',color:GLASS},{name:'Paper',color:'#ebe4d6'},{name:'Studio',color:'#f2f3f3'},{name:'Warm',color:'#efe8de'},{name:'Mist',color:'#e2eaf0'},{name:'Slate',color:'#3a4551'},{name:'Midnight',color:'#11171e'},{name:'Black',color:'#000000'}];
 export const DEFAULT_APPEARANCE:Appearance={background:BACKGROUNDS[0].color,colors:Object.fromEntries(SYSTEMS.map(s=>[s.id,s.color])) as Record<SystemId,string>};
 const KEY='human-atlas-colors',LEGACY_KEY='human-atlas-appearance',LEGACY_DEFAULT='#f2f3f3',HEX=/^#[0-9a-f]{6}$/i;
 const hex=(value:unknown,fallback:string)=>typeof value==='string'&&HEX.test(value)?value.toLowerCase():fallback;

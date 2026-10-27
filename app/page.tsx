@@ -23,6 +23,8 @@ import AiPanel from './ai-panel';
 import SheetResizer from './sheet-resizer';
 import LearningPanel from './learning-panel';
 import IntroPanel,{INTRO_STEPS,introSeen,markIntroSeen} from './intro-panel';
+import PaywallDialog from './paywall';
+import {useSubscription} from '../hooks/use-subscription';
 import {describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
 import type {AssistantSelection} from './llm-types';
 import {AnchorChannel} from './anchor';
@@ -44,6 +46,10 @@ const sharesSheetSpot=()=>matchMedia('(max-width:767px)').matches&&!matchMedia('
 const SEARCH_SUGGESTIONS=['heart','brain','liver','stomach','spleen','pancreas','urinary bladder','trachea',...BONE_SEARCH_SUGGESTIONS,'digastric','mylohyoid','tooth','molar tooth','canine tooth'];
 export default function Home(){
  const {lang,t}=useLang();
+ const subscription=useSubscription();
+ // Admins can open the labs without buying a plan, so they can verify the flow.
+ const premium=subscription.premium||subscription.isAdmin;
+ const [paywall,setPaywall]=useState(false);
  const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
  const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(null);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
@@ -125,7 +131,7 @@ export default function Home(){
   if(active){setDetails(false);setPanel(null);setChosen(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view,reset:s.reset+1}));}
   else {setActivations({});setState(s=>({...s,selected:[],isolate:false}));}
  },[]);
- const openRom=()=>{setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
+ const openRom=()=>{if(!premium){setPaywall(true);return;}setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
  // A tour or quiz takes the introduction's slot; opening one means the visitor found their way, so it counts as seen.
  const openLearning=(mode:'tour'|'quiz')=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);if(intro!==null){markIntroSeen();setIntro(null);}setLearning(current=>current===mode?null:mode);};
  const openIntro=()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(false);setLearning(null);setIntro(0);};
@@ -194,7 +200,8 @@ export default function Home(){
   {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:perfusion.ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
-  <PlaquePanel atlas={atlas} onPreview={previewPlaque}/>
+  <PlaquePanel atlas={atlas} onPreview={previewPlaque} locked={!premium} onLocked={()=>setPaywall(true)}/>
+  <PaywallDialog open={paywall} onClose={()=>setPaywall(false)}/>
   <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1><span className="atlas-wordmark"><em>A</em>natomn</span><Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><Button variant="ghost" className={`${learning==='tour'?'active':''} ${intro===INTRO_STEPS?'intro-target':''}`} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button></div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''} ${intro===3?'intro-target':''}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={`${panel==='search'?'active':''} ${intro===2?'intro-target':''}`} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>

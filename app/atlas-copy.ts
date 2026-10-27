@@ -187,7 +187,7 @@ const en = {
     back: 'Back',
     nextStep: 'Next',
   },
-  site: {label: 'Main navigation', home: 'Home', atlas: '3D atlas', body: 'Body check', signIn: 'Sign in'},
+  site: {label: 'Main navigation', home: 'Home', atlas: '3D atlas', body: 'Body check', signIn: 'Sign in', account: 'Account'},
   intro: {
     panel: 'Getting started',
     kicker: 'Getting started',
@@ -270,6 +270,8 @@ const en = {
     signupFailed: 'Could not create the account. Try again.',
     creating: 'Creating account...',
     hasAccount: 'Already have an account?',
+    created: 'Account created. Welcome!',
+    verifyEmail: 'Account created. Open the confirmation email, then come back and sign in.',
   },
   romLab: {
     panel: 'Range of motion lab',
@@ -486,7 +488,7 @@ const mn: typeof en = {
     back: 'Буцах',
     nextStep: 'Цааш',
   },
-  site: {label: 'Үндсэн цэс', home: 'Нүүр', atlas: '3D атлас', body: 'Биеийн шалгалт', signIn: 'Нэвтрэх'},
+  site: {label: 'Үндсэн цэс', home: 'Нүүр', atlas: '3D атлас', body: 'Биеийн шалгалт', signIn: 'Нэвтрэх', account: 'Бүртгэл'},
   intro: {
     panel: 'Эхлэх заавар',
     kicker: 'Эхлэх заавар',
@@ -569,6 +571,8 @@ const mn: typeof en = {
     signupFailed: 'Бүртгүүлэхэд алдаа гарлаа. Дахин оролдоно уу.',
     creating: 'Бүртгэж байна...',
     hasAccount: 'Бүртгэлтэй юу?',
+    created: 'Бүртгэл амжилттай үүслээ. Тавтай морил!',
+    verifyEmail: 'Бүртгэл үүслээ. Имэйлээ шалгаад, баталгаажуулаад нэвтэрнэ үү.',
   },
   romLab: {
     panel: 'Хөдөлгөөний далайцын лаборатори',

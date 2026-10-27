@@ -1,13 +1,17 @@
 import {Link,NavLink} from 'react-router-dom';
-import {Box,HandHeart,House,LogIn} from 'lucide-react';
+import {Box,HandHeart,House,LogIn,UserRound} from 'lucide-react';
+import {useAuth} from '../hooks/use-auth';
 import {useLang} from './locale';
 import './site-nav.css';
 
-// One navigation bar for every page: the brand, the three screens, the language and sign-in. It is fixed
-// to the top; each page keeps --site-nav-h clear for it. "glass" sits on the blue rooms (the atlas glass
-// backdrop and the body check), "light" on the paper pages. Phones keep the icons and drop the labels.
+// One navigation bar for every page: the brand, the three screens, the language and the account (sign-in
+// until someone is signed in). It is fixed to the top; each page keeps --site-nav-h clear for it. "glass"
+// sits on the blue rooms (the atlas glass backdrop and the body check), "light" on the paper pages. Phones
+// keep the icons and drop the labels.
 export default function SiteNav({tone, onNavigate}: {tone: 'glass' | 'light'; onNavigate?: () => void}) {
   const {lang, setLang, langs, t} = useLang();
+  const {user} = useAuth();
+  const account = user ? {to: '/account', label: t.site.account, Icon: UserRound} : {to: '/login', label: t.site.signIn, Icon: LogIn};
   const links = [
     {to: '/', label: t.site.home, Icon: House},
     {to: '/atlas', label: t.site.atlas, Icon: Box},
@@ -35,9 +39,9 @@ export default function SiteNav({tone, onNavigate}: {tone: 'glass' | 'light'; on
             </button>
           ))}
         </div>
-        <NavLink to="/login" aria-label={t.site.signIn} title={t.site.signIn} className={({isActive}) => `site-login ${isActive ? 'is-active' : ''}`} onClick={onNavigate}>
-          <LogIn size={16} aria-hidden />
-          <span>{t.site.signIn}</span>
+        <NavLink to={account.to} aria-label={account.label} title={account.label} className={({isActive}) => `site-login ${isActive ? 'is-active' : ''}`} onClick={onNavigate}>
+          <account.Icon size={16} aria-hidden />
+          <span>{account.label}</span>
         </NavLink>
       </div>
     </header>

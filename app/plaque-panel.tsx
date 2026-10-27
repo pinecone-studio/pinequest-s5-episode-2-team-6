@@ -5,7 +5,7 @@ import type {Atlas} from './anatomy';
 import {useLang} from './locale';
 import {renalColor,renalFlow,renalTerritory,type RenalPreview} from './plaque-model';
 import './plaque.css';
-export default function PlaquePanel({atlas,onPreview}:{atlas:Atlas|null;onPreview:(preview:RenalPreview|null)=>void}){
+export default function PlaquePanel({atlas,onPreview,locked=false,onLocked}:{atlas:Atlas|null;onPreview:(preview:RenalPreview|null)=>void;locked?:boolean;onLocked?:()=>void}){
  const {t:{plaque:t}}=useLang();
  const [open,setOpen]=useState(false),[side,setSide]=useState<'Left'|'Right'>('Left'),[narrowing,setNarrowing]=useState(0),[length,setLength]=useState(20);
  const {flow,arterialLoss}=renalFlow(narrowing,length),percent=Math.round(flow*100),gap=40*(1-narrowing/100),a=160-length,b=160+length;
@@ -15,7 +15,7 @@ export default function PlaquePanel({atlas,onPreview}:{atlas:Atlas|null;onPrevie
  useEffect(()=>{if(!open)return;close.current?.focus();const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};window.addEventListener('keydown',escape);return()=>{window.removeEventListener('keydown',escape);onPreview(null);trigger.current?.focus();};},[open,onPreview]);
  const lumen=`M20 45 H${a-20} Q${a} 45 ${a} ${85-gap} H${b} Q${b} 45 ${b+20} 45 H300 V125 H${b+20} Q${b} 125 ${b} ${85+gap} H${a} Q${a} 125 ${a-20} 125 H20 Z`;
  const branches='M5 50 H40 M40 50 L65 20 H85 M40 50 H85 M40 50 L65 80 H85';
- return <><Button ref={trigger} className="plaque-trigger" variant="outline" aria-expanded={open} aria-controls="plaque-lab" onClick={()=>setOpen(value=>!value)}><Activity size={16}/>{t.trigger}</Button>
+ return <><Button ref={trigger} className="plaque-trigger" variant="outline" aria-expanded={open&&!locked} aria-controls="plaque-lab" onClick={()=>{if(locked){onLocked?.();return;}setOpen(value=>!value);}}><Activity size={16}/>{t.trigger}</Button>
   {open&&<aside id="plaque-lab" className="rom-panel glass plaque-panel" aria-labelledby="plaque-title">
    <header className="rom-header"><div className="rom-title-block"><p className="rom-kicker">{t.kicker}</p><h2 id="plaque-title" className="rom-title">{t.title}</h2><p className="rom-subtitle">{t.subtitle}</p></div><Button ref={close} variant="ghost" className="icon-button rom-close" aria-label={t.close} onClick={()=>setOpen(false)}><X size={18}/></Button></header>
    <div className="rom-status"><span className="rom-status-dot"/>{t.status}</div>

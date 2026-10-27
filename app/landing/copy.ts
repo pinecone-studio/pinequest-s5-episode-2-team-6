@@ -19,7 +19,7 @@ const en={
   unlock:{lead:'Anatomn unlocks a faster,',title:' smarter way to study anatomy',text:'Bring the textbook to life instantly. Cut through dense diagrams, skip the tab-switching and stay focused on the structure in front of you.',cta:'Launch now',features:[
     {title:'3D Atlas',text:'Rotate, peel back and explode the whole body.'},
     {title:'AI Assistant',text:'Ask which nerve supplies a muscle and watch it light up.'},
-    {title:'Tours & quizzes',text:'Guided walkthroughs and quick checks before the exam.'},
+    {title:'Quizzes',text:'Quick checks before the exam, with every answer linked to the 3D atlas.'},
     {title:'ROM Lab',text:'Track shoulder range of motion live with your camera.'},
   ]},
   finale:{title:['The whole body,','one tap away'],note:'Built on BodyParts3D, Z-Anatomy and Anatomy Standard. An educational explorer, not a diagnostic or surgical tool.',credits:'Read the full credits',tag:'Designed for',tagStrong:'students'},
@@ -43,7 +43,7 @@ const mn:typeof en={
   unlock:{lead:'Anatomn анатомийг илүү хурдан,',title:' ухаалгаар судлах боломж олгоно',text:'Сурах бичгээ шууд амилуул. Ээдрээтэй зургуудаас салж, цонх хооронд үсрэхээ больж, өмнө чинь байгаа бүтцэдээ анхаарлаа төвлөрүүл.',cta:'Одоо эхлэх',features:[
     {title:'3D атлас',text:'Бүх биеийг эргүүлж, давхаргаар нь хуулж, задлан хар.'},
     {title:'AI туслах',text:'Булчинг ямар мэдрэл мэдрүүлдгийг асуугаад, тодрон гэрэлтэхийг хар.'},
-    {title:'Аялал ба сорил',text:'Шалгалтын өмнөх удирдамжтай аялал, богино сорилууд.'},
+    {title:'Сорил',text:'Шалгалтын өмнөх богино сорил. Хариулт бүр 3D атлас руу холбогдоно.'},
     {title:'ROM лаборатори',text:'Камераараа мөрний хөдөлгөөний далайцыг шууд хэмж.'},
   ]},
   finale:{title:['Бүтэн бие,','нэг товшилтын зайд'],note:'BodyParts3D, Z-Anatomy, Anatomy Standard дээр суурилсан. Энэ бол сургалтын хэрэгсэл бөгөөд онош тавих, мэс заслын зориулалттай биш.',credits:'Эх сурвалжийг бүрэн унших',tag:'Оюутнуудад',tagStrong:'зориулав'},

@@ -1,24 +1,26 @@
 import {Link,NavLink} from 'react-router-dom';
-import {Box,HandHeart,House,LogIn,UserRound} from 'lucide-react';
+import {Activity,Box,House,ListChecks,LogIn,UserRound} from 'lucide-react';
 import {useAuth} from '../hooks/use-auth';
 import {useLang} from './locale';
 import './site-nav.css';
 
-// One navigation bar for every page: the brand, the three screens, the language and the account (sign-in
+// One navigation bar for every page: the brand, the four screens, the language and the account (sign-in
 // until someone is signed in). It is fixed to the top; each page keeps --site-nav-h clear for it. "glass"
-// sits on the blue rooms (the atlas glass backdrop and the body check), "light" on the paper pages. Phones
+// sits on the blue rooms (the atlas glass backdrop, the Plaque lab and the quiz), "light" on the paper pages. Phones
 // keep the icons and drop the labels.
-export default function SiteNav({tone, onNavigate}: {tone: 'glass' | 'light'; onNavigate?: () => void}) {
+// `highlight` rings the bar while the atlas's phone guide is explaining it.
+export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 'light'; highlight?: boolean; onNavigate?: () => void}) {
   const {lang, setLang, langs, t} = useLang();
   const {user} = useAuth();
   const account = user ? {to: '/account', label: t.site.account, Icon: UserRound} : {to: '/login', label: t.site.signIn, Icon: LogIn};
   const links = [
     {to: '/', label: t.site.home, Icon: House},
     {to: '/atlas', label: t.site.atlas, Icon: Box},
-    {to: '/body', label: t.site.body, Icon: HandHeart},
+    {to: '/plaque', label: t.site.plaque, Icon: Activity},
+    {to: '/quiz', label: t.site.quiz, Icon: ListChecks},
   ];
   return (
-    <header className={`site-nav is-${tone}`}>
+    <header className={`site-nav is-${tone} ${highlight ? 'intro-target' : ''}`}>
       <Link to="/" className="site-brand" onClick={onNavigate}>
         <span className="site-mark" aria-hidden />
         <span className="site-brand-name">Anatomn</span>

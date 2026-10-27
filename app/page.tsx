@@ -1,8 +1,9 @@
 import {flushSync} from 'react-dom';
 import {registerAtlasTools} from './agent-tools';
 import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
-import {Activity,ArrowUpRight,ChevronRight,Focus,GraduationCap,Info,Layers3,ListChecks,Palette,RotateCcw,Search,Sparkles,X,PersonStanding} from 'lucide-react';
-import {Button} from '@/components/ui/button';
+import {Link} from 'react-router-dom';
+import {Activity,ArrowUpRight,ChevronRight,Focus,GraduationCap,Info,Layers3,ListChecks,Palette,RotateCcw,Search,Sparkles,User,X,PersonStanding} from 'lucide-react';
+import {Button,buttonVariants} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
 import {Slider} from '@/components/ui/slider';
 import {Switch} from '@/components/ui/switch';
@@ -20,6 +21,9 @@ import type {RenalPreview} from './plaque-model';
 import AiPanel from './ai-panel';
 import SheetResizer from './sheet-resizer';
 import LearningPanel from './learning-panel';
+import PaywallDialog from './paywall';
+import {useAuth} from '../hooks/use-auth';
+import {useSubscription} from '../hooks/use-subscription';
 import {describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
 import type {AssistantSelection} from './llm-types';
 import {AnchorChannel} from './anchor';
@@ -36,6 +40,12 @@ const ROM_VISIBLE:SystemId[]=['skeletal','muscular'];
 const SEARCH_SUGGESTIONS=['heart','brain','liver','stomach','spleen','pancreas','urinary bladder','trachea',...BONE_SEARCH_SUGGESTIONS,'digastric','mylohyoid','tooth','molar tooth','canine tooth'];
 export default function Home(){
  const {lang,t}=useLang();
+ const {user}=useAuth();
+ const subscription=useSubscription();
+ // Admins can open the labs without buying a plan, so they can verify the flow.
+ const premium=subscription.premium||subscription.isAdmin;
+ const [paywall,setPaywall]=useState(false);
+ const accountLabel=user?(lang==='mn'?'Бүртгэл':'Account'):(lang==='mn'?'Нэвтрэх':'Sign in');
  const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
  const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(null);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
@@ -108,7 +118,7 @@ export default function Home(){
   if(active){setDetails(false);setPanel(null);setChosen(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view,reset:s.reset+1}));}
   else {setActivations({});setState(s=>({...s,selected:[],isolate:false}));}
  },[]);
- const openRom=()=>{setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
+ const openRom=()=>{if(!premium){setPaywall(true);return;}setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
  const openLearning=(mode:'tour'|'quiz')=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setLearning(current=>current===mode?null:mode);};
  const toggleChat=()=>{setDetails(false);setPanel(null);setRomOpen(false);setAbout(false);setLearning(null);setChatOpen(open=>!open);};
  // The assistant reads the same reference notes the interface shows and can drive the model.
@@ -160,8 +170,9 @@ export default function Home(){
   {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:perfusion.ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
-  <PlaquePanel atlas={atlas} onPreview={previewPlaque}/>
-  <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1><span className="atlas-wordmark"><em>A</em>natomn</span><Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><LangSwitch/><Button variant="ghost" className={learning==='tour'?'active':''} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button></div></header>
+  <PlaquePanel atlas={atlas} onPreview={previewPlaque} locked={!premium} onLocked={()=>setPaywall(true)}/>
+  <PaywallDialog open={paywall} onClose={()=>setPaywall(false)}/>
+  <header className="identity"><div className="eyebrow"><span className="status-dot"/> {t.kicker}</div><h1><span className="atlas-wordmark"><em>A</em>natomn</span><Badge variant="outline" className="edition">3D</Badge></h1><div className="identity-meta">{t.modeled(atlas?atlas.parts.length.toLocaleString():'2,763')} <span>·</span> BodyParts3D + Z-Anatomy</div><div className="identity-tools"><LangSwitch/><Button variant="ghost" className={learning==='tour'?'active':''} aria-pressed={learning==='tour'} onClick={()=>openLearning('tour')}><GraduationCap size={15}/><span>{t.tours}</span></Button><Button variant="ghost" className={learning==='quiz'?'active':''} aria-pressed={learning==='quiz'} onClick={()=>openLearning('quiz')}><ListChecks size={15}/><span>{t.quiz}</span></Button><Link to={user?'/account':'/login'} className={buttonVariants({variant:'ghost'})} aria-label={accountLabel}><User size={15}/><span>{accountLabel}</span></Link></div></header>
   <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={romOpen?'active':''} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={panel==='search'?'active':''} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className="icon-button" aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>
   {learning&&<LearningPanel mode={learning} atlas={atlas} onClose={()=>setLearning(null)} onPick={pickConcept} onView={setView}/>}

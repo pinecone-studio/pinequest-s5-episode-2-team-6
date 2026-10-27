@@ -2,6 +2,7 @@
 // localStorage (no cookies, no third party) and mirrors the same events to
 // VITE_USAGE_ENDPOINT when a deployment sets one, so a server can add up every visitor.
 import {useEffect,useState} from 'react';
+import {useFetch} from '@/hooks/use-fetch';
 
 const KEY='human-atlas-usage';
 const env=(import.meta as unknown as {env?:Record<string,string|undefined>}).env;
@@ -108,23 +109,11 @@ export function startTimer(){
 // endpoint is configured and answers with them.
 export function useUsage():{usage:Usage;totals:Usage|null}{
   const [usage,setUsage]=useState<Usage>(read);
-  const [totals,setTotals]=useState<Usage|null>(null);
+  const {data}=useFetch<Partial<Usage>>(USAGE_ENDPOINT);
   useEffect(()=>{
     listeners.add(setUsage);
     return()=>{listeners.delete(setUsage);};
   },[]);
-  useEffect(()=>{
-    if(!USAGE_ENDPOINT)return;
-    let live=true;
-    fetch(USAGE_ENDPOINT,{headers:{accept:'application/json'}})
-      .then(r=>r.ok?r.json():null)
-      .then((data:unknown)=>{
-        if(!live||!data||typeof data!=='object')return;
-        const totals=data as Partial<Usage>;
-        if(typeof totals.visits==='number')setTotals({...blank(),...totals});
-      })
-      .catch(()=>{});
-    return()=>{live=false;};
-  },[]);
-  return {usage,totals};
+  // A failed or malformed answer leaves the local tally on screen.
+  return {usage,totals:typeof data?.visits==='number'?{...blank(),...data}:null};
 }

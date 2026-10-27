@@ -4,8 +4,9 @@ import {ArrowDown,ArrowUpRight,BookOpen,Box,Cpu,Database,Layers,PersonStanding} 
 import {figureData} from './figure-data';
 import ParticleLogo from './particles';
 import {useLandingMotion} from './motion';
-import {COPY,LANGS} from './copy';
+import {COPY} from './copy';
 import {useLang} from '../locale';
+import SiteNav from '../site-nav';
 import {startTimer,trackDepth,trackEngaged,trackVisit,useUsage} from '../usage';
 import './landing.css';
 
@@ -29,7 +30,7 @@ const STACK=[
 
 export default function LandingPage(){
   const root=useRef<HTMLDivElement>(null);
-  const {lang,setLang}=useLang();
+  const {lang}=useLang();
   const [figureReady,setFigureReady]=useState(false);
   const t=COPY[lang];
   const {usage,totals}=useUsage();
@@ -63,17 +64,7 @@ export default function LandingPage(){
       </div>
       <Suspense fallback={null}><Figure scroller={root} onReady={()=>setFigureReady(true)}/></Suspense>
 
-      <header className="lp-header">
-        <Link to="/" className="lp-logo"><span className="lp-mark" aria-hidden/>Anatomn</Link>
-        <div className="lp-index" aria-hidden><span data-letter>( A )</span><span data-counter>[ 001 / 005 ]</span></div>
-        <nav className="lp-actions" aria-label={t.nav.account}>
-          <div className="lp-lang" role="group" aria-label={t.nav.language}>
-            {LANGS.map(l=><button key={l.id} type="button" lang={l.id} aria-label={l.name} aria-pressed={l.id===lang} className={l.id===lang?'is-active':''} onClick={()=>setLang(l.id)}>{l.label}</button>)}
-          </div>
-          <Link to="/login" className="lp-link">{t.nav.signIn}</Link>
-          <Link to="/atlas" className="lp-pill" onClick={engage}>{t.nav.open}</Link>
-        </nav>
-      </header>
+      <SiteNav tone="light" onNavigate={engage}/>
 
       <main>
         <section className="lp-hero" data-pose="hero" data-index>

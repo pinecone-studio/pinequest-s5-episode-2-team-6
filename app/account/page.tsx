@@ -14,7 +14,8 @@ import {supabase,supabaseConfigured} from '../../lib/supabase';
 import {BANK,PLANS,type Plan} from '../../lib/plans';
 import {useSubscription} from '../../hooks/use-subscription';
 import {useAuth} from '../../hooks/use-auth';
-import {LangSwitch,useLang} from '../locale';
+import {useLang} from '../locale';
+import SiteNav from '../site-nav';
 
 const copy={
   en:{
@@ -135,11 +136,11 @@ export default function AccountPage(){
   const statusLabel=(key:string)=>String((dict.status as Record<string,string>)[key]??key);
 
   return(
-    <main className="mx-auto min-h-screen max-w-3xl bg-white px-4 py-8 text-slate-900">
+    <main className="mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
+      <SiteNav tone="light"/>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-semibold">{dict.title}</h1>
         <div className="flex items-center gap-3">
-          <LangSwitch/>
           {isAdmin&&<Link to="/admin" className="text-sm font-medium text-slate-500 underline">Admin</Link>}
           <Link to="/atlas" className="text-sm text-slate-500 underline">{dict.backAtlas}</Link>
         </div>

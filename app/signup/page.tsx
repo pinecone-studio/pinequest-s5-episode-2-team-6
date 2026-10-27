@@ -4,7 +4,8 @@ import {Link,useNavigate} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
-import {LangSwitch,useLang} from '../locale';
+import {useLang} from '../locale';
+import SiteNav from '../site-nav';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
 
 export default function SignupPage(){
@@ -57,9 +58,9 @@ export default function SignupPage(){
   }
 
   return(
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 pt-[calc(var(--site-nav-h)+16px)] pb-8">
+      <SiteNav tone="light"/>
       <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-sm">
-        <div className="mb-4 flex justify-end"><LangSwitch/></div>
         <p className="mb-2 text-xs font-medium tracking-[0.2em] text-slate-500">{t.auth.kicker}</p>
         <h1 className="mb-1 text-3xl font-semibold text-slate-900">Anatomn</h1>
         <p className="mb-6 text-sm text-slate-500">{t.auth.signupLead}</p>

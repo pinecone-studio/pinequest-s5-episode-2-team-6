@@ -7,6 +7,8 @@ import type {Lang} from './landing/copy';
 export interface TourStep {
   concept: string;
   title: string;
+  // The Latin term shown under a translated title.
+  latin?: string;
   text: string;
   view?: View;
 }
@@ -275,10 +277,13 @@ export const QUIZ: QuizQuestion[] = [
   },
 ];
 
-const TOUR_MN: Record<string, {title: string; summary: string; text: string[]}> = {
+// Step titles are Mongolian, with the Latin term kept underneath; the step text keeps Latin terms as they are.
+const TOUR_MN: Record<string, {title: string; summary: string; titles: string[]; latin?: string[]; text: string[]}> = {
   arm: {
     title: 'Гар',
     summary: 'Тохой, мөрийг хөдөлгөдөг булчингууд.',
+    titles: ['Бугалганы яс', 'Бугалганы хоёр толгойт булчин', 'Бугалганы гурван толгойт булчин', 'Шууны яс ба тохойн яс'],
+    latin: ['Humerus', 'M. biceps brachii', 'M. triceps brachii', 'Radius, ulna'],
     text: [
       'Дээд мөчний цорын ганц яс. Толгой нь мөрний үенд, доод үзүүрийн товойлт нь тохойг үүсгэнэ.',
       'Хоёр толгойтой. Тохойг нугалж, шууг супинаци хийнэ. Урт толгой нь мөрийг урагш татна.',
@@ -287,18 +292,22 @@ const TOUR_MN: Record<string, {title: string; summary: string; text: string[]}> 
     ],
   },
   'rotator cuff': {
-    title: 'Rotator cuff',
-    summary: 'Гарыг хөдөлгөх үед мөрийг төвд нь барьдаг дөрвөн булчин.',
+    title: 'Мөрний ханцуй',
+    summary: 'Гарыг хөдөлгөх үед мөрийг төвд нь барьдаг дөрвөн булчин (rotator cuff).',
+    titles: ['Сэртэн дээрх булчин', 'Сэртэн доорх булчин', 'Бага дугуй булчин', 'Дал доорх булчин'],
+    latin: ['M. supraspinatus', 'M. infraspinatus', 'M. teres minor', 'M. subscapularis'],
     text: [
       'Scapula-ийн нурууны дээгүүр байрлаж, гарыг хажуу тийш эхний 15 градус өргөнө.',
       'Scapula-ийн нурууны доорх хонхорыг дүүргэж, гарыг гадагш эргүүлнэ.',
       'Triceps-ийн урт толгойн хажуугаар явж, гарыг гадагш эргүүлэхэд тусална.',
-      'Scapula-ийн урд талын цорын ганц rotator cuff булчин. Гарыг дотогш эргүүлнэ.',
+      'Scapula-ийн урд талын цорын ганц мөрний ханцуйн булчин. Гарыг дотогш эргүүлнэ.',
     ],
   },
   knee: {
     title: 'Өвдөг',
     summary: 'Биеийн хамгийн том үений шөрмөс, мөгөөрс, яс.',
+    titles: ['Гуяны яс', 'Өвдөгний тойг', 'Мениск', 'Загалмай холбоос'],
+    latin: ['Femur', 'Patella', 'Menisci', 'Ligamenta cruciata'],
     text: [
       'Гуяны яс өвдөгний ховилд эргэлддэг хоёр товойлтоор төгсөнө.',
       'Өвдөгний товрог нь quadriceps-ийн шөрмөсөнд байрлаж, булчинг урагш хөшүүргэдэг.',
@@ -309,6 +318,8 @@ const TOUR_MN: Record<string, {title: string; summary: string; text: string[]}> 
   'blood-flow': {
     title: 'Цусны урсгал',
     summary: 'Зүрхнээс том судас хүртэл нэг дусал цусны замыг дага.',
+    titles: ['Зүрх', 'Өгсөх гол судас', 'Гол судасны нум', 'Уруудах гол судас'],
+    latin: ['Cor', 'Aorta ascendens', 'Arcus aortae', 'Aorta descendens'],
     text: [
       'Дөрвөн тасалгаа. Баруун тал цусыг уушгинд, зүүн тал биеэр эргүүлнэ.',
       'Aorta зүүн ховдолоос гарч, зүрхний дээгүүр хойш нумна.',
@@ -319,6 +330,7 @@ const TOUR_MN: Record<string, {title: string; summary: string; text: string[]}> 
   layers: {
     title: 'Биеийн дотор',
     summary: 'Доод самбарын Давхарга хэрэгслээр биеийг давхаргаар нь хуул.',
+    titles: ['Эрхтэн', 'Уушги', 'Элэг'],
     text: [
       'Самбарыг Давхарга руу шилжүүлж, гадаргууг хуулаад эрхтэнд хүр.',
       'Уушги зүрхний хажууд дээд цээжийг дүүргэнэ. Дахин хуулахад тусад нь харагдана.',
@@ -331,7 +343,7 @@ const QUIZ_MN: {prompt: string; explain: string}[] = [
   {prompt: 'Тохойг нугалж, шууг супинаци хийдэг булчин аль нь вэ?', explain: 'Biceps brachii тохойг нугалж, алгыг дээш эргүүлнэ. Musculocutaneous мэдрэлээр мэдрүүлнэ.'},
   {prompt: 'Triceps brachii-г аль мэдрэл мэдрүүлдэг вэ?', explain: 'Triceps-ийг radial мэдрэл мэдрүүлнэ. Энэ мэдрэл шууны бүх сунгагч булчинг ч хөдөлгөнө.'},
   {prompt: 'Амьсгал авах гол булчин аль нь вэ?', explain: 'Diaphragm агшиж хавтгайрахдаа агаарыг уушгинд татна. Phrenic мэдрэлээр мэдрүүлнэ.'},
-  {prompt: 'Rotator cuff-ийг бүрдүүлдэг дөрвөн булчин аль нь вэ?', explain: 'Supraspinatus, infraspinatus, teres minor, subscapularis. Эдгээр нь humerus-ийн толгойг үенд барина.'},
+  {prompt: 'Мөрний ханцуйг (rotator cuff) бүрдүүлдэг дөрвөн булчин аль нь вэ?', explain: 'Supraspinatus, infraspinatus, teres minor, subscapularis. Эдгээр нь humerus-ийн толгойг үенд барина.'},
   {prompt: 'Тохойн нугалтын үндсэн хөдөлгөгч булчин аль нь вэ?', explain: 'Brachialis нь humerus дээр шууд байрлаж, шуу ямар байрлалтай байхаас үл хамааран тохойг нугална.'},
   {prompt: 'Өвдөгт tibia-г урагш гулгахаас сэргийлдэг шөрмөс аль нь вэ?', explain: 'Anterior cruciate ligament нь tibia-ийн урагшлах хөдөлгөөнийг хязгаарлаж, сунгасан өвдгийг түгжихэд тусална.'},
   {prompt: 'Sternocleidomastoid-ийг аль мэдрэл мэдрүүлдэг вэ?', explain: 'Spinal accessory мэдрэл. Толгойг эсрэг тал руу эргүүлж, хүзүүг нугална.'},
@@ -339,7 +351,7 @@ const QUIZ_MN: {prompt: string; explain: string}[] = [
   {prompt: 'Биеийн хамгийн урт яс аль нь вэ?', explain: 'Femur нь ташаанаас өвдөг хүртэл үргэлжилж, зогсох, алхах ачааллыг үүрдэг.'},
   {prompt: 'Thenar eminence-ийн булчинг аль мэдрэл мэдрүүлдэг вэ?', explain: 'Median мэдрэлийн recurrent салбар. Энэ мэдрэл гэмтвэл эрхий хурууны эсэргүүцэл суларна.'},
   {prompt: 'Gastrocnemius юу хийдэг вэ?', explain: 'Хөлийг доош чиглүүлж, өвдгийг дайран өнгөрдөг тул өвдгийг нугалахад тусална. Tibial мэдрэлээр мэдрүүлнэ.'},
-  {prompt: 'Мөрийг дотогш эргүүлдэг булчин аль нь вэ?', explain: 'Subscapularis нь scapula-ийн урд талын цорын ганц rotator cuff булчин тул гарыг дотогш эргүүлнэ.'},
+  {prompt: 'Мөрийг дотогш эргүүлдэг булчин аль нь вэ?', explain: 'Subscapularis нь scapula-ийн урд талын цорын ганц мөрний ханцуйн булчин тул гарыг дотогш эргүүлнэ.'},
 ];
 
 export function toursFor(lang: Lang): Tour[] {
@@ -351,7 +363,7 @@ export function toursFor(lang: Lang): Tour[] {
       ...tour,
       title: copy.title,
       summary: copy.summary,
-      steps: tour.steps.map((step, index) => ({...step, text: copy.text[index] ?? step.text})),
+      steps: tour.steps.map((step, index) => ({...step, title: copy.titles[index] ?? step.title, latin: copy.latin?.[index], text: copy.text[index] ?? step.text})),
     };
   });
 }

@@ -47,14 +47,19 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
     setStep(0);
   }, [tourId]);
 
+  // The atlas passes fresh callbacks on every render. Reading them from refs keeps this effect to step
+  // changes; with the callbacks as dependencies each pick re-rendered the atlas and picked again.
+  const pick = useRef(onPick), view = useRef(onView);
+  pick.current = onPick;
+  view.current = onView;
   useEffect(() => {
     if (mode !== 'tour') return;
     const current = tour.steps[Math.min(step, tour.steps.length - 1)];
     if (!current || !atlas) return;
     const matches = findConcepts(atlas, current.concept, 1);
-    if (matches[0]) onPick(matches[0].name);
-    if (current.view) onView(current.view);
-  }, [mode, tour, step, atlas, onPick, onView]);
+    if (matches[0]) pick.current(matches[0].name);
+    if (current.view) view.current(current.view);
+  }, [mode, tour, step, atlas]);
 
   if (!mode) return null;
 
@@ -190,6 +195,7 @@ export default function LearningPanel({mode, atlas, onClose, onPick, onView}: Pr
           {t.learn.step(step + 1, tour.steps.length)}
         </span>
         <h3>{current.title}</h3>
+        {current.latin && <p className="structure-latin" lang="la">{current.latin}</p>}
         <p>{current.text}</p>
         <Button variant="ghost" className="tour-show" onClick={() => onPick(current.concept)}>
           {t.learn.show}

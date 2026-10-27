@@ -29,19 +29,26 @@ interface Props {
 let counter = 0;
 const nextId = () => `m${(counter += 1)}`;
 
+// Visitors see plain messages; setup details (keys, model names, endpoints) are added only on the dev server.
+const DEV = Boolean((import.meta as unknown as {env?: {DEV?: boolean}}).env?.DEV);
+const UNAVAILABLE = 'AI туслах түр ажиллахгүй байна. Дараа дахин оролдоно уу. Атласын хайлт, аялал, сорил хэвийн ажиллана.';
+const SETUP_HINTS: Record<string, string> = {
+  not_configured: '.env.local файлд GEMINI_API_KEY, OPENAI_API_KEY эсвэл OPENROUTER_API_KEY нэмээд серверээ дахин эхлүүлнэ үү.',
+  provider_auth: 'LLM API түлхүүр буруу эсвэл хүчингүй байна.',
+  provider_quota: 'LLM provider-ийн кредит эсвэл квот дууссан байна.',
+  provider_model: 'GEMINI_MODEL эсвэл бусад *_MODEL тохиргоог шалгана уу.',
+  unavailable: 'api/chat серверт ажиллаж байгаа эсэхийг шалгана уу.',
+};
+
 function assistantErrorMessage(code: string): string {
-  if (code === 'not_configured') {
-    return 'LLM холболт тохируулагдаагүй байна. .env.local файлд GEMINI_API_KEY, OPENAI_API_KEY эсвэл OPENROUTER_API_KEY нэмээд серверээ дахин эхлүүлнэ үү.';
-  }
-  if (code === 'provider_auth') return 'LLM API түлхүүр буруу эсвэл хүчингүй байна. Серверийн тохиргоог шалгана уу.';
-  if (code === 'provider_quota') return 'LLM provider-ийн кредит эсвэл квот дууссан байна. OpenAI billing хэсэгт кредит нэмээд дахин оролдоно уу.';
-  if (code === 'provider_model') return 'Тохируулсан LLM загвар олдсонгүй. GEMINI_MODEL эсвэл бусад *_MODEL тохиргоог шалгана уу.';
+  const hint = DEV && SETUP_HINTS[code] ? ` (${SETUP_HINTS[code]})` : '';
+  if (code === 'not_configured' || code === 'provider_auth' || code === 'provider_model' || code === 'unavailable') return UNAVAILABLE + hint;
+  if (code === 'provider_quota') return 'AI туслахын хэрэглээний хязгаар түр дууссан байна. Дараа дахин оролдоно уу.' + hint;
   if (code === 'rate_limited') return 'Хүсэлт хэт олон байна. Нэг минутын дараа дахин оролдоно уу.';
-  if (code === 'provider_busy') return 'LLM загвар түр ачаалалтай байна. Хэдэн секундын дараа дахин оролдоно уу.';
-  if (code === 'unavailable') return 'LLM API олдсонгүй. api/chat серверэн дээр ажиллаж байгаа эсэхийг шалгана уу.';
+  if (code === 'provider_busy') return 'AI туслах түр ачаалалтай байна. Хэдэн секундын дараа дахин оролдоно уу.';
   if (code === 'network') return 'Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгаад дахин оролдоно уу.';
   if (code === 'stream_error') return 'Хариулт бүрэн ирээгүй. Дахин оролдоно уу.';
-  if (code === 'empty') return 'LLM хоосон хариулт өглөө. Асуултаа өөрөөр тавиад үзээрэй.';
+  if (code === 'empty') return 'Хариулт хоосон ирлээ. Асуултаа өөрөөр тавиад үзээрэй.';
   return 'Алдаа гарлаа. Дахин оролдоно уу.';
 }
 
@@ -184,7 +191,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
       <header className="ai-header">
         <div className="ai-title-block">
           <p className="ai-kicker">
-            <Sparkles size={12} /> LLM ASSISTANT
+            <Sparkles size={12} /> Атласын туслах
             {health?.configured && health.model && (
               <span className="ai-model-badge" title={`${health.provider ?? 'LLM'} · ${health.model}`}>
                 {health.model}
@@ -221,7 +228,12 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
             </p>
             {health?.configured === false && (
               <p className="ai-config-hint">
-                LLM холболт тохируулагдаагүй байна. Серверт <code>GEMINI_API_KEY</code>, <code>OPENAI_API_KEY</code> эсвэл <code>OPENROUTER_API_KEY</code> нэмнэ үү.
+                {UNAVAILABLE}
+                {DEV && (
+                  <>
+                    {' '}Серверт <code>GEMINI_API_KEY</code>, <code>OPENAI_API_KEY</code> эсвэл <code>OPENROUTER_API_KEY</code> нэмнэ үү.
+                  </>
+                )}
               </p>
             )}
             <div className="ai-prompts">
@@ -301,7 +313,7 @@ export default function AiPanel({open, atlas, selection, onAction, onClose}: Pro
           </Button>
         )}
       </form>
-      <p className="ai-note">Хариултыг LLM үүсгэдэг. Эмнэлгийн онош, эмчилгээний зөвлөгөө биш.</p>
+      <p className="ai-note">Хариултыг хиймэл оюун үүсгэдэг. Эмнэлгийн онош, эмчилгээний зөвлөгөө биш.</p>
     </section>
   );
 }

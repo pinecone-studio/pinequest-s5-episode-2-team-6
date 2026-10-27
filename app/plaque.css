@@ -6,3 +6,4 @@
 @media(max-width:767px){.plaque-trigger{top:112px;right:12px}.rom-panel.plaque-panel{top:auto;bottom:12px;max-height:48dvh}}
 @media(max-height:600px) and (orientation:landscape){.rom-panel.plaque-panel{left:auto;top:12px;bottom:12px;width:45vw;height:auto;max-height:calc(100dvh - 24px)}}
 @media(prefers-reduced-motion:reduce){.plaque-panel circle{display:none}}
+.rom-panel.plaque-panel{overflow-x:hidden}

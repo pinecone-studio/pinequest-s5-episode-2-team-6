@@ -209,6 +209,8 @@ const en = {
     signupFailed: 'Could not create the account. Try again.',
     creating: 'Creating account...',
     hasAccount: 'Already have an account?',
+    created: 'Account created. Welcome!',
+    verifyEmail: 'Account created. Open the confirmation email, then come back and sign in.',
   },
   romLab: {
     panel: 'Range of motion lab',
@@ -447,6 +449,8 @@ const mn: typeof en = {
     signupFailed: 'Бүртгүүлэхэд алдаа гарлаа. Дахин оролдоно уу.',
     creating: 'Бүртгэж байна...',
     hasAccount: 'Бүртгэлтэй юу?',
+    created: 'Бүртгэл амжилттай үүслээ. Тавтай морил!',
+    verifyEmail: 'Бүртгэл үүслээ. Имэйлээ шалгаад, баталгаажуулаад нэвтэрнэ үү.',
   },
   romLab: {
     panel: 'Хөдөлгөөний далайцын лаборатори',

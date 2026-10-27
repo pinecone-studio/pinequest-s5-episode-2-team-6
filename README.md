@@ -123,6 +123,63 @@ establish clinical accuracy, valid vessel lumens, or suitability for flow simula
 
 The repository includes browser-ready geometry. Rebuilding it is optional: obtain the official BodyParts3D OBJ archive and English metadata tables, prepare the joined concepts and display-system mappings, run `scripts/convert-anatomy.py`, then `node scripts/optimize-anatomy.mjs` and `node scripts/compress-models.mjs`. Simplification uses a 0.2% relative error limit per structure. Afterwards run `node scripts/fix-systems.mjs` to correct display-system assignments and `node scripts/refine-bones.mjs OBJ_DIRECTORY && node scripts/compress-models.mjs` to restore full-resolution bones, then download the Z-Anatomy FBX files (`NervousSystem100`, `LymphoidOrgans100`, `VisceralSystem100`, `SkeletalSystem100`, `Joints100`) from https://github.com/LluisV/Z-Anatomy/tree/PC-Version/Resources/Models/FBX and run `node --max-old-space-size=8000 scripts/import-zanatomy.mjs FBX_DIRECTORY`.
 
+## Backend (Supabase)
+
+The app has a backend on [Supabase](https://supabase.com) (project: `wckcbyobgpjwiolsdjjd`). The client is set up in [`lib/supabase.ts`](lib/supabase.ts) and the auth hook in [`hooks/use-auth.ts`](hooks/use-auth.ts). It provides:
+
+- **Auth** — the signup (`/signup`) and login (`/login`) pages call `supabase.auth.signUp` / `signInWithPassword`. Email confirmation and password reset come from Supabase Auth for free.
+- **Profiles** — the name typed at signup is stored in `public.profiles` by a database trigger (`supabase/schema.sql`).
+- **Usage stats** — `public.usage_events` with an aggregate `public.usage_totals` view can back the landing-page tally instead of localStorage.
+- **Quiz results** — `public.quiz_results` stores per-user quiz history.
+
+### Setup
+
+The publishable key is meant for the browser; row level security protects the data. Vars are read with the `VITE_` prefix (Vite app; the `NEXT_PUBLIC_` names don't apply here):
+
+```sh
+VITE_SUPABASE_URL=https://wckcbyobgpjwiolsdjjd.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+They live in `.env.local` (gitignored, already filled in locally) and must also be added to the Vercel project's Environment Variables for deployments. The same vars are documented in `.env.example`.
+
+### One-time database setup
+
+Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe.
+
+### Roles: user, premium, admin
+
+- **User** — every signup. Free access to the whole atlas plus search, tours, and the quiz.
+- **Premium** — unlocks ROM Lab (camera motion) and Plaque Lab (renal flow). Bought with an order-based transfer on `/account`: pick a plan (1 month 9,900₮ / 1 year 49,000₮, see `lib/plans.ts`), transfer the amount to the shown bank account, save the transaction reference, and the team's admin confirms it in `/admin`. A database trigger turns the confirmed payment into subscription time automatically. Admins can also grant premium directly by inserting a `subscriptions` row.
+- **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
+
+```sql
+update public.profiles set is_admin = true where email = 'you@example.com';
+```
+
+`/admin` then shows the user list (search, toggle admin) and the payment queue (confirm/reject pending transfers) at `/admin`.
+
+### Data flow of one payment
+
+1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created.
+2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
+3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
+4. `useSubscription()` picks up the change and the premium tools turn on.
+
+### Reading and writing data from a component
+
+```ts
+import {supabase} from '../lib/supabase';
+
+// insert a quiz result for the signed-in user
+const {data,error}=await supabase.from('quiz_results').insert({score:8,total:10});
+
+// read counts
+const {count}=await supabase.from('usage_events').select('*', {count:'exact',head:true});
+```
+
+Hooks: `hooks/use-auth.ts` (session, `signOut`) and `hooks/use-subscription.ts` (`isAdmin`, `premium`, `expiresAt`). If the env vars are missing (`supabaseConfigured === false`), the login and signup pages still render and continue in demo mode so the rest of the atlas keeps working.
+
 ## Deploy
 
 Import this repository into Vercel as a Vite project. The included `vercel.json` configures `npm ci`, `npm run build`, the `dist` output directory, and the `/api/chat` function. Add the LLM environment variable (`GEMINI_API_KEY`, or `LLM_PROVIDER` plus the matching key) in the Vercel project settings before deploying. The `vercel.json` rewrite excludes `/api`, so the chat function is not swallowed by the single-page-app fallback.

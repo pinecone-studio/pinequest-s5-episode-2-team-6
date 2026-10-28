@@ -117,9 +117,14 @@ export default function AccountPage(){
   async function createPayment(plan:Plan){
     setError('');
     const {data,error}=await supabase.from('payments').insert({
-      user_id:user!.id,plan,amount_mnt:plan.priceMnt,method:'qpay',status:'pending',
+      // The column holds the plan id, not the whole plan object.
+      user_id:user!.id,plan:plan.id,amount_mnt:plan.priceMnt,method:'qpay',status:'pending',
     }).select().single();
-    if(error){setError(dict.error);return;}
+    if(error){
+      // The visitor sees a friendly line; the exact PostgREST reason belongs in the console.
+      console.error('[account] payment create failed',error.code,error.message);
+      setError(dict.error);return;
+    }
     setPayments(p=>[data as Record<string,unknown>,...p]);
   }
 
@@ -128,7 +133,12 @@ export default function AccountPage(){
     setSavingId(id);
     const value=(refs[id]??'').trim();
     const {error}=await supabase.from('payments').update({reference:value}).eq('id',Number(id)).eq('status','pending');
-    if(error)setError(dict.error);
+    if(error){
+      console.error('[account] reference save failed',error.code,error.message);
+      setError(dict.error);
+    }
+    // The history table reads local state, so mirror the saved value here.
+    setPayments(p=>p.map(row=>String(row.id)===id?{...row,reference:value}:row));
     refresh();
     setSavingId(null);
   }

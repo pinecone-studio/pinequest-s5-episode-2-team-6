@@ -51,9 +51,13 @@ Validation covers mesh buffers, names and concept membership, nonoverlapping exp
 
 ## Anatomy data
 
+### Adult skeletal count
+
+The conventional adult skeleton has **206 bones: 80 axial and 126 appendicular** ([OpenStax](https://openstax.org/books/anatomy-and-physiology-2e/pages/7-1-divisions-of-the-skeletal-system)). `app/skeleton.ts` maps the atlas to this convention rather than counting meshes. The current model represents **205 of 206**: no separately identified coccyx mesh is available. The interface reports this coverage explicitly; it does not fabricate missing geometry. The sternum's three components count as one bone, the duplicate hyoid meshes count as one bone, the six auditory ossicles belong to the skeleton, and the 14 costal cartilages belong to connective tissue. Four additional foot sesamoid meshes remain available but are excluded from the conventional count (the two patellae remain included). Run `node scripts/validate-skeleton.mjs` to check the mapping and regional totals. This correction is not a medical validation of the remaining atlas.
+
 The current viewer uses **BodyParts3D 4.0**, an adult male reference anatomy, licensed **CC BY 4.0**, plus 529 supplementary meshes from **Z-Anatomy**, licensed **CC BY-SA 4.0** (see `public/ATTRIBUTION.md`). It does not represent every human structure or variation. Individual source meshes are distinct from named concepts, which may group multiple meshes. Descriptions distinguish general system context from individual organ explanations.
 
-Geometry is simplified for browser performance while retaining every source mesh; the 220 BodyParts3D bones keep their full source resolution. The packaged model contains 3,043,414 triangles and downloads approximately 42 MB of compressed geometry. Full credits, source links, and adaptation details are in [ATTRIBUTION.md](public/ATTRIBUTION.md).
+Geometry is simplified for browser performance while retaining every source mesh; the 220 originally skeletal-classified BodyParts3D meshes keep their full source resolution; this is a mesh count, not an anatomical bone count. The packaged model contains 3,043,414 triangles and downloads approximately 42 MB of compressed geometry. Full credits, source links, and adaptation details are in [ATTRIBUTION.md](public/ATTRIBUTION.md).
 
 This is an educational explorer, not a diagnostic or surgical tool.
 

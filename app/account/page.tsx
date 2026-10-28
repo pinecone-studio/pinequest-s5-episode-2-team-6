@@ -4,7 +4,7 @@
 // shown amount → save the bank reference → the admin confirms → the
 // subscription extends (handled by a database trigger).
 import {useEffect,useState} from 'react';
-import {Link,useLocation,Navigate} from 'react-router-dom';
+import {Link,useLocation,useNavigate,Navigate} from 'react-router-dom';
 import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
@@ -13,13 +13,14 @@ import {Label} from '@/components/ui/label';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
 import {BANK,PLANS,type Plan} from '../../lib/plans';
 import {useSubscription} from '../../hooks/use-subscription';
-import {useAuth} from '../../hooks/use-auth';
+import {useAuth,signOut} from '../../hooks/use-auth';
 import {useLang} from '../locale';
 import SiteNav from '../site-nav';
 
 const copy={
   en:{
     title:'Account',
+    signOut:'Sign out',
     free:'Free plan',
     premium:'Premium',
     until:(v:string)=>`Premium is active until ${v}`,
@@ -48,6 +49,7 @@ const copy={
   },
   mn:{
     title:'Хэрэглэгч',
+    signOut:'Гарах',
     free:'Үнэгүй эрх',
     premium:'Premium',
     until:(v:string)=>`Premium ${v} хүртэл идэвхтэй`,
@@ -83,6 +85,7 @@ export default function AccountPage(){
   const {lang}=useLang();
   const dict=copy[lang];
   const location=useLocation();
+  const navigate=useNavigate();
   const {ready:subReady,user}=useAuth();
   const {ready:subOk,isAdmin,premium,expiresAt,refresh}=useSubscription();
   const ready=subReady&&subOk;
@@ -133,6 +136,10 @@ export default function AccountPage(){
     setSavingId(null);
   }
 
+  // Navigate before signing out: the guard above would otherwise bounce a
+  // signed-out visitor to /login instead of the landing page.
+  async function leave(){navigate('/',{replace:true});await signOut();}
+
   const planName=(id:string)=>PLANS.find(p=>p.id===id)?.name??id;
   const statusLabel=(key:string)=>String((dict.status as Record<string,string>)[key]??key);
 
@@ -144,6 +151,7 @@ export default function AccountPage(){
         <div className="flex items-center gap-3">
           {isAdmin&&<Link to="/admin" className="text-sm font-medium text-slate-500 underline">Admin</Link>}
           <Link to="/atlas" className="text-sm text-slate-500 underline">{dict.backAtlas}</Link>
+          <Button size="sm" variant="outline" onClick={leave}>{dict.signOut}</Button>
         </div>
       </div>
 

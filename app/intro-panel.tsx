@@ -107,7 +107,7 @@ export default function IntroPanel({step, phone, tucked, onStep, onClose}: Props
           <Icon size={24} />
         </div>
       )}
-      <section className={`learning-panel intro-panel glass ${tucked ? 'is-tucked' : ''}`} aria-label={t.intro.panel}>
+      <section className={`learning-panel intro-panel glass ${tucked ? 'is-tucked' : ''}`} data-target={shape.target} aria-label={t.intro.panel}>
         <header className="learning-head">
           <div>
             <p className="learning-kicker">

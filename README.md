@@ -117,6 +117,8 @@ LLM_MODEL=llama3.1
 
 Never commit `.env.local`; it is gitignored. Each teammate should create their own Gemini key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and add it to their local `.env.local`. If the team shares one key, send it through a private password manager or direct message — never through GitHub. For the deployed site, add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project's Environment Variables.
 
+`api/exam.ts` (implementation in `server/exam.ts`) reads the same provider variables: `mode: 'grade'` scores a hand-in's case answers against the stored rubric, `mode: 'draft'` writes candidate questions for the admin screen. Both endpoints run in the dev server too — `vite.config.ts` serves `/api/chat` and `/api/exam` from the same middleware.
+
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
 If OpenAI returns `insufficient_quota` / `credit_balance_exhausted`, add credits to that OpenAI project; the panel shows this as `provider_quota` instead of a generic rate-limit error.
@@ -160,23 +162,29 @@ They live in `.env.local` (gitignored — copy them from `.env.example`, which s
 
 ### One-time database setup
 
-Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe.
+Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe. Pages that need the newer tables show a "run the schema" notice instead of failing, so an unmigrated database still renders the app.
 
 ### Roles: user, premium, admin
 
-- **User** — every signup. Free access to the whole atlas plus search and the quiz.
-- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account; the account page no longer sells access to these labs.
+- **User** — every signup. Free access to the whole atlas plus search, the quiz and the exams.
+- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/account` for the payment queue and the XP discount.
 - **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
 
 ```sql
 update public.profiles set is_admin = true where email = 'you@example.com';
 ```
 
-`/admin` then shows the user list (search, toggle admin) and the payment queue (confirm/reject pending transfers) at `/admin`.
+`/admin` shows the user list (search, toggle admin, grant XP), the payment queue (confirm/reject pending transfers) and the exam bank (publish, archive, or draft questions with the assistant).
+
+### XP, exams and what the browser cannot fake
+
+- Attendance (`claim_daily_checkin()`, +10 once a day) and a first pass of an exam write rows into `xp_events`. The table has a select policy only, so a student can read their own points but never insert them.
+- At checkout the client sends the XP it would like to spend. `guard_payment()` recomputes the price from `plan_price()`, caps the spend at the balance and at 20% of the plan, and freezes `amount_mnt`, `discount_mnt` and `xp_spent` for the life of the order. A rejected order returns the points.
+- An attempt is scored by `score_exam_attempt()` on insert: multiple-choice points come from the stored answer keys, the case score is clamped to what the case questions are worth, and the pass flag and XP award are computed there. `/api/exam` (`mode: 'grade'`) only ever supplies the case score and the feedback text; `mode: 'draft'` writes candidate questions that stay in `draft` until an admin publishes them.
 
 ### Data flow of one payment
 
-1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created.
+1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
 2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
 3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
 4. `useSubscription()` picks up the change for account status. Lab access is independent of subscription status.

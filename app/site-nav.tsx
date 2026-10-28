@@ -1,10 +1,10 @@
 import {Link,NavLink} from 'react-router-dom';
-import {Activity,Box,House,ListChecks,LogIn,UserRound} from 'lucide-react';
+import {Activity,Box,House,ListChecks,LogIn,ScrollText,UserRound} from 'lucide-react';
 import {useAuth} from '../hooks/use-auth';
 import {useLang} from './locale';
 import './site-nav.css';
 
-// One navigation bar for every page: the brand, the four screens, the language and the account (sign-in
+// One navigation bar for every page: the brand, the five screens, the language and the account (sign-in
 // until someone is signed in). It is fixed to the top; each page keeps --site-nav-h clear for it. "glass"
 // sits on the blue rooms (the atlas glass backdrop, the Plaque lab and the quiz), "light" on the paper pages. Phones
 // keep the icons and drop the labels.
@@ -18,6 +18,7 @@ export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 
     {to: '/atlas', label: t.site.atlas, Icon: Box},
     {to: '/plaque', label: t.site.plaque, Icon: Activity},
     {to: '/quiz', label: t.site.quiz, Icon: ListChecks},
+    {to: '/exam', label: t.site.exam, Icon: ScrollText},
   ];
   return (
     <header className={`site-nav is-${tone} ${highlight ? 'intro-target' : ''}`}>

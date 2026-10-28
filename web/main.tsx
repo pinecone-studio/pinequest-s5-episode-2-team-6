@@ -11,6 +11,7 @@ const Home=lazy(()=>import('../app/page'));
 const LoginPage=lazy(()=>import('../app/login/page'));
 const SignupPage=lazy(()=>import('../app/signup/page'));
 const QuizPage=lazy(()=>import('../app/quiz/page'));
+const ExamPage=lazy(()=>import('../app/exam/page'));
 const AccountPage=lazy(()=>import('../app/account/page'));
 const AdminPage=lazy(()=>import('../app/admin/page'));
 
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<LoginPage/>}/>
         <Route path="/signup" element={<SignupPage/>}/>
         <Route path="/quiz" element={<QuizPage/>}/>
+        <Route path="/exam" element={<ExamPage/>}/>
         <Route path="/account" element={<AccountPage/>}/>
         <Route path="/admin" element={<AdminPage/>}/>
       </Routes>

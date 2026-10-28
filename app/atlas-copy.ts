@@ -163,7 +163,7 @@ const en = {
     send: 'Send question',
     note: "Answers come from this atlas' own reference notes. Not a medical device.",
   },
-  site: {label: 'Main navigation', home: 'Home', atlas: '3D atlas', plaque: 'Plaque lab', quiz: 'Quiz', exam: 'Exams', signIn: 'Sign in', account: 'Account'},
+  site: {label: 'Main navigation', home: 'Home', atlas: '3D atlas', plaque: 'Plaque lab', quiz: 'Quiz', teacher: 'AI teacher', exam: 'Exams', signIn: 'Sign in', account: 'Account'},
   intro: {
     panel: 'Getting started',
     kicker: 'Getting started',
@@ -437,7 +437,7 @@ const mn: typeof en = {
     send: 'Асуулт илгээх',
     note: 'Хариулт энэ атласын өөрийн тайлбараас гарсан. Оношилгооны хэрэгсэл биш.',
   },
-  site: {label: 'Үндсэн цэс', home: 'Нүүр', atlas: '3D атлас', plaque: 'Товрууны лаб', quiz: 'Сорил', exam: 'Шалгалт', signIn: 'Нэвтрэх', account: 'Бүртгэл'},
+  site: {label: 'Үндсэн цэс', home: 'Нүүр', atlas: '3D атлас', plaque: 'Товрууны лаб', quiz: 'Сорил', teacher: 'AI багш', exam: 'Шалгалт', signIn: 'Нэвтрэх', account: 'Бүртгэл'},
   intro: {
     panel: 'Эхлэх заавар',
     kicker: 'Эхлэх заавар',

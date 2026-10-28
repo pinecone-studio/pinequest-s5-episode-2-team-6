@@ -44,3 +44,6 @@ next-env.d.ts
 # Local accounts created by /api/auth. Never commit passwords or sessions.
 /data/auth-users.json
 /data/auth-users.json.tmp
+
+# Supabase CLI local state
+supabase/.temp/

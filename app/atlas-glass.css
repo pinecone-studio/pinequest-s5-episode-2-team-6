@@ -51,13 +51,25 @@
 .atlas-glass .eyebrow{font-family:var(--g-sans);font-weight:600;letter-spacing:.16em;color:var(--g-ink-2)}
 
 /* Pill controls: masthead tools, toolbar and the Plaque lab button */
-.atlas-glass .top-actions>button{border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 10px 24px -14px rgb(14 42 92/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
-.atlas-glass .top-actions>button+button{margin-left:6px}
-.atlas-glass .top-actions>button:hover{background:var(--g-fill-2) padding-box,var(--g-edge) border-box;color:#fff}
+.atlas-glass .top-actions button{border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 10px 24px -14px rgb(14 42 92/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
+.atlas-glass .top-actions button+button{margin-left:6px}
+.atlas-glass .top-actions button:hover{background:var(--g-fill-2) padding-box,var(--g-edge) border-box;color:#fff}
 .atlas-glass .top-actions .ask-button{background:#fff;color:#1d4079;font-weight:600}
 .atlas-glass .top-actions .ask-button:hover{background:#eef5ff;color:#1d4079}
-.atlas-glass .top-actions>button.active{background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.42)}
+.atlas-glass .top-actions button.active{background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.42)}
 .atlas-glass .top-actions kbd{border-radius:5px;border-color:currentColor;font-family:var(--g-sans);opacity:.6}
+/* The masthead tools fold into one round button. Opened, they fan out to its left, the nearest one first; while
+   folded, a lime dot on it says one of them (the assistant, the ROM lab, search) is open. */
+.top-actions .tools-toggle{position:relative}
+.atlas-tools{position:absolute;top:0;right:100%;bottom:0;display:flex;align-items:center;padding-right:6px;visibility:hidden;pointer-events:none;transition:visibility 0s .3s}
+.atlas-tools>button{opacity:0;transform:translateX(28px) scale(.9);transition:opacity .2s,transform .32s cubic-bezier(.2,.7,.2,1),background .18s,color .18s}
+.top-actions.is-open .atlas-tools{visibility:inherit;pointer-events:auto;transition-delay:0s}
+.top-actions.is-open .atlas-tools>button{opacity:1;transform:none;transition-delay:calc(var(--i)*40ms),calc(var(--i)*40ms),0s,0s}
+.top-actions .tools-toggle svg{animation:toolsTurn .3s cubic-bezier(.2,.7,.2,1)}
+@keyframes toolsTurn{from{opacity:0;transform:rotate(-90deg) scale(.7)}}
+.atlas-glass .top-actions .tools-toggle[aria-expanded=true]{background:var(--g-fill-2) padding-box,var(--g-edge) border-box}
+.atlas-glass .top-actions .tools-toggle.has-active::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--g-lime);box-shadow:0 0 0 2px rgb(29 64 121/.7)}
+@media(prefers-reduced-motion:reduce){.atlas-tools>button{transition:none}.top-actions .tools-toggle svg{animation:none}}
 .atlas-glass .lang-switch{border:1px solid transparent;border-radius:999px;padding:0 3px;background:var(--g-fill) padding-box,var(--g-edge) border-box;-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
 .atlas-glass .lang-switch button{border-radius:999px;font-family:var(--g-sans);font-weight:600;color:var(--g-ink-2);text-shadow:none}
 .atlas-glass .lang-switch button:hover{background:var(--g-chip);color:#fff}

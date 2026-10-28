@@ -17,7 +17,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{}),nameOf=useRef(label);
  latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};nameOf.current=label;
  useEffect(()=>{
-  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',layoutKey='',amount=0;
+  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',lastFocus='',layoutKey='',amount=0;
   let lastState:SceneState|null=null,lastLook:Appearance|null=null;let lastActivationKey='';
   // Glass backdrops clear to transparent so the page's gradient shows through, and drop the ground.
   let glass=false;
@@ -271,6 +271,17 @@ void main(){
       const availableWidth=Math.max(150,right-left),availableHeight=Math.max(40,bottom-top);camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);const distance=Math.max(.07,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.35);controls.maxDistance=Math.max(40,distance*2);controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.2,.1,1).normalize().multiplyScalar(distance));controls.update();dirty=true;}
     }else if(lastIsolate){camera.clearViewOffset();fit(s.view,amount);}
     lastIsolate=isolateKey;
+   }
+   // On a phone held upright the details sheet covers the lower screen, so the view slides to put the selection in the space above it.
+   const sheet=!s.isolate&&s.inspectorOpen&&s.selected.length&&el.clientWidth<768&&el.clientWidth<el.clientHeight?document.querySelector<HTMLElement>('.detail-sheet'):null;
+   const focusKey=sheet?s.selected.join(',')+':'+sheet.offsetTop+':'+s.view+':'+s.reset+':'+camera.aspect+':'+Math.round(amount*20):'';
+   if(focusKey!==lastFocus){
+    if(sheet){const box=new T.Box3();atlas.parts.forEach((p,i)=>{if(s.selected.includes(p.id))box.union(bounds[i].clone().translate(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])));});
+     const w=el.clientWidth,h=el.clientHeight,origin=el.getBoundingClientRect(),header=document.querySelector('.top-actions')?.getBoundingClientRect(),top=(header?header.bottom-origin.top:94)+12,bottom=sheet.offsetTop-origin.top-12;
+     // A sheet opened to full height leaves no room, so the view stays where it was until the sheet is lowered again.
+     if(!box.isEmpty()&&bottom-top>80){camera.clearViewOffset();const y=(1-box.getCenter(new T.Vector3()).project(camera).y)*h/2;camera.setViewOffset(w,h,0,y-(top+bottom)/2,w,h);dirty=true;}
+    }else if(lastFocus&&!s.isolate){camera.clearViewOffset();dirty=true;}
+    lastFocus=focusKey;
    }
    controls.enableRotate=amount<.8;controls.mouseButtons.LEFT=amount<.8?T.MOUSE.ROTATE:T.MOUSE.PAN;controls.touches.ONE=amount<.8?T.TOUCH.ROTATE:T.TOUCH.PAN;ground.visible=platform.visible=ring.visible=innerRing.visible=amount<.5&&!s.isolate;if(glass)ground.visible=false;markers.visible=amount>.75;controls.autoRotate=s.rotate&&!s.isolate&&amount<.4;controls.autoRotateSpeed=.65;controls.update();if(controls.autoRotate)dirty=true;
    if(dirty){renderer.render(scene,camera);targets=[];if(amount>.45){const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);atlas.parts.forEach((p,i)=>{if(data[i*4+3]<.5||(hasSolid&&p.system==='integumentary'))return;let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;for(let corner=0;corner<8;corner++){projected.set(p.bounds[(corner&1)?1:0][0]+data[i*4],p.bounds[(corner&2)?1:0][1]+data[i*4+1],p.bounds[(corner&4)?1:0][2]+data[i*4+2]).project(camera);const x=(projected.x+1)*el.clientWidth/2,y=(1-projected.y)*el.clientHeight/2;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}projected.copy(centers[i]).add(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])).project(camera);if(projected.z< -1||projected.z>1)return;targets.push({index:i,x:(projected.x+1)*el.clientWidth/2,y:(1-projected.y)*el.clientHeight/2,left,right,top,bottom});});}}

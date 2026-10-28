@@ -7,9 +7,10 @@ import {Label} from '@/components/ui/label';
 import {useLang} from '../locale';
 import SiteNav from '../site-nav';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
+import {explainAuthError} from '../auth-error';
 
 export default function SignupPage(){
-  const {t}=useLang();
+  const {t,lang}=useLang();
   const navigate=useNavigate();
   const [name,setName]=useState('');
   const [email,setEmail]=useState('');
@@ -21,7 +22,10 @@ export default function SignupPage(){
   async function onSubmit(e:FormEvent){
     e.preventDefault();
     setError('');
-    if(!name||!email||!password||!confirm){setError(t.auth.fillAll);return;}
+    if(loading)return;
+    const mail=email.trim().toLowerCase();
+    setEmail(mail);
+    if(!name||!mail||!password||!confirm){setError(t.auth.fillAll);return;}
     if(password.length<8){setError(t.auth.short);return;}
     if(password!==confirm){setError(t.auth.mismatch);return;}
     setLoading(true);
@@ -33,7 +37,7 @@ export default function SignupPage(){
         return;
       }
       const result=await supabase.auth.signUp({
-        email,
+        email:mail,
         password,
         options:{
           data:{name}, // copied into the profiles table by a DB trigger
@@ -46,12 +50,13 @@ export default function SignupPage(){
       // already exists, so the new user goes straight to the account page.
       // With confirmation on, the login page shows the check-your-email note.
       if(result.data.session){
-        navigate('/account',{state:{notice:t.auth.created}});
+        navigate('/account',{state:{notice:t.auth.created},replace:true});
       }else{
-        navigate('/login',{state:{notice:t.auth.verifyEmail}});
+        navigate('/login',{state:{notice:t.auth.verifyEmail},replace:true});
       }
     }catch(err){
-      setError(err instanceof Error&&err.message?t.auth.signupFailed+' — '+err.message:t.auth.signupFailed);
+      const message=err instanceof Error?explainAuthError(err.message,lang):'';
+      setError(message?`${t.auth.signupFailed} ${message}`:t.auth.signupFailed);
     }finally{
       setLoading(false);
     }

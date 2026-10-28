@@ -2,7 +2,7 @@
 // know whether a user is signed in and who they are.
 import {useEffect,useState} from 'react';
 import type {Session,User} from '@supabase/supabase-js';
-import {supabase} from '../lib/supabase';
+import {supabase, supabaseConfigured} from '../lib/supabase';
 
 export interface AuthState{
   ready:boolean;     // false until the first session check finishes
@@ -32,6 +32,13 @@ export function useAuth():AuthState{
   return state;
 }
 
-export async function signOut(){
-  await supabase.auth.signOut();
+/**
+ * Sign the user out and report what went wrong instead of throwing. A failed
+ * sign-out leaves the session in localStorage, so the caller has to keep the
+ * user on the page and say why rather than pretend they left.
+ */
+export async function signOut():Promise<string|null>{
+  if(!supabaseConfigured)return null;
+  const {error}=await supabase.auth.signOut();
+  return error?.message??null;
 }

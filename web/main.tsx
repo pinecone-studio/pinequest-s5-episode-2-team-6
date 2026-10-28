@@ -14,6 +14,7 @@ const QuizPage=lazy(()=>import('../app/quiz/page'));
 const ExamPage=lazy(()=>import('../app/exam/page'));
 const AccountPage=lazy(()=>import('../app/account/page'));
 const AdminPage=lazy(()=>import('../app/admin/page'));
+const FracturePage=lazy(()=>import('../app/fracture/page'));
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/atlas" element={<Home/>}/>
         {/* The Plaque lab is the atlas with its panel open; the same element keeps the loaded model between the two. */}
         <Route path="/plaque" element={<Home/>}/>
+        <Route path="/fracture" element={<FracturePage/>}/>
         <Route path="/login" element={<LoginPage/>}/>
         <Route path="/signup" element={<SignupPage/>}/>
         <Route path="/quiz" element={<QuizPage/>}/>

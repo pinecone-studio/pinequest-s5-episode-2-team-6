@@ -33,6 +33,18 @@ Vite reads `.env.local` once when the dev server starts, so restart it after edi
 
 ## Validate
 
+### Clavicle fracture lab
+
+The default **Fall scenario** view animates the actual atlas skeleton walking on tiled pavement, slipping forward at the right foot, falling backward, reaching behind with the right arm, and planting the right hand behind the body before an authored right midshaft clavicle fracture. The whole-body skeleton and right-clavicle close-up share one reversible timeline. Play/pause, replay, 0.25×/0.5×/1× speeds, stage buttons, timeline seeking, and camera reset are available on desktop and mobile. **Bone detail** retains the independent left/right fracture controls.
+
+The slip choreography plants the right heel on the patch at 34%, slides it forward 24 cm by 47% while keeping the other foot planted, and delays the torso response until after traction is lost. A cyan arrow traces the slide. Knee yielding, a balancing arm reaction, a lifted recovery step, and gradual palm rotation lead into the existing hand-contact event. These are authored poses, not computed friction/contact dynamics. The fall validator also checks rigid leg lengths, grounded sliding-foot height, planted support-foot position, and continuity of palm orientation at hand contact.
+
+`app/fracture/fall-model.ts` defines deterministic poses, approximate skeletal segment assignments, and two-link arm/leg inverse kinematics. The right wrist stays at the contact target from 72% of the timeline onward; the prescribed fracture displacement starts at 80%. A gold dashed line illustrates the arm-to-shoulder loading route without assigning force values. The fall is authored animation, not a dynamics solver: it does not calculate friction, impact forces, fracture thresholds, or injury probability, and an outstretched-hand fall does not invariably fracture the clavicle. Run `node scripts/validate-fall.mjs` to check event ordering, hand planting, rigid arm lengths, knee floor clearance, and finite/reversible poses across 1,001 timeline samples.
+
+Open **Fracture Lab** from the bone icon in the navigation (`/fracture`). It loads the actual left or right clavicle from the atlas and uses two complementary clipping planes at the shaft midpoint to illustrate a simple midshaft fracture. Compare intact, nondisplaced, and displaced presets; adjust prescribed vertical displacement, medial translation of the lateral fragment, relative angulation, and animation progress. Play/pause, reset, and camera reset work without an account. English and Mongolian instructions explain the controls and link to [AAOS](https://orthoinfo.aaos.org/en/diseases--conditions/clavicle-fracture-broken-collarbone/).
+
+This is a geometry teaching demonstration, not impact physics or an injury prediction. Fragment transforms are prescribed, not computed from tissue properties or loading; cut faces remain open mesh sections. It does not model fracture propagation, comminution, soft tissue, healing, or treatment decisions. Orange contours trace source-triangle intersections with the teaching fracture plane. Run `node scripts/validate-fracture.mjs` to check source mapping, midshaft coverage, mirrored transforms, units, neutral states, and invalid inputs.
+
 Open **Plaque lab** from the navigation bar (`/plaque`) for the renal-artery teaching demo: adjust diameter
 narrowing and segment length, compare relative flow, and inspect the selected renal
 artery and its branches in 3D. Run `node scripts/validate-plaque.mjs` for model checks.

@@ -43,6 +43,8 @@ const copy={
     title:'My page',
     overview:'Overview',
     signOut:'Sign out',
+    signingOut:'Signing out…',
+    signOutFailed:'Could not sign out. Check the connection and try again.',
     backAtlas:'Back to the atlas',
     admin:'Admin',
     loading:'Loading…',
@@ -114,6 +116,8 @@ const copy={
     title:'Миний хуудас',
     overview:'Ерөнхий',
     signOut:'Гарах',
+    signingOut:'Гарч байна…',
+    signOutFailed:'Гарж чадсангүй. холболтоо шалгаад дахин оролдоно уу.',
     backAtlas:'Атлас руу буцах',
     admin:'Админ',
     loading:'Ачаалж байна…',
@@ -250,6 +254,7 @@ export default function AccountPage(){
   const [form,setForm]=useState({university:'',department:'',study_year:'',specialty:''});
   const [savingProfile,setSavingProfile]=useState(false);
   const [spend,setSpend]=useState<Record<string,string>>({});
+  const [leaving,setLeaving]=useState(false);
 
   useEffect(()=>{
     setNotice(typeof (location.state as {notice?:string}|null)?.notice==='string'
@@ -306,7 +311,10 @@ export default function AccountPage(){
   useEffect(()=>{load();},[load]);
 
   if(!ready)return <main className="flex min-h-screen items-center justify-center text-slate-500">…</main>;
-  if(!user)return <Navigate to="/login" state={{from:'/account'}} replace/>;
+  if(!user){
+    if(leaving)return <main className="flex min-h-screen items-center justify-center text-slate-500">{dict.signingOut}</main>;
+    return <Navigate to="/login" state={{from:'/account'}} replace/>;
+  }
 
   const bestByExam=new Map<number,number>();
   const passedExams=new Set<number>();
@@ -403,9 +411,22 @@ export default function AccountPage(){
     setSavingProfile(false);
   }
 
-  // Navigate before signing out: the guard above would otherwise bounce a
-  // signed-out visitor to /login instead of the landing page.
-  async function leave(){navigate('/',{replace:true});await signOut();}
+  // A sign-out in flight keeps the redirect guard below quiet: the user has
+  // already left the session, so bouncing them to /login would be wrong. If
+  // the request itself fails the session is still live, and the reason is
+  // shown instead of pretending they signed out.
+  async function leave(){
+    if(leaving)return;
+    setLeaving(true);
+    setError('');
+    const message=await signOut();
+    if(message){
+      setError(dict.signOutFailed);
+      setLeaving(false);
+      return;
+    }
+    navigate('/',{replace:true});
+  }
 
   const tiles=[
     {Icon:Award,color:'#3b82f6',value:String(xp),label:dict.tiles.xp},
@@ -680,7 +701,7 @@ export default function AccountPage(){
           <div className="flex items-center justify-end gap-3" style={{marginTop:18}}>
             {isAdmin&&<Link to="/admin" className="text-sm font-medium text-slate-500 underline">{dict.admin}</Link>}
             <Link to="/atlas" className="text-sm text-slate-500 underline">{dict.backAtlas}</Link>
-            <Button size="sm" variant="outline" onClick={leave}>{dict.signOut}</Button>
+            <Button size="sm" variant="outline" disabled={leaving} onClick={leave}>{dict.signOut}</Button>
           </div>
         </div>
       </div>

@@ -215,6 +215,8 @@ grant select on public.usage_totals to anon, authenticated;
 -- ============================================================
 -- 6. Quiz results — the atlas has a quiz; this lets signed-in
 --    users keep a history and the team build a leaderboard.
+--    Admins read every row so the user panel in /admin can show
+--    a student's practice history next to their exam attempts.
 -- ============================================================
 create table if not exists public.quiz_results (
   id bigserial primary key,
@@ -229,7 +231,7 @@ alter table public.quiz_results enable row level security;
 
 drop policy if exists "quiz_results_select_own" on public.quiz_results;
 create policy "quiz_results_select_own" on public.quiz_results
-  for select using (auth.uid () = user_id);
+  for select using (auth.uid () = user_id or public.is_admin ());
 
 drop policy if exists "quiz_results_insert_own" on public.quiz_results;
 create policy "quiz_results_insert_own" on public.quiz_results

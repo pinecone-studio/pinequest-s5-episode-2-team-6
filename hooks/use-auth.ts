@@ -82,15 +82,31 @@ export function useAuth():AuthState{
   return state;
 }
 
-export async function signOut(){
-  await fetch('/api/auth',{
+/**
+ * Sign out of both stores — the local cookie and the Supabase session — and
+ * report what went wrong instead of throwing. A failed sign-out leaves the
+ * session behind, so the caller has to keep the user on the page and say why
+ * rather than pretend they left.
+ */
+export async function signOut():Promise<string|null>{
+  let problem='';
+  const local=await fetch('/api/auth',{
     method:'POST',
     credentials:'include',
     headers:{'content-type':'application/json'},
     body:JSON.stringify({action:'logout'}),
-  }).catch(()=>{});
+  }).catch(()=>null);
+  // A static host has no /api/auth at all; nothing to clear there.
+  if(local&&!local.ok&&local.status!==404)problem=`logout ${local.status}`;
   if(supabaseConfigured){
-    try{await supabase.auth.signOut();}catch{/* The local cookie is already cleared. */}
+    // The Supabase client clears its own storage even offline, so a dead
+    // network is not a failed sign-out as long as it answers.
+    const {error}=await supabase.auth.signOut();
+    if(error)problem=error.message;
+  }else if(!local){
+    problem='failed to fetch';
   }
   window.dispatchEvent(new Event('anatomn-auth'));
+  return problem||null;
 }
+

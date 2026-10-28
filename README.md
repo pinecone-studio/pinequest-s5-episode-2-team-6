@@ -29,6 +29,8 @@ npm run dev
 
 Open http://localhost:3016. The Vite dev server serves `/api/chat` from `server/chat.ts`, so the assistant works locally without a separate backend. To build the static site, run `npm run build`; the output is in `dist/`.
 
+Vite reads `.env.local` once when the dev server starts, so restart it after editing. The file has to be named exactly `.env.local` at the repository root — a copy saved under a name with an invisible character, or one placed in `web/`, is ignored without a warning and the assistant reports that no key is set.
+
 ## Validate
 
 Open **Plaque lab** from the navigation bar (`/plaque`) for the renal-artery teaching demo: adjust diameter
@@ -143,7 +145,14 @@ VITE_SUPABASE_URL=https://wckcbyobgpjwiolsdjjd.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-They live in `.env.local` (gitignored, already filled in locally) and must also be added to the Vercel project's Environment Variables for deployments. The same vars are documented in `.env.example`.
+They live in `.env.local` (gitignored — copy them from `.env.example`, which ships the team's public values) and must also be added to the Vercel project's Environment Variables for deployments.
+
+### Local sign-in checklist
+
+`/login` and `/signup` degrade to demo mode when the two `VITE_SUPABASE_*` vars are missing: `supabaseConfigured` is false, no request leaves the browser, and the pages still render. To sign in for real:
+
+- Add your dev origin under Supabase Dashboard → Authentication → URL Configuration → **Redirect URLs**. Vite falls back to 3017, 3018… whenever 3016 is busy, so list the ports you actually use.
+- With Authentication → Providers → Email → **Confirm email** enabled, a new account cannot sign in until its emailed link is opened: `signUp` returns no session and `/signup` routes to `/login` with the check-your-email note. GoTrue rejects reserved domains such as `example.com`, so a throwaway test address needs a real-looking domain.
 
 ### One-time database setup
 

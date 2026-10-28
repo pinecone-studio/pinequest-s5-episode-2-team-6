@@ -163,7 +163,7 @@ export default function Home(){
   if(action.kind==='view'){setState(s=>({...s,view:action.view,reset:s.reset+1,rotate:false}));return;}
   if(action.kind==='labels'){setState(s=>({...s,labels:action.on}));return;}
   // The quiz is its own page; the assistant sends the visitor there.
-  if(action.kind==='quiz'){navigate('/quiz');return;}
+  if(action.kind==='quiz'){navigate(action.topic?`/quiz?topic=${action.topic}`:'/quiz');return;}
   const ids=action.ids??[];
   if(!ids.length||!atlas)return;
   const first=atlas.parts.find(p=>p.id===ids[0]);

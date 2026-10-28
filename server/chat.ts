@@ -514,7 +514,8 @@ function isQuotaExhausted(error: ProviderErrorDetails): boolean {
   );
 }
 
-function checkRateLimit(request: Request, env: LlmEnv): number | null {
+/** Seconds to wait when this IP is over the per-minute limit, or null. Shared with /api/exam. */
+export function checkRateLimit(request: Request, env: LlmEnv): number | null {
   if (env.LLM_DISABLE_RATE_LIMIT === '1') return null;
   const configured = Number(env.LLM_RATE_LIMIT ?? DEFAULT_RATE_LIMIT);
   const limit = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_RATE_LIMIT;

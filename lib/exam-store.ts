@@ -245,7 +245,17 @@ export function weakTopics(attempts: ExamAttempt[], exams: Exam[], quizResults: 
     add(title, '', attempt.passed);
   }
   for (const result of quizResults) {
-    const answers = (result.details as {answers?: Record<string, number>} | null)?.answers;
+    const details = result.details as {items?: unknown; answers?: Record<string, number>} | null;
+    // Current rows say per question whether it was right; generated questions carry their own concept.
+    if (Array.isArray(details?.items)) {
+      for (const item of details.items as {concept?: unknown; correct?: unknown}[]) {
+        const concept = typeof item?.concept === 'string' ? item.concept : '';
+        add(concept, concept, item?.correct === true);
+      }
+      continue;
+    }
+    // Older rows keep the picked option by position in the original twelve, which still lead the bank.
+    const answers = details?.answers;
     if (!answers) continue;
     for (const [key, picked] of Object.entries(answers)) {
       const index = Number(key);

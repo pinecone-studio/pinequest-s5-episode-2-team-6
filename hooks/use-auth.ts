@@ -36,6 +36,11 @@ export function useAuth():AuthState{
   useEffect(()=>{
     let alive=true;
     let local=false;
+    // Supabase fires INITIAL_SESSION as soon as it subscribes, usually before
+    // the cookie lookup answers. Acting on it then would report "signed out"
+    // to a local account and bounce /account to /login, so its events only
+    // count once the first lookup has settled.
+    let settled=false;
     let generation=0;
 
     async function refresh(){
@@ -45,21 +50,23 @@ export function useAuth():AuthState{
         if(!alive||mine!==generation)return;
         if(user){
           local=true;
+          settled=true;
           setState({ready:true,session:null,user});
           return;
         }
       }catch{/* The dev server can be restarting; fall through to signed-out. */}
       local=false;
       if(!supabaseConfigured){
-        if(alive&&mine===generation)setState({ready:true,session:null,user:null});
+        if(alive&&mine===generation){settled=true;setState({ready:true,session:null,user:null});}
         return;
       }
       try{
         const {data}=await supabase.auth.getSession();
         if(!alive||mine!==generation||local)return;
+        settled=true;
         setState({ready:true,session:data.session,user:data.session?.user??null});
       }catch{
-        if(alive&&mine===generation)setState({ready:true,session:null,user:null});
+        if(alive&&mine===generation){settled=true;setState({ready:true,session:null,user:null});}
       }
     }
 
@@ -68,7 +75,7 @@ export function useAuth():AuthState{
     window.addEventListener('anatomn-auth',onChange);
     const subscription=supabaseConfigured
       ?supabase.auth.onAuthStateChange((_event,session)=>{
-        if(!alive||local)return;
+        if(!alive||local||!settled)return;
         setState({ready:true,session,user:session?.user??null});
       })
       :null;

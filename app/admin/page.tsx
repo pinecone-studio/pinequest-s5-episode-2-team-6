@@ -13,6 +13,7 @@ import {supabase} from '../../lib/supabase';
 import {useSubscription} from '../../hooks/use-subscription';
 import {useAuth} from '../../hooks/use-auth';
 import {useLang} from '../locale';
+import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
 
 const copy={
@@ -307,7 +308,7 @@ export default function AdminPage(){
   const holderOf=(id:string)=>profileById.get(id);
 
   return(
-    <main className="mx-auto min-h-screen max-w-5xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
+    <PageScroll className="mx-auto min-h-screen max-w-5xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
       <SiteNav tone="light"/>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-semibold">{dict.title}</h1>
@@ -498,6 +499,6 @@ export default function AdminPage(){
         </CardContent>
       </Card>
       {grantNotice&&<p className="mt-4 text-sm text-emerald-700">{grantNotice}</p>}
-    </main>
+    </PageScroll>
   );
 }

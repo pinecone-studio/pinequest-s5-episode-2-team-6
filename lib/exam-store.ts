@@ -4,7 +4,8 @@
 // tables are created by supabase/schema.sql, and a deployment whose database
 // has not been migrated yet must still render the app with a clear message
 // rather than a blank screen. Postgres reports an absent table as SQLSTATE
-// 42P01, and Supabase surfaces that as code '42P01' (sometimes 'PGRST205').
+// 42P01, and Supabase surfaces that as code '42P01' (sometimes 'PGRST205'); an
+// absent function is 42883 or 'PGRST202'.
 import {supabase} from './supabase';
 import {QUIZ} from '../app/quiz/questions';
 import type {Lang} from '../app/landing/copy';
@@ -83,12 +84,12 @@ export interface WeakTopic {
   concept: string;
 }
 
-const MISSING = new Set(['42P01', 'PGRST205', '42703']);
+const MISSING = new Set(['42P01', 'PGRST205', '42703', '42883', 'PGRST202']);
 
 function stateOf(error: {code?: string; message?: string} | null): DbState {
   if (!error) return 'ok';
   const code = error.code ?? '';
-  if (MISSING.has(code) || /does not exist|could not find the table|column .* does not exist/i.test(error.message ?? '')) return 'missing';
+  if (MISSING.has(code) || /does not exist|could not find the (table|function)|column .* does not exist/i.test(error.message ?? '')) return 'missing';
   return 'error';
 }
 
@@ -200,26 +201,31 @@ export async function fetchProfile(userId: string): Promise<Result<StudentProfil
 }
 
 export async function saveProfile(userId: string, fields: Pick<StudentProfile, 'university' | 'department' | 'study_year' | 'specialty'>): Promise<Result<null>> {
-  const {error} = await supabase.from('profiles').update(fields).eq('id', userId);
+  // An update that matches no row is not an error to PostgREST, so ask for the
+  // row back: no row means nothing was saved (no profile yet, or RLS refused).
+  const {data, error} = await supabase.from('profiles').update(fields).eq('id', userId).select('id');
   if (error) return {data: null, state: stateOf(error), message: error.message};
+  if (!data?.length) return {data: null, state: 'error', message: 'No profile row was updated.'};
   return {data: null, state: 'ok'};
 }
 
 /** Points earned per day for the last seven days — the dashboard's bar chart. */
 export function weeklyPoints(events: XpEvent[], lang: Lang): {label: string; points: number}[] {
+  // Both sides use the visitor's local calendar day: created_at is UTC, and
+  // slicing its date would file a morning in Ulaanbaatar under the day before.
+  const dayKey = (day: Date) => `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
   const byDay = new Map<string, number>();
   for (const event of events) {
     if (event.points <= 0) continue;
-    const key = event.created_at.slice(0, 10);
+    const key = dayKey(new Date(event.created_at));
     byDay.set(key, (byDay.get(key) ?? 0) + event.points);
   }
   const labels = lang === 'mn' ? ['Ням', 'Дав', 'Мяг', 'Лха', 'Пүр', 'Баа', 'Бяа'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const out: {label: string; points: number}[] = [];
   const today = new Date();
   for (let offset = 6; offset >= 0; offset -= 1) {
-    const day = new Date(today.getTime() - offset * 86400000);
-    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-    out.push({label: labels[day.getDay()], points: byDay.get(key) ?? 0});
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - offset);
+    out.push({label: labels[day.getDay()], points: byDay.get(dayKey(day)) ?? 0});
   }
   return out;
 }

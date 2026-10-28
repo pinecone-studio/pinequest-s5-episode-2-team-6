@@ -649,3 +649,217 @@ button:focus-visible,a:focus-visible{outline-color:var(--blood)}
 .search-result-name{display:flex;flex-direction:column;gap:1px;min-width:0}
 .search-result-alt{font-family:var(--mono);font-size:10px;letter-spacing:.02em;text-transform:none;color:var(--ink-3)}
 .structure-alt{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--ink-3)}
+/* Доод талын dock болон footer хэсгийн өндөр, зайг багасгах */
+.bottom-dock {
+  padding: 6px 10px !important;
+  bottom: 8px !important;
+  min-height: auto !important;
+}
+
+.bottom-dock .dock-body {
+  gap: 4px !important;
+}
+
+/* Studio footer хэсгийн зайг багасгах */
+.studio-footer {
+  padding: 4px 12px !important;
+  font-size: 11px !important;
+}
+/* ===== Mobile: зүүн босоо sidebar, detail sheet, толгойн засвар ===== */
+@media (max-width: 767px) {
+  /* Plaque lab нуух */
+  .studio .plaque-trigger { display: none !important; }
+
+  /* 3D талбарыг зүүнээс нарийсгаж загварыг баруун тийш шахах */
+  body .scene { left: 56px; }
+
+  /* MN/EN: жижиг, баруун ирмэгт */
+  body .identity-tools { width: calc(100vw - 2 * max(16px, env(safe-area-inset-left))); }
+  body .identity-tools .lang-switch { order: 3; margin-left: auto; height: 30px; padding: 0 2px; }
+  body .identity-tools .lang-switch button {
+    min-width: 28px; width: auto; height: 24px; padding: 0 6px; font-size: 10px;
+  }
+
+  /* Sidebar */
+  body .bottom-dock {
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: auto !important;
+    top: calc(max(18px, env(safe-area-inset-top)) + 150px) !important;
+    bottom: auto !important;
+    width: 80px !important;
+    max-width: none !important;
+    height: min(70dvh, 560px) !important;
+    margin: 0 !important;
+    transform: none !important;
+    padding: 8px 4px !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px !important;
+  }
+  body .bottom-dock .scene-caption { display: none; }
+  body .bottom-dock .dock-layers {
+    flex-direction: column; border: 0; padding: 0; min-height: 40px; font-size: 8px;
+  }
+  body .bottom-dock .dock-body {
+    flex: 1; min-height: 0; width: 100%;
+    flex-direction: column; align-items: center; gap: 8px !important;
+  }
+  body .bottom-dock .dock-tabs { flex-direction: column; width: 100%; gap: 4px; }
+  body .bottom-dock .dock-tabs button {
+    font-size: 9px !important; letter-spacing: .04em; line-height: 1.15;
+    height: 36px; min-height: 36px; padding: 2px 3px;
+    white-space: normal; text-align: center; justify-content: center;
+  }
+  body .bottom-dock .dock-tabs .dock-index { display: none; }
+
+  body .bottom-dock .explode-control {
+    flex: 1; min-height: 0; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  body .bottom-dock .explode-label { flex-direction: column; gap: 2px; margin: 0 0 6px; }
+  body .bottom-dock .explode-label label,
+  body .bottom-dock .slider-endpoints,
+  body .bottom-dock .dock-ruler { display: none; }
+  body .bottom-dock .explode-label output {
+    font-size: 11px; min-width: 0; max-width: 64px; padding: 2px 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Босоо slider */
+  body .bottom-dock .explode-control [data-slot=slider] {
+    flex: 1; display: flex; justify-content: center;
+    min-height: 70px; height: auto; width: 100% !important; padding: 0 !important;
+  }
+  body .bottom-dock .explode-control [data-slot=slider-control] {
+    flex: 1; min-height: 70px; height: auto; display: flex; justify-content: center;
+  }
+  body .bottom-dock .explode-control [data-slot=slider-track] {
+    height: 100% !important; min-height: 70px; width: 4px !important;
+    border-radius: 2px; background: #18253626;
+  }
+  body .bottom-dock .explode-control [data-slot=slider-range] {
+    width: 100% !important; background: #263b48;
+  }
+
+  /* Зүсэлтийн тэнхлэгийн товчнууд */
+  body .bottom-dock .slice-axis { flex: 0 0 auto; flex-direction: column; gap: 4px; width: 100%; }
+  body .bottom-dock .slice-axis button {
+    font-size: 8px !important; letter-spacing: 0; line-height: 1.15;
+    height: auto; min-height: 30px; padding: 3px 2px; white-space: normal;
+  }
+
+  /* Шинэчлэх: зөвхөн икон */
+  body .bottom-dock .dock-reset {
+    flex: 0 0 auto; width: 36px; min-height: 36px; padding: 0; border: 0;
+  }
+  body .bottom-dock .dock-reset span { display: none !important; }
+
+  /* Detail sheet: sidebar-ын баруун талд */
+  body .detail-sheet,
+  body .detail-sheet.is-isolated {
+    left: 96px !important;
+    right: 10px !important;
+    width: auto !important;
+    bottom: calc(40px + env(safe-area-inset-bottom)) !important;
+    max-height: 40dvh !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+  body .layers-panel.mobile-open {
+    left: 96px; bottom: calc(40px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 300px);
+  }
+  body .detail-sheet .detail-header { gap: 4px; padding-right: 36px; }
+  body .detail-sheet .detail-accent { height: 3px; }
+  body .detail-sheet .eyebrow { font-size: 9px; padding-right: 36px; }
+  body .detail-sheet .detail-header .structure-title {
+    font-size: 17px !important; line-height: 1.2 !important; padding-right: 0;
+  }
+  body .detail-sheet .structure-latin { font-size: 11px; }
+  body .detail-sheet .structure-alt { font-size: 9.5px; }
+  body .detail-sheet .structure-description,
+  body .detail-sheet .info-card-line { font-size: 12px !important; line-height: 1.45 !important; }
+  body .detail-sheet .detail-scroll { gap: 8px; }
+  body .detail-sheet .structure-meta { display: none; }
+  body .detail-sheet .detail-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-top: 8px;
+  }
+  body .detail-sheet .detail-actions .primary-action {
+    order: -1; grid-column: 1 / -1; min-height: 36px; padding: 6px 10px; font-size: 10px;
+  }
+  body .detail-sheet .detail-actions .secondary-action {
+    min-height: 36px; padding: 4px 6px; font-size: 9.5px;
+  }
+}
+@media (max-width: 767px) {
+  /* Аялал | Сорил | MN: нэг тасралтгүй мөр */
+  body .identity-tools {
+    width: calc(100vw - 2 * max(16px, env(safe-area-inset-left)));
+    gap: 0;
+  }
+  body .identity-tools > button {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin: 0;
+  }
+  body .identity-tools > button + button { margin-left: -1px; }
+
+  body .identity-tools .lang-switch {
+    order: 3;
+    flex: 0 0 56px;
+    height: 38px;
+    margin-left: -1px;
+    padding: 0;
+  }
+  body .identity-tools .lang-switch button {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 0;
+    font-size: 11px;
+  }
+}
+@media (max-width: 767px) {
+  /* Босоо slider: нарийн шугам */
+  body .bottom-dock [data-slot=slider] {
+    flex: 1 1 auto;
+    min-height: 70px;
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+    padding: 0 !important;
+    background: none !important;
+  }
+  /* Control (data-slot-гүй) нь root-ийн шууд хүүхэд */
+  body .bottom-dock [data-slot=slider] > * {
+    width: auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    background: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  body .bottom-dock [data-slot=slider-track] {
+    width: 4px !important;
+    min-width: 4px !important;
+    max-width: 4px !important;
+    flex: 1 1 auto !important;
+    border-radius: 2px !important;
+    background: #1825362e !important;
+  }
+  body .bottom-dock [data-slot=slider-range] {
+    width: 100% !important;
+    background: #263b48 !important;
+  }
+}
+@media (max-width: 767px) {
+  /* Sidebar-ыг хүрээний шугамаас дотогш оруулж толгойн мөртэй тэгшлэх */
+  body .bottom-dock {
+    left: max(16px, env(safe-area-inset-left)) !important;
+  }
+  /* Баруун талын хэсгүүдийг дагуулан шилжүүлэх */
+  body .detail-sheet,
+  body .detail-sheet.is-isolated { left: 112px !important; }
+  body .layers-panel.mobile-open { left: 112px; }
+  body .scene { left: 64px; }
+}

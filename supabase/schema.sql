@@ -499,12 +499,30 @@ create table if not exists public.exams (
   title text not null,
   title_en text not null default '',
   topic text not null default '',           -- free-text label, e.g. "Дээд мөч"
+  -- The atlas system the paper belongs to ('skeletal', 'muscular', 'arterial',
+  -- 'venous', 'nervous', 'cardiac', ...), so the exam screen can group papers
+  -- the same way the 3D atlas colours them. Empty = a paper the team wrote.
+  group_key text not null default '',
+  part_key text not null default '',        -- atlas structure the paper is about, e.g. 'femur'
+  part_mn text not null default '',         -- its Mongolian name, for titles
+  source text not null default 'manual' check (source in ('manual', 'ai')),
   level text not null default 'basic' check (level in ('basic', 'clinical')),
   time_limit_min int not null default 15,
   pass_pct int not null default 70,
   status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
   created_at timestamptz not null default now()
 );
+
+-- Databases created before the grouping existed get the same columns; the
+-- create table above already carries them for a new project.
+alter table public.exams add column if not exists group_key text not null default '';
+alter table public.exams add column if not exists part_key text not null default '';
+alter table public.exams add column if not exists part_mn text not null default '';
+alter table public.exams add column if not exists source text not null default 'manual' check (source in ('manual', 'ai'));
+
+-- The exam screen lists one group at a time.
+create index if not exists exams_group_published
+  on public.exams (group_key, part_key) where status = 'published';
 
 create table if not exists public.exam_questions (
   id bigserial primary key,
@@ -644,6 +662,11 @@ create trigger score_exam_attempt
 --
 --     The block is guarded by the exam title, so re-running the
 --     schema never duplicates the bank.
+--
+--     After this file, run supabase/exam_bank.sql: 18 short papers
+--     grouped by atlas system (Яс, Булчин, Артерийн судас, Венийн
+--     судас, Мэдрэлийн систем, Зүрх) with one named structure each,
+--     drafted by the assistant and stored with source = 'ai'.
 -- ============================================================
 do $$
 declare

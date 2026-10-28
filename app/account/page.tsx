@@ -1,8 +1,4 @@
-// Account page: shows the plan status, sells premium with an
-// order-based bank/QPay transfer flow, and lists payment history.
-// Flow: pick a plan → a pending payment row is created → transfer the
-// shown amount → save the bank reference → the admin confirms → the
-// subscription extends (handled by a database trigger).
+// Account status and existing payment history. Both labs are freely accessible.
 import {useEffect,useState} from 'react';
 import {Link,useLocation,useNavigate,Navigate} from 'react-router-dom';
 import {Badge} from '@/components/ui/badge';
@@ -11,7 +7,7 @@ import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
-import {BANK,PLANS,type Plan} from '../../lib/plans';
+import {BANK,PLANS} from '../../lib/plans';
 import {useSubscription} from '../../hooks/use-subscription';
 import {useAuth,signOut} from '../../hooks/use-auth';
 import {useLang} from '../locale';
@@ -25,7 +21,7 @@ const copy={
     premium:'Premium',
     premiumAdmin:'Premium — admin',
     until:(v:string)=>`Premium is active until ${v}`,
-    plansLead:'Unlock ROM Lab and Plaque Lab',
+    plansLead:'ROM Lab and Plaque Lab are free to access. No subscription is required.',
     buy:'Pay',
     how:'How to pay',
     step1:'Transfer the amount below with QPay, SocialPay, or a bank app.',
@@ -55,7 +51,7 @@ const copy={
     premium:'Premium',
     premiumAdmin:'Premium — админ',
     until:(v:string)=>`Premium ${v} хүртэл идэвхтэй`,
-    plansLead:'ROM Lab болон Plaque Lab-ийг нээх',
+    plansLead:'ROM Lab болон Plaque Lab үнэгүй. Төлбөртэй эрх шаардлагагүй.',
     buy:'Төлөх',
     how:'Төлөх заавар',
     step1:'Дараах дүнг QPay, SocialPay эсвэл банкны апп ашиглан шилжүүлнэ үү.',
@@ -119,20 +115,6 @@ export default function AccountPage(){
   if(!ready)return <main className="flex min-h-screen items-center justify-center text-slate-500">…</main>;
   if(!user)return <Navigate to="/login" state={{from:'/account'}} replace/>;
 
-  async function createPayment(plan:Plan){
-    setError('');
-    const {data,error}=await supabase.from('payments').insert({
-      // The column holds the plan id, not the whole plan object.
-      user_id:user!.id,plan:plan.id,amount_mnt:plan.priceMnt,method:'qpay',status:'pending',
-    }).select().single();
-    if(error){
-      // The visitor sees a friendly line; the exact PostgREST reason belongs in the console.
-      console.error('[account] payment create failed',error.code,error.message);
-      setError(dict.error);return;
-    }
-    setPayments(p=>[data as Record<string,unknown>,...p]);
-  }
-
   async function saveReference(id:string){
     setError('');
     setSavingId(id);
@@ -154,7 +136,7 @@ export default function AccountPage(){
 
   const planName=(id:string)=>PLANS.find(p=>p.id===id)?.name??id;
   const statusLabel=(key:string)=>String((dict.status as Record<string,string>)[key]??key);
-  // The atlas treats an admin as premium, so the account page must agree.
+  // Preserve existing subscription and administrator status for account history.
   const unlocked=premium||isAdmin;
 
   return(
@@ -180,18 +162,13 @@ export default function AccountPage(){
             :<Badge variant="secondary">{dict.free}</Badge>}
           {premium&&expiresAt&&<span className="ml-2 text-sm font-normal text-slate-500">{dict.until(fmtDate(expiresAt))}</span>}
         </CardTitle></CardHeader>
-        {!unlocked&&<CardContent>
+        <CardContent>
           <p className="mb-4 text-sm text-slate-600">{dict.plansLead}</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {PLANS.map(plan=>(
-              <div key={plan.id} className="rounded-2xl border border-slate-200 p-4">
-                <p className="text-lg font-semibold">{plan.name}</p>
-                <p className="mb-3 text-2xl font-bold">{plan.priceMnt.toLocaleString()}₮</p>
-                <Button className="w-full" onClick={()=>createPayment(plan)}>{dict.buy}</Button>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-3">
+            <Button nativeButton={false} render={<Link to="/atlas?open=rom"/>}>ROM Lab</Button>
+            <Button nativeButton={false} variant="outline" render={<Link to="/plaque"/>}>Plaque Lab</Button>
           </div>
-        </CardContent>}
+        </CardContent>
       </Card>
 
       {payments.length>0&&payments.some(p=>p.status==='pending')&&(

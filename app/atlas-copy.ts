@@ -42,6 +42,17 @@ const systemsMn: Record<SystemId, {name: string; description: string}> = {
 // One step of the phone guide. `legend` labels the icons the intro panel draws for that step.
 interface GuideStep {title: string; text: string; legend?: string[]}
 
+const labGuides: Record<Lang, GuideStep[]> = {
+  en: [
+    {title: 'Try ROM Lab', text: 'Open the tools menu and choose the person icon (ROM Lab). Pick elbow or shoulder and left or right arm, then start the camera and allow access. Keep your upper body and arm in view and move slowly to see the estimated angle and muscle highlights. This is a learning tool, not a clinical measurement.'},
+    {title: 'Explore Plaque Lab', text: 'Choose Plaque Lab (the pulse icon) in the main navigation. Select the left or right renal artery, then adjust diameter narrowing and segment length. Compare flow with the healthy baseline and inspect the highlighted artery in 3D. Reset to compare again. Flow is illustrative, not a patient prediction. Both labs are free; no account is needed.'},
+  ],
+  mn: [
+    {title: 'ROM Lab ашиглах', text: 'Хэрэгслийн цэсийг нээж, хүний дүрстэй ROM Lab товчийг сонго. Тохой эсвэл мөр, зүүн эсвэл баруун гараа сонгоод камерыг асааж, зөвшөөрөл өг. Биеийн дээд хэсэг, гараа камерт бүтнээр харуулж, аажуухан хөдөлгөн өнцгийн ойролцоо хэмжилт болон булчингийн тодруулгыг ажигла. Энэ нь суралцах хэрэгсэл бөгөөд эмнэлзүйн хэмжилт биш.'},
+    {title: 'Plaque Lab судлах', text: 'Үндсэн цэсний судасны цохилтын дүрстэй Товрууны лаб товчийг сонго. Зүүн эсвэл баруун бөөрний артерийг сонгоод диаметрийн нарийсалт, нарийссан хэсгийн уртыг өөрчил. Урсгалыг эрүүл үеийн суурьтай харьцуулж, тодруулсан артерийг 3D дээр хар. Дахин харьцуулахдаа суурь төлөвт буцаа. Урсгал нь сургалтын жишээ бөгөөд өвчтөний үзүүлэлтийг таамаглахгүй. Хоёр лаб үнэгүй, бүртгэл шаардлагагүй.'},
+  ],
+};
+
 const en = {
   language: 'Language',
   askAi: 'Ask AI',
@@ -162,6 +173,7 @@ const en = {
       {title: 'Tap any structure', text: 'Click a bone, muscle or organ to see its name, Latin term and a short explanation. The tools at the bottom explode, peel or slice the body open.'},
       {title: 'Search by name', text: 'Use Find a structure, or press /, to look up any part in Mongolian, English or Latin. Try “heart” or “femur”.'},
       {title: 'Ask the assistant', text: 'Ask about anything you did not understand. The assistant answers in Mongolian and can rotate or highlight the model for you.'},
+      ...labGuides.en,
     ],
     // On a phone the buttons are icons without labels, so the guide names each one.
     phoneKicker: 'Using it on a phone',
@@ -172,6 +184,7 @@ const en = {
       {title: 'Buttons at the top', text: 'Each icon opens one tool:', legend: ['Ask AI', 'ROM lab', 'Find a structure', 'About this atlas']},
       {title: 'Main menu', text: 'The bar at the very top moves between pages:', legend: ['Home', '3D atlas', 'Plaque lab', 'Quiz']},
       {title: 'Keep it on your home screen', text: 'Open Anatomn like an app. In Safari tap Share, then “Add to Home Screen”. In Chrome tap ⋮, then “Add to Home screen”.'},
+      ...labGuides.en,
     ] as GuideStep[],
     step: (n: number, total: number) => `Step ${n} of ${total}`,
     back: 'Back',
@@ -433,6 +446,7 @@ const mn: typeof en = {
       {title: 'Бүтэц дээр дар', text: 'Яс, булчин, эрхтэн дээр дарахад нэр, латин нэр, товч тайлбар нь гарна. Доод талын Задлах, Давхарга, Зүсэлтээр биеийн дотрыг харна.'},
       {title: 'Нэрээр нь хай', text: '“Бүтэц хайх” товч эсвэл / товчоор дурын хэсгийг монгол, англи, латин нэрээр хайна. Жишээ нь: зүрх, femur.'},
       {title: 'AI-аас асуу', text: 'Ойлгоогүй зүйлээ монголоор асуу. Туслах тайлбарлаад, загварыг эргүүлж, хэсгийг тодруулж харуулна.'},
+      ...labGuides.mn,
     ],
     phoneKicker: 'Утсан дээр ашиглах',
     phoneSteps: [
@@ -442,6 +456,7 @@ const mn: typeof en = {
       {title: 'Дээд товчнууд', text: 'Тэмдэг бүр нэг хэрэгсэл нээнэ:', legend: ['AI-аас асуух', 'Хөдөлгөөний далайц', 'Бүтэц хайх', 'Энэ атласын тухай']},
       {title: 'Үндсэн цэс', text: 'Хамгийн дээд талын мөрөөр хуудас хооронд шилжинэ:', legend: ['Нүүр', '3D атлас', 'Товрууны лаб', 'Сорил']},
       {title: 'Нүүр дэлгэцэндээ нэмэх', text: 'Anatomn-ийг апп шиг нээхийн тулд Safari-д Share (Хуваалцах) → “Add to Home Screen”, Chrome-д ⋮ → “Add to Home screen”-ийг сонгоно.'},
+      ...labGuides.mn,
     ],
     step: (n: number, total: number) => `Алхам ${n} / ${total}`,
     back: 'Буцах',

@@ -165,7 +165,7 @@ Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → *
 ### Roles: user, premium, admin
 
 - **User** — every signup. Free access to the whole atlas plus search and the quiz.
-- **Premium** — unlocks ROM Lab (camera motion) and Plaque Lab (renal flow). Bought with an order-based transfer on `/account`: pick a plan (1 month 9,900₮ / 1 year 49,000₮, see `lib/plans.ts`), transfer the amount to the shown bank account, save the transaction reference, and the team's admin confirms it in `/admin`. A database trigger turns the confirmed payment into subscription time automatically. Admins can also grant premium directly by inserting a `subscriptions` row.
+- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account; the account page no longer sells access to these labs.
 - **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
 
 ```sql
@@ -179,7 +179,7 @@ update public.profiles set is_admin = true where email = 'you@example.com';
 1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created.
 2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
 3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
-4. `useSubscription()` picks up the change and the premium tools turn on.
+4. `useSubscription()` picks up the change for account status. Lab access is independent of subscription status.
 
 ### Reading and writing data from a component
 

@@ -621,34 +621,53 @@ button.intro-target{position:relative}
  .detail-scroll .source-link{font-size:13.5px}
  .detail-scroll :is(.term-list li,.member-list button){font-size:13.5px}
 }
-/* Phones held upright: the details sheet sits on the screen's bottom edge over the dock and footer, which hide
+/* Phones held upright: the details sheet sits above the footer over the dock, which hides
    while it is open. It opens low, with the name, the start of the notes and the main button, so the tapped
    structure stays in view above it; its grab bar, or scrolling the notes, opens it to full height with every
    action. */
 @media(max-width:767px) and (orientation:portrait),(max-width:767px) and (min-height:601px){
- .detail-sheet,.detail-sheet.is-isolated{bottom:calc(12px + env(safe-area-inset-bottom))!important;max-height:46dvh;padding-top:26px!important;transition:max-height .25s ease}
- .detail-sheet.is-full,.detail-sheet.is-full.is-isolated{max-height:calc(100dvh - 16px - var(--site-nav-h))}
+ .detail-sheet,.detail-sheet.is-isolated{bottom:calc(52px + env(safe-area-inset-bottom))!important;max-height:46dvh;padding-top:26px!important;transition:max-height .25s ease}
+ .detail-sheet.is-full,.detail-sheet.is-full.is-isolated{max-height:calc(100dvh - 68px - var(--site-nav-h) - env(safe-area-inset-bottom))}
  .sheet-handle{display:flex;position:absolute;top:0;left:50%;width:120px;height:26px;margin-left:-60px;align-items:center;justify-content:center;touch-action:none;cursor:grab}
  .sheet-handle::before{content:'';width:40px;height:5px;border-radius:3px;background:var(--rule-2)}
  .detail-sheet:not(.is-full) .detail-actions .secondary-action{display:none}
- body:has(.detail-sheet) :is(.bottom-dock,.studio-footer){visibility:hidden}
+ body:has(.detail-sheet) .bottom-dock{visibility:hidden}
  /* The walkthrough sits on the bottom edge too, over the dock, except on the step about the dock itself, and
     below the top buttons. Its title and buttons stay put while a long step scrolls between them. */
- .learning-panel.intro-panel{bottom:calc(12px + env(safe-area-inset-bottom));max-height:calc(100dvh - 82px - var(--site-nav-h));overflow:hidden}
+ .learning-panel.intro-panel{bottom:calc(52px + env(safe-area-inset-bottom));max-height:calc(100dvh - 122px - var(--site-nav-h) - env(safe-area-inset-bottom));overflow:hidden}
  .learning-panel.intro-panel[data-target=dock]{bottom:calc(218px + env(safe-area-inset-bottom));max-height:calc(100dvh - 288px - var(--site-nav-h))}
  .intro-panel .tour-step{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
  .intro-panel :is(.learning-head,.learning-actions){flex-shrink:0}
  /* The systems list takes the dock's place while it is open, so far more of it shows at once. */
- .layers-panel.mobile-open{bottom:calc(12px + env(safe-area-inset-bottom));max-height:min(64dvh,calc(100dvh - 82px - var(--site-nav-h)))}
- body:has(.layers-panel.mobile-open) :is(.bottom-dock,.studio-footer){visibility:hidden}
+ .layers-panel.mobile-open{bottom:calc(52px + env(safe-area-inset-bottom));max-height:min(64dvh,calc(100dvh - 122px - var(--site-nav-h) - env(safe-area-inset-bottom)))}
+ body:has(.layers-panel.mobile-open) .bottom-dock{visibility:hidden}
 }
 /* Phones on their side. A small one also matches the narrow-screen rules above the shared navigation, which lift
    these panels 218px to clear the upright dock and so left them a few pixels tall here; they run down to the
    bottom edge instead, the systems list over the dock. The details sheet hides the top buttons, so it starts just
    below the navigation, and it scrolls as one so its actions are always reachable on so short a screen. */
 @media(max-height:600px) and (orientation:landscape){
- .detail-sheet{top:calc(12px + var(--site-nav-h))!important;bottom:calc(12px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;overscroll-behavior:contain}
+ .detail-sheet{top:calc(12px + var(--site-nav-h))!important;bottom:calc(52px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;overscroll-behavior:contain}
  .detail-sheet .detail-scroll{flex:none;overflow:visible}
- .layers-panel.mobile-open,.learning-panel{bottom:calc(12px + env(safe-area-inset-bottom));max-height:none}
- body:has(.layers-panel.mobile-open) :is(.bottom-dock,.studio-footer){visibility:hidden}
+ .layers-panel.mobile-open,.learning-panel{bottom:calc(52px + env(safe-area-inset-bottom));max-height:none}
+ body:has(.layers-panel.mobile-open) .bottom-dock{visibility:hidden}
 }
+@media(max-width:767px),(max-height:600px) and (orientation:landscape){
+ .bottom-dock{bottom:calc(52px + env(safe-area-inset-bottom))}
+ .studio-footer{bottom:calc(9px + env(safe-area-inset-bottom))}
+ .studio-footer button{min-height:32px}
+}
+/* The illustration viewer stays light even when opened from the blue atlas. */
+.standard-figure-dialog[data-slot=dialog-content]{display:flex;flex-direction:column;gap:12px;overflow:hidden;background:#fff;color:#243444;max-height:calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+.standard-figure-dialog-header{flex-shrink:0;padding-right:44px;display:flex;flex-direction:column;gap:8px}
+.standard-figure-dialog-header [data-slot=dialog-description]{color:#526375;max-height:18dvh;overflow-y:auto}
+.standard-figure-dialog .standard-figure-dialog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.standard-figure-dialog-footer{flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid #d7dfe7;background:#fff}
+.standard-figure-dialog .standard-figure-controls{flex-wrap:wrap;gap:8px}
+.standard-figure-dialog .standard-figure-controls button,.standard-figure-dialog [data-slot=dialog-close]{color:#243444;background:#edf2f7;border:1px solid #cbd5df;min-width:40px;min-height:40px;opacity:1}
+.standard-figure-dialog .standard-figure-controls button:hover,.standard-figure-dialog [data-slot=dialog-close]:hover{background:#dce6ef;color:#152434}
+.standard-figure-dialog .standard-figure-controls button:disabled{opacity:.45}
+.standard-figure-dialog [data-slot=dialog-close]{z-index:2;border-radius:50%}
+.standard-figure-dialog .standard-figure-controls .small-number{color:#405368}
+.standard-figure-dialog .source-link,.standard-figure-dialog .standard-figure-credit a{color:#24617e}
+.standard-figure-dialog button:focus-visible{outline:2px solid #24617e;outline-offset:2px}

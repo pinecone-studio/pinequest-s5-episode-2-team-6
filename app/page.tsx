@@ -25,8 +25,6 @@ import AiPanel from './ai-panel';
 import SheetResizer from './sheet-resizer';
 import SheetHandle from './sheet-handle';
 import IntroPanel,{introSeen,introSteps,usePhoneLayout,type IntroTarget} from './intro-panel';
-import PaywallDialog from './paywall';
-import {useSubscription} from '../hooks/use-subscription';
 import {describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
 import type {AssistantSelection} from './llm-types';
 import {AnchorChannel} from './anchor';
@@ -46,14 +44,8 @@ const SEARCH_SUGGESTIONS=['heart','brain','liver','stomach','spleen','pancreas',
 export default function Home(){
  const {lang,t}=useLang();
  const navigate=useNavigate();
- const subscription=useSubscription();
- // Admins can open the labs without buying a plan, so they can verify the flow.
- const premium=subscription.premium||subscription.isAdmin;
- const [paywall,setPaywall]=useState(false);
- // The Plaque lab lives at /plaque in the navigation bar: the same atlas with the lab panel open. Free accounts
- // get the paywall and land back on /atlas, but only once the subscription lookup has settled.
- const plaqueRoute=useLocation().pathname==='/plaque',plaqueOpen=plaqueRoute&&premium;
- useEffect(()=>{if(plaqueRoute&&subscription.ready&&!subscription.loading&&!premium){setPaywall(true);navigate('/atlas',{replace:true});}},[plaqueRoute,subscription.ready,subscription.loading,premium]);
+ // Both labs are available directly, including without an account.
+ const plaqueRoute=useLocation().pathname==='/plaque',plaqueOpen=plaqueRoute;
  const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
  const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
@@ -140,7 +132,7 @@ export default function Home(){
   if(active){setDetails(false);setPanel(null);setChosen(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view,reset:s.reset+1}));}
   else {setActivations({});setState(s=>({...s,selected:[],isolate:false}));}
  },[]);
- const openRom=()=>{if(!premium){setPaywall(true);return;}setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
+ const openRom=()=>{setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
  const openIntro=()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(false);setIntro(0);};
  const introTucked=chatOpen||panel!==null||(details&&state.selected.length>0)||romOpen||about||!!perfusion;
  // Phones get their own guide; each step can name a control, which then wears a pulsing ring.
@@ -151,7 +143,7 @@ export default function Home(){
  // point at them; a click elsewhere (but not on the intro itself) or Escape folds it again.
  const [tools,setTools]=useState(false),toolsRef=useRef<HTMLElement>(null);
  const toolsActive=chatOpen||romOpen||panel==='search';
- useEffect(()=>{if(introTarget==='ask'||introTarget==='search'||introTarget==='top')setTools(true);},[introTarget]);
+ useEffect(()=>{if(introTarget==='ask'||introTarget==='search'||introTarget==='top'||introTarget==='rom')setTools(true);},[introTarget]);
  useEffect(()=>{if(!tools)return;const away=(e:PointerEvent)=>{const el=e.target as Element;if(!toolsRef.current?.contains(el)&&!el.closest?.('.intro-panel'))setTools(false);};const esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setTools(false);};document.addEventListener('pointerdown',away);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('pointerdown',away);document.removeEventListener('keydown',esc);};},[tools]);
  const toggleChat=()=>{setDetails(false);setPanel(null);setRomOpen(false);setAbout(false);setChatOpen(open=>!open);};
  // The assistant reads the same reference notes the interface shows and can drive the model.
@@ -210,10 +202,9 @@ export default function Home(){
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
   <PlaquePanel atlas={atlas} open={plaqueOpen} onPreview={previewPlaque} onClose={()=>navigate('/atlas')}/>
-  <PaywallDialog open={paywall} onClose={()=>setPaywall(false)}/>
   {/* No visible title over the model; the heading stays for screen readers. */}
   <h1 className="sr-only">Anatomn</h1>
-  <nav ref={toolsRef} className={`top-actions ${tools?'is-open':''}`} aria-label="Explorer panels"><div className="atlas-tools" id="atlas-tools"><Button variant="ghost" style={{'--i':3} as CSSProperties} className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={()=>{setTools(false);toggleChat();}} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" style={{'--i':2} as CSSProperties} className={`${romOpen?'active':''} ${ring('top')}`} onClick={()=>{setTools(false);romOpen?setRomOpen(false):openRom();}} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" style={{'--i':1} as CSSProperties} className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>{setTools(false);openPanel('search');}} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" style={{'--i':0} as CSSProperties} className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setTools(false);setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></div><Button variant="ghost" className={`icon-button tools-toggle ${toolsActive&&!tools?'has-active':''}`} onClick={()=>setTools(open=>!open)} aria-expanded={tools} aria-controls="atlas-tools" aria-label={tools?t.hideTools:t.showTools}>{tools?<X size={18}/>:<LayoutGrid size={18}/>}</Button></nav>
+  <nav ref={toolsRef} className={`top-actions ${tools?'is-open':''}`} aria-label="Explorer panels"><div className="atlas-tools" id="atlas-tools"><Button variant="ghost" style={{'--i':3} as CSSProperties} className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={()=>{setTools(false);toggleChat();}} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" style={{'--i':2} as CSSProperties} className={`${romOpen?'active':''} ${ring('rom','top')}`} onClick={()=>{setTools(false);romOpen?setRomOpen(false):openRom();}} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" style={{'--i':1} as CSSProperties} className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>{setTools(false);openPanel('search');}} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" style={{'--i':0} as CSSProperties} className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setTools(false);setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></div><Button variant="ghost" className={`icon-button tools-toggle ${toolsActive&&!tools?'has-active':''}`} onClick={()=>setTools(open=>!open)} aria-expanded={tools} aria-controls="atlas-tools" aria-label={tools?t.hideTools:t.showTools}>{tools?<X size={18}/>:<LayoutGrid size={18}/>}</Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>
   {intro!==null&&<IntroPanel step={intro} phone={phone} tucked={introTucked} onStep={setIntro} onClose={()=>setIntro(null)}/>}
   <RomPanel parts={romParts} open={romOpen} onClose={()=>setRomOpen(false)} onActivation={onActivation} onRomFocus={onRomFocus}/>

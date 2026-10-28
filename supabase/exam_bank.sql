@@ -273,7 +273,7 @@ $$;
 do $$
 declare e_id bigint;
 begin
-  if not exists (select 1 from public.exams where title = 'Зүрх: зүрх') then
+  if not exists (select 1 from public.exams where title = 'Зүрх: зүрхний байршил, хангамж') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
       values ('Зүрх: зүрхний байршил, хангамж', 'Heart: position and supply', 'Зүрх', 'basic', 6, 70, 'published', 'cardiac', 'heart', 'зүрх', 'ai')
       returning id into e_id;

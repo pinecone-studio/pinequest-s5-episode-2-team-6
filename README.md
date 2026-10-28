@@ -12,6 +12,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Search anatomical names and source identifiers.
 - Isolate a selected structure and read its details.
 - Ask the AI assistant anything and get a detailed Mongolian answer; anatomy questions can also rotate or highlight the model.
+- Study with the AI teacher (`/teacher`): lessons anchored to Gray's Anatomy for Students chapters, a learning profile that remembers what you asked, and per-chapter progress.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
 - Take the quiz on its own page (`/quiz`), and switch floating labels on.
 - Sit a timed exam on `/exam`; the papers are grouped by anatomy part — bones, muscles, arteries, veins, nerves, the heart — and each one links back to the structure in the 3D atlas.
@@ -100,11 +101,21 @@ When the endpoint answers with totals, the landing page shows those numbers inst
 
 The landing page and the atlas are built for phones, tablets and desktops. The landing page stacks the copy under the body on a phone and on a portrait tablet, keeps the two column hero on a landscape tablet and on a desktop, and scales the big words so they never run off the screen. The atlas switches to the bottom dock and the sheet panels below 768 pixels and keeps the side panels above it. Checked at 320×568, 390×844, 768×1024, 820×1180, 1024×768, 1440×900 and 1920×1200.
 
-## The assistant and the quiz
+## Ask AI
 
 "Ask AI" is an LLM chat backed by a small server-side endpoint, `api/chat.ts`, with the shared implementation in `server/chat.ts`. It accepts any free-form question — anatomy or a general topic — and streams a detailed, structured answer in Mongolian. Medical, scientific and Latin terminology stays in its original form. When a structure is selected and the question matches atlas content, those notes are sent as context so anatomy answers stay grounded in the same reference data the detail panel shows; other questions are answered from the model's general knowledge. The system prompt asks for in-depth answers of roughly 400–900 words with headings, examples and a short conclusion, and the panel works even before the 3D atlas finishes loading. The default Gemini model is `gemini-3.5-flash-lite`, which starts streaming in about a second; set `GEMINI_MODEL=gemini-3.6-flash` if you prefer deeper reasoning over speed.
 
+## The AI teacher
+
+**AI багш** (`/teacher`, the graduation-cap link in the navigation) is a dedicated teaching chat for students. It answers whatever they do not understand and anchors every answer to the chapter structure of *Gray's Anatomy for Students*: the eight regional-anatomy chapters (The Body, Back, Thorax, Abdomen, Pelvis and Perineum, Lower Limb, Upper Limb, Head and Neck) are mapped in `app/teacher/textbook.ts` with keywords, section topics and starter questions. Picking a chapter pins the answer to it; leaving **Бүгд (авто)** routes the question to a chapter from its wording. The teacher explains in its own words following the book's regional method (surface anatomy → bones → muscles → vessels → nerves → clinical notes), never reproduces the book's text, and ends each answer with self-check questions plus the chapter to read next.
+
+The teacher also learns about the student: every answered question is tagged with its chapter and saved to localStorage, and for a signed-in student also to the `teacher_questions` table (`supabase/schema.sql`), so the history follows them across devices. The profile — questions per chapter and a level from 1 to 3 (5 questions → level 2, 12 → level 3) — is sent with every turn, so later answers reference earlier questions ("өмнө бид ... ярилцсан") and pick their depth from the level. The **Миний ахиц** card shows the per-chapter bars and the **Миний асуултууд** card keeps the recent questions; clicking one puts it back in the input.
+
+The teacher shares the `/api/chat` endpoint, provider configuration, rate limit and health check with the atlas assistant: the same `GEMINI_API_KEY` (or other provider variables) powers both, and `mode: "teacher"` in the request body selects the teaching prompt in `server/teacher.ts`. No textbook text is bundled with the app — the chapter map carries only the book's public structure, so the student reads the actual content in their own copy.
+
 The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens the quiz page. Those actions are shown as chips under the answer.
+
+## The quiz
 
 The quiz (`/quiz`) deals a fresh run from a bank of 79 questions in `app/quiz/questions.ts`. Each question has one of six topics (bones, muscles, nervous system, joints and ligaments, heart and vessels, organs), a level from 1 to 3, and a concept that opens in the 3D atlas. A visitor picks the topic, level and length, can turn on a 30-second timer per question, and gets shuffled options, a per-topic breakdown and a rerun of the questions they missed. With "AI-written" selected, `POST /api/exam` with `mode: "quiz"` asks the configured LLM for new questions on the same topic and level; rows that are not a clean four-option question are dropped, and the request shares the assistant's per-IP rate limit. Asking the assistant for a quiz on a topic ("Гарын ясаар сорил өг", "quiz me on nerves") opens the quiz with that topic picked.
 
@@ -185,7 +196,7 @@ For local development they live in `.env.local` (gitignored — copy them from `
 
 Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the three steps in order; each one is safe to run twice.
 
-1. [`supabase/schema.sql`](supabase/schema.sql) — creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with the policies behind the admin panel, and adds the triggers that keep profiles in sync with `auth.users` and do all the scoring. The `exams` table carries `group_key`, `part_key`, `part_mn` and `source`; the file also `alter table … add column if not exists` them, so a database migrated before the grouping exists only needs this file re-run.
+1. [`supabase/schema.sql`](supabase/schema.sql) — creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `teacher_questions`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with the policies behind the admin panel, and adds the triggers that keep profiles in sync with `auth.users` and do all the scoring. The `exams` table carries `group_key`, `part_key`, `part_mn` and `source`; the file also `alter table … add column if not exists` them, so a database migrated before the grouping exists only needs this file re-run.
 2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 published papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper. Skip it if you would rather generate the bank from `/admin` instead.
 3. Promote yourself, then refresh `/admin` (step 3 needs the profile row from step 1):
 

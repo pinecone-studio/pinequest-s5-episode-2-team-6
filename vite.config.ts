@@ -4,10 +4,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/postcss';
 import {handleChatRequest,type LlmEnv} from './server/chat';
 import {handleExamRequest} from './server/exam';
+import {handleAuthRequest} from './server/auth';
 
 const path=(relative:string)=>fileURLToPath(new URL(relative,import.meta.url));
 
-/** Serve the Vercel-style `/api/chat` and `/api/exam` functions during `npm run dev`.
+/** Serve the Vercel-style `/api/chat`, `/api/exam`, and `/api/auth` functions during `npm run dev`.
  *  Vite has no serverless runtime, so this middleware adapts Node's request and
  *  response objects to the Web Request/Response pair used by the handler. */
 function assistantApiPlugin(env:LlmEnv):Plugin{
@@ -15,10 +16,9 @@ function assistantApiPlugin(env:LlmEnv):Plugin{
   name:'human-atlas-assistant-api',
   configureServer(server){
    server.middlewares.use(async(req,res,next)=>{
-    const endpoint=/^\/api\/(chat|exam)(?:\?|$)/.exec(req.url??'')?.[1];
+    const endpoint=/^\/api\/(chat|exam|auth)(?:\/[^?]*)?(?:\?|$)/.exec(req.url??'')?.[1];
     if(!endpoint)return next();
     if(req.method!=='GET'&&req.method!=='POST'&&req.method!=='OPTIONS')return next();
-    const handle=endpoint==='exam'?handleExamRequest:handleChatRequest;
     try{
      const chunks:Buffer[]=[];
      for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));
@@ -31,9 +31,11 @@ function assistantApiPlugin(env:LlmEnv):Plugin{
      res.on('close',()=>{if(!res.writableEnded)abort.abort();});
      const body=req.method==='POST'?new Uint8Array(Buffer.concat(chunks)):undefined;
      const request=new Request(`http://${req.headers.host??'localhost'}${req.url??`/api/${endpoint}`}`,{method:req.method,headers,body,signal:abort.signal});
-     const response=await handle(request,env);
+     const response=endpoint==='exam'?await handleExamRequest(request,env):endpoint==='chat'?await handleChatRequest(request,env):await handleAuthRequest(request);
      res.statusCode=response.status;
-     response.headers.forEach((value,key)=>res.setHeader(key,value));
+     const cookies=typeof response.headers.getSetCookie==='function'?response.headers.getSetCookie():[];
+     response.headers.forEach((value,key)=>{if(key.toLowerCase()!=='set-cookie')res.setHeader(key,value);});
+     if(cookies.length)res.setHeader('set-cookie',cookies);
      if(!response.body){res.end();return;}
      res.flushHeaders();
      const reader=response.body.getReader();

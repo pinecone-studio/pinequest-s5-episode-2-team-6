@@ -12,6 +12,9 @@
     "api/exam.ts": {
       "maxDuration": 60,
       "supportsCancellation": true
+    },
+    "api/auth.ts": {
+      "maxDuration": 15
     }
   },
   "rewrites": [

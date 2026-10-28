@@ -606,3 +606,49 @@ button.intro-target{position:relative}
 @media(min-width:768px) and (min-height:601px){.detail-sheet{top:calc(130px + var(--site-nav-h))!important;max-height:calc(100dvh - 330px - var(--site-nav-h))}.detail-sheet[data-height]{max-height:calc(100dvh - 186px - var(--site-nav-h))}}
 @media(max-width:767px){.detail-sheet{top:auto!important;max-height:calc(100dvh - 390px - var(--site-nav-h))}}
 @media(max-height:600px) and (orientation:landscape){.detail-sheet{top:calc(80px + var(--site-nav-h))!important}}
+
+/* Every phone layout: the details sheet's actions sit two to a row above the main button, long labels wrapping
+   inside the chip, and its small print grows to a size a phone can read. */
+.sheet-handle{display:none}
+@media(max-width:767px),(max-height:600px) and (orientation:landscape){
+ .detail-actions{flex-direction:row;flex-wrap:wrap;gap:6px}
+ .detail-actions .secondary-action{flex:1 1 calc(50% - 3px);min-width:0;height:auto;min-height:44px;padding:4px 10px;border:1px solid var(--rule-2);white-space:normal;line-height:1.25;text-align:center}
+ .detail-actions .primary-action{order:1;flex-basis:100%;min-height:46px;font-size:14px}
+ .detail-header .eyebrow{font-size:11.5px}.detail-header .structure-alt{font-size:12px}
+ .detail-scroll .info-card-line{font-size:14px;line-height:1.55}
+ .detail-scroll .context-note{font-size:12.5px}
+ .detail-scroll .structure-meta{font-size:11px}
+ .detail-scroll .source-link{font-size:13.5px}
+ .detail-scroll :is(.term-list li,.member-list button){font-size:13.5px}
+}
+/* Phones held upright: the details sheet sits on the screen's bottom edge over the dock and footer, which hide
+   while it is open. It opens low, with the name, the start of the notes and the main button, so the tapped
+   structure stays in view above it; its grab bar, or scrolling the notes, opens it to full height with every
+   action. */
+@media(max-width:767px) and (orientation:portrait),(max-width:767px) and (min-height:601px){
+ .detail-sheet,.detail-sheet.is-isolated{bottom:calc(12px + env(safe-area-inset-bottom))!important;max-height:46dvh;padding-top:26px!important;transition:max-height .25s ease}
+ .detail-sheet.is-full,.detail-sheet.is-full.is-isolated{max-height:calc(100dvh - 16px - var(--site-nav-h))}
+ .sheet-handle{display:flex;position:absolute;top:0;left:50%;width:120px;height:26px;margin-left:-60px;align-items:center;justify-content:center;touch-action:none;cursor:grab}
+ .sheet-handle::before{content:'';width:40px;height:5px;border-radius:3px;background:var(--rule-2)}
+ .detail-sheet:not(.is-full) .detail-actions .secondary-action{display:none}
+ body:has(.detail-sheet) :is(.bottom-dock,.studio-footer){visibility:hidden}
+ /* The walkthrough sits on the bottom edge too, over the dock, except on the step about the dock itself, and
+    below the top buttons. Its title and buttons stay put while a long step scrolls between them. */
+ .learning-panel.intro-panel{bottom:calc(12px + env(safe-area-inset-bottom));max-height:calc(100dvh - 82px - var(--site-nav-h));overflow:hidden}
+ .learning-panel.intro-panel[data-target=dock]{bottom:calc(218px + env(safe-area-inset-bottom));max-height:calc(100dvh - 288px - var(--site-nav-h))}
+ .intro-panel .tour-step{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+ .intro-panel :is(.learning-head,.learning-actions){flex-shrink:0}
+ /* The systems list takes the dock's place while it is open, so far more of it shows at once. */
+ .layers-panel.mobile-open{bottom:calc(12px + env(safe-area-inset-bottom));max-height:min(64dvh,calc(100dvh - 82px - var(--site-nav-h)))}
+ body:has(.layers-panel.mobile-open) :is(.bottom-dock,.studio-footer){visibility:hidden}
+}
+/* Phones on their side. A small one also matches the narrow-screen rules above the shared navigation, which lift
+   these panels 218px to clear the upright dock and so left them a few pixels tall here; they run down to the
+   bottom edge instead, the systems list over the dock. The details sheet hides the top buttons, so it starts just
+   below the navigation, and it scrolls as one so its actions are always reachable on so short a screen. */
+@media(max-height:600px) and (orientation:landscape){
+ .detail-sheet{top:calc(12px + var(--site-nav-h))!important;bottom:calc(12px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;overscroll-behavior:contain}
+ .detail-sheet .detail-scroll{flex:none;overflow:visible}
+ .layers-panel.mobile-open,.learning-panel{bottom:calc(12px + env(safe-area-inset-bottom));max-height:none}
+ body:has(.layers-panel.mobile-open) :is(.bottom-dock,.studio-footer){visibility:hidden}
+}

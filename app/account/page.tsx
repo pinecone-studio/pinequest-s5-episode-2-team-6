@@ -22,6 +22,7 @@ const copy={
     title:'Account',
     free:'Free plan',
     premium:'Premium',
+    premiumAdmin:'Premium — admin',
     until:(v:string)=>`Premium is active until ${v}`,
     plansLead:'Unlock ROM Lab and Plaque Lab',
     buy:'Pay',
@@ -50,6 +51,7 @@ const copy={
     title:'Хэрэглэгч',
     free:'Үнэгүй эрх',
     premium:'Premium',
+    premiumAdmin:'Premium — админ',
     until:(v:string)=>`Premium ${v} хүртэл идэвхтэй`,
     plansLead:'ROM Lab болон Plaque Lab-ийг нээх',
     buy:'Төлөх',
@@ -145,6 +147,8 @@ export default function AccountPage(){
 
   const planName=(id:string)=>PLANS.find(p=>p.id===id)?.name??id;
   const statusLabel=(key:string)=>String((dict.status as Record<string,string>)[key]??key);
+  // The atlas treats an admin as premium, so the account page must agree.
+  const unlocked=premium||isAdmin;
 
   return(
     <main className="mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
@@ -163,12 +167,12 @@ export default function AccountPage(){
 
       <Card className="mb-6">
         <CardHeader><CardTitle className="text-lg">
-          {premium
-            ?<Badge className="bg-emerald-600">{dict.premium}</Badge>
+          {unlocked
+            ?<Badge className="bg-emerald-600">{premium?dict.premium:dict.premiumAdmin}</Badge>
             :<Badge variant="secondary">{dict.free}</Badge>}
           {premium&&expiresAt&&<span className="ml-2 text-sm font-normal text-slate-500">{dict.until(fmtDate(expiresAt))}</span>}
         </CardTitle></CardHeader>
-        {!premium&&<CardContent>
+        {!unlocked&&<CardContent>
           <p className="mb-4 text-sm text-slate-600">{dict.plansLead}</p>
           <div className="grid gap-4 sm:grid-cols-2">
             {PLANS.map(plan=>(

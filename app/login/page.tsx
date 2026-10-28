@@ -28,17 +28,25 @@ export default function LoginPage(){
     if(!email||!password){setError(t.auth.missing);return;}
     setLoading(true);
     try{
-      if(!supabaseConfigured){
-        // Env vars missing: the page still works in demo mode (no backend).
-        await new Promise(r=>setTimeout(r,500));
+      const res=await fetch('/api/auth',{
+        method:'POST',
+        credentials:'include',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'login',email,password}),
+      });
+      if(res.ok){
+        window.dispatchEvent(new Event('anatomn-auth'));
         navigate(destination);
         return;
       }
-      const {error}=await supabase.auth.signInWithPassword({email,password});
-      if(error)throw error;
-      navigate(destination);
-    }catch(err){
-      setError(err instanceof Error&&err.message?t.auth.failed+' — '+err.message:t.auth.failed);
+      // A cloud account still signs in when this browser has no local one.
+      if(supabaseConfigured){
+        const {error}=await supabase.auth.signInWithPassword({email,password});
+        if(!error){navigate(destination);return;}
+      }
+      setError(t.auth.failed);
+    }catch{
+      setError(t.auth.failed);
     }finally{
       setLoading(false);
     }

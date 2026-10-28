@@ -39,3 +39,7 @@ next-env.d.ts
 /work/
 *.tsbuildinfo
 .vscode/settings.json
+
+# Local accounts created by /api/auth. Never commit passwords or sessions.
+/data/auth-users.json
+/data/auth-users.json.tmp

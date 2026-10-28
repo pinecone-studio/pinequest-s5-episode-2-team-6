@@ -41,12 +41,16 @@ export function StandardFigures({page,link}:{page:StandardPage,link:string}){
   {figure.caption&&<p className="standard-figure-caption">{figure.caption}</p>}
   {credit}
   <Dialog open={zoom} onOpenChange={setZoom}><DialogContent className="standard-figure-dialog">
-   <DialogTitle>{page.title}</DialogTitle>
-   <DialogDescription>{figure.caption||figure.alt}</DialogDescription>
+   <div className="standard-figure-dialog-header">
+    <DialogTitle>{page.title}</DialogTitle>
+    <DialogDescription>{figure.caption||figure.alt}</DialogDescription>
+   </div>
    <div className="standard-figure-dialog-body"><Figure figure={figure} showOverlay={overlay}/></div>
-   {controls}
-   {credit}
-   <a className="source-link" href={link} target="_blank" rel="noreferrer">Open this page on Anatomy Standard <ArrowUpRight size={14}/></a>
+   <div className="standard-figure-dialog-footer">
+    {controls}
+    {credit}
+    <a className="source-link" href={link} target="_blank" rel="noreferrer">Open this page on Anatomy Standard <ArrowUpRight size={14}/></a>
+   </div>
   </DialogContent></Dialog>
  </section>;
 }

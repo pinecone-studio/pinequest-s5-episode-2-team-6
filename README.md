@@ -51,9 +51,13 @@ Validation covers mesh buffers, names and concept membership, nonoverlapping exp
 
 ## Anatomy data
 
+### Adult skeletal count
+
+The conventional adult skeleton has **206 bones: 80 axial and 126 appendicular** ([OpenStax](https://openstax.org/books/anatomy-and-physiology-2e/pages/7-1-divisions-of-the-skeletal-system)). `app/skeleton.ts` maps the atlas to this convention rather than counting meshes. The current model represents **205 of 206**: no separately identified coccyx mesh is available. The interface reports this coverage explicitly; it does not fabricate missing geometry. The sternum's three components count as one bone, the duplicate hyoid meshes count as one bone, the six auditory ossicles belong to the skeleton, and the 14 costal cartilages belong to connective tissue. Four additional foot sesamoid meshes remain available but are excluded from the conventional count (the two patellae remain included). Run `node scripts/validate-skeleton.mjs` to check the mapping and regional totals. This correction is not a medical validation of the remaining atlas.
+
 The current viewer uses **BodyParts3D 4.0**, an adult male reference anatomy, licensed **CC BY 4.0**, plus 529 supplementary meshes from **Z-Anatomy**, licensed **CC BY-SA 4.0** (see `public/ATTRIBUTION.md`). It does not represent every human structure or variation. Individual source meshes are distinct from named concepts, which may group multiple meshes. Descriptions distinguish general system context from individual organ explanations.
 
-Geometry is simplified for browser performance while retaining every source mesh; the 220 BodyParts3D bones keep their full source resolution. The packaged model contains 3,043,414 triangles and downloads approximately 42 MB of compressed geometry. Full credits, source links, and adaptation details are in [ATTRIBUTION.md](public/ATTRIBUTION.md).
+Geometry is simplified for browser performance while retaining every source mesh; the 220 originally skeletal-classified BodyParts3D meshes keep their full source resolution; this is a mesh count, not an anatomical bone count. The packaged model contains 3,043,414 triangles and downloads approximately 42 MB of compressed geometry. Full credits, source links, and adaptation details are in [ATTRIBUTION.md](public/ATTRIBUTION.md).
 
 This is an educational explorer, not a diagnostic or surgical tool.
 
@@ -113,6 +117,8 @@ LLM_MODEL=llama3.1
 
 Never commit `.env.local`; it is gitignored. Each teammate should create their own Gemini key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and add it to their local `.env.local`. If the team shares one key, send it through a private password manager or direct message — never through GitHub. For the deployed site, add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project's Environment Variables.
 
+`api/exam.ts` (implementation in `server/exam.ts`) reads the same provider variables: `mode: 'grade'` scores a hand-in's case answers against the stored rubric, `mode: 'draft'` writes candidate questions for the admin screen. Both endpoints run in the dev server too — `vite.config.ts` serves `/api/chat` and `/api/exam` from the same middleware.
+
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
 If OpenAI returns `insufficient_quota` / `credit_balance_exhausted`, add credits to that OpenAI project; the panel shows this as `provider_quota` instead of a generic rate-limit error.
@@ -156,26 +162,32 @@ They live in `.env.local` (gitignored — copy them from `.env.example`, which s
 
 ### One-time database setup
 
-Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe.
+Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe. Pages that need the newer tables show a "run the schema" notice instead of failing, so an unmigrated database still renders the app.
 
 ### Roles: user, premium, admin
 
-- **User** — every signup. Free access to the whole atlas plus search and the quiz.
-- **Premium** — unlocks ROM Lab (camera motion) and Plaque Lab (renal flow). Bought with an order-based transfer on `/account`: pick a plan (1 month 9,900₮ / 1 year 49,000₮, see `lib/plans.ts`), transfer the amount to the shown bank account, save the transaction reference, and the team's admin confirms it in `/admin`. A database trigger turns the confirmed payment into subscription time automatically. Admins can also grant premium directly by inserting a `subscriptions` row.
+- **User** — every signup. Free access to the whole atlas plus search, the quiz and the exams.
+- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/account` for the payment queue and the XP discount.
 - **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
 
 ```sql
 update public.profiles set is_admin = true where email = 'you@example.com';
 ```
 
-`/admin` then shows the user list (search, toggle admin) and the payment queue (confirm/reject pending transfers) at `/admin`.
+`/admin` shows the user list (search, toggle admin, grant XP), the payment queue (confirm/reject pending transfers) and the exam bank (publish, archive, or draft questions with the assistant).
+
+### XP, exams and what the browser cannot fake
+
+- Attendance (`claim_daily_checkin()`, +10 once a day) and a first pass of an exam write rows into `xp_events`. The table has a select policy only, so a student can read their own points but never insert them.
+- At checkout the client sends the XP it would like to spend. `guard_payment()` recomputes the price from `plan_price()`, caps the spend at the balance and at 20% of the plan, and freezes `amount_mnt`, `discount_mnt` and `xp_spent` for the life of the order. A rejected order returns the points.
+- An attempt is scored by `score_exam_attempt()` on insert: multiple-choice points come from the stored answer keys, the case score is clamped to what the case questions are worth, and the pass flag and XP award are computed there. `/api/exam` (`mode: 'grade'`) only ever supplies the case score and the feedback text; `mode: 'draft'` writes candidate questions that stay in `draft` until an admin publishes them.
 
 ### Data flow of one payment
 
-1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created.
+1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
 2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
 3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
-4. `useSubscription()` picks up the change and the premium tools turn on.
+4. `useSubscription()` picks up the change for account status. Lab access is independent of subscription status.
 
 ### Reading and writing data from a component
 

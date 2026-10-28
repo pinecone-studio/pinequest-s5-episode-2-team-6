@@ -81,7 +81,8 @@ const copy={
     free:'Free plan',
     until:(v:string)=>`Valid until ${v}`,
     validNow:'Valid until',
-    plansLead:'Unlock ROM Lab and Plaque Lab',
+    plansLead:'ROM Lab and Plaque Lab are free to access. No subscription is required.',
+    plans:'Plans',
     buy:'Pay',
     useXp:'Use XP',
     discountAt:(v:string)=>`${v} off`,
@@ -151,7 +152,8 @@ const copy={
     free:'Үнэгүй эрх',
     until:(v:string)=>`${v} хүртэл хүчинтэй`,
     validNow:'Хүчинтэй хугацаа',
-    plansLead:'ROM Lab болон Plaque Lab-ийг нээх',
+    plansLead:'ROM Lab болон Plaque Lab үнэгүй. Төлбөртэй эрх шаардлагагүй.',
+    plans:'Багц',
     buy:'Төлөх',
     useXp:'XP ашиглах',
     discountAt:(v:string)=>`${v} хөнгөллт`,
@@ -577,8 +579,14 @@ export default function AccountPage(){
           </div>
           {premium&&expiresAt&&<p className="dash-note info" style={{marginBottom:14}}>{dict.validNow}: <b>{fmtDay(expiresAt)}</b></p>}
 
+          <p style={{fontSize:14,color:'#475569',marginBottom:12}}>{dict.plansLead}</p>
+          <div className="flex flex-wrap gap-3" style={{marginBottom:14}}>
+            <Button nativeButton={false} render={<Link to="/atlas?open=rom"/>}>ROM Lab</Button>
+            <Button nativeButton={false} variant="outline" render={<Link to="/plaque"/>}>Plaque Lab</Button>
+          </div>
+
           {!unlocked&&<>
-            <p style={{fontSize:14,color:'#475569',marginBottom:12}}>{dict.plansLead}</p>
+            <h3 className="dash-card-title" style={{margin:'4px 0 8px'}}>{dict.plans}</h3>
             <div className="dash-plan" style={{marginBottom:10}}>
               <p className="text-sm"><b>{dict.bank}:</b> {BANK.name} · <b>{dict.account}:</b> {BANK.account} · <b>{dict.receiver}:</b> {BANK.receiver}</p>
             </div>

@@ -1,7 +1,5 @@
-// Track the signed-in user's role and premium status. The atlas uses
-// `premium` to lock ROM Lab and Plaque Lab (its /plaque route waits for
-// `ready` and `loading` before deciding); the account page also reads
-// the latest subscription row for renewal dates.
+// Track account roles and existing subscriptions for account management.
+// ROM Lab and Plaque Lab are free and do not depend on this hook.
 import {useEffect,useState} from 'react';
 import {supabase} from '../lib/supabase';
 import {useAuth} from './use-auth';

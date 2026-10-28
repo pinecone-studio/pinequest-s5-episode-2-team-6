@@ -20,7 +20,7 @@ const en={
     {title:'3D Atlas',text:'Rotate, peel back and explode the whole body.'},
     {title:'AI Assistant',text:'Ask which nerve supplies a muscle and watch it light up.'},
     {title:'Quizzes',text:'Quick checks before the exam, with every answer linked to the 3D atlas.'},
-    {title:'Exams',text:'Timed papers scored on the server. Passing earns XP that discounts premium.'},
+    {title:'Exams',text:'Timed papers scored on the server. Passing earns XP, which comes off a plan payment.'},
     {title:'ROM Lab',text:'Track shoulder range of motion live with your camera.'},
   ]},
   finale:{title:['The whole body,','one tap away'],note:'Built on BodyParts3D, Z-Anatomy and Anatomy Standard. An educational explorer, not a diagnostic or surgical tool.',credits:'Read the full credits',tag:'Designed for',tagStrong:'students'},

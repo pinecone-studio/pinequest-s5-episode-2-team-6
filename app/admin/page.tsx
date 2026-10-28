@@ -12,12 +12,15 @@ import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
+import {NativeSelect,NativeSelectOption} from '@/components/ui/native-select';
 import {supabase} from '../../lib/supabase';
 import {useSubscription} from '../../hooks/use-subscription';
 import {useAuth} from '../../hooks/use-auth';
 import {useLang} from '../locale';
 import SiteNav from '../site-nav';
-import {fetchProfile, type StudentProfile} from '../../lib/exam-store';
+import {resolveStructureFact} from '../structure-facts';
+import {EXAM_GROUPS,groupLabel,partLabel,partTitle,type ExamGroupId} from '../../lib/anatomy-groups';
+import {fetchProfile,saveDraftPaper,type StudentProfile} from '../../lib/exam-store';
 
 const copy={
   en:{
@@ -54,6 +57,17 @@ const copy={
     draftKind:{mcq:'Multiple choice',case:'Case'},
     draftAnswer:'Correct answer',
     draftRubric:'Marking notes',
+    batchTitle:'Generate a whole group',
+    batchLead:'Pick an anatomy group and its structures. The assistant writes one draft paper per structure, grounded on the atlas notes; nothing reaches a student until you publish it.',
+    batchGroup:'Group',
+    batchParts:'Structures',
+    batchAll:'Select all',
+    batchClear:'Clear',
+    batchCount:'Questions per paper',
+    batchRun:'Write the papers',
+    batchPickParts:'Choose at least one structure.',
+    batchDone:(made:number,failed:number)=>`${made} draft paper${made===1?'':'s'} saved${failed?`, ${failed} failed`:''}.`,
+    batchEmpty:'The assistant wrote no usable question for these structures.',
     grantXp:'Grant XP',
     grantXpHint:'Points to add',
     grantedXp:(v:string)=>`Balance: ${v} XP`,
@@ -108,6 +122,17 @@ const copy={
     draftKind:{mcq:'Олон сонголт',case:'Кэйс'},
     draftAnswer:'Зөв хариулт',
     draftRubric:'Үнэлгээний заавар',
+    batchTitle:'Бүлэг бүрэн үүсгэх',
+    batchLead:'Анатомийн бүлэг, доторх хэсгүүдийг сонгоно уу. Туслах хэсэг бүрт нэг бэлтгэл шалгалт бичнэ. Та нийтлэх хүртэл хүүдэд харагдахгүй.',
+    batchGroup:'Бүлэг',
+    batchParts:'Анатомийн хэсгүүд',
+    batchAll:'Бүгдийг сонгох',
+    batchClear:'Цэвэрлэх',
+    batchCount:'Нэг шалгалтад асуулт',
+    batchRun:'Шалгалтуудыг бичих',
+    batchPickParts:'Дор хаяж нэг хэсэг сонгоно уу.',
+    batchDone:(made:number,failed:number)=>`${made} бэлтгэл шалгалт хадгалагдлаа${failed?`, ${failed} амжилтгүй`:''}.`,
+    batchEmpty:'Эдгээр хэсэгт туслах ашиглах боломжтой асуулт бичсэнгүй.',
     grantXp:'XP өгөх',
     grantXpHint:'Нэмэх оноо',
     grantedXp:(v:string)=>`Үлдэгдэл: ${v} XP`,
@@ -137,6 +162,7 @@ interface Payment{id:number;user_id:string;plan:string;amount_mnt:number;status:
 interface ExamRow{
   id:number;title:string;title_en:string;topic:string;level:string;
   time_limit_min:number;pass_pct:number;status:string;
+  group_key:string;part_key:string;part_mn:string;source:string;
   question_count:number;total_points:number;
 }
 // The shape /api/exam returns for mode 'draft'. Kept here so the browser
@@ -176,7 +202,15 @@ async function loadExams(): Promise<{rows:ExamRow[];missing:boolean}>{
     tally.set(q.exam_id,entry);
   }
   return {
-    rows:rows.map(r=>({...r,question_count:tally.get(r.id)?.count??0,total_points:tally.get(r.id)?.points??0})) as ExamRow[],
+    rows:rows.map(r=>({
+      ...r,
+      group_key:r.group_key??'',
+      part_key:r.part_key??'',
+      part_mn:r.part_mn??'',
+      source:r.source??'manual',
+      question_count:tally.get(r.id)?.count??0,
+      total_points:tally.get(r.id)?.points??0,
+    })) as ExamRow[],
     missing:false,
   };
 }
@@ -256,6 +290,11 @@ export default function AdminPage(){
   const [draftBusy,setDraftBusy]=useState(false);
   const [draftSaving,setDraftSaving]=useState(false);
   const [draftSaved,setDraftSaved]=useState(false);
+  const [batchGroup,setBatchGroup]=useState<ExamGroupId>('skeletal');
+  const [batchParts,setBatchParts]=useState<string[]>([]);
+  const [batchCount,setBatchCount]=useState('5');
+  const [batchBusy,setBatchBusy]=useState(false);
+  const [batchDone,setBatchDone]=useState('');
   const [grant,setGrant]=useState<Record<string,string>>({});
   const [grantNotice,setGrantNotice]=useState('');
   const [selected,setSelected]=useState<Profile|null>(null);
@@ -341,47 +380,94 @@ export default function AdminPage(){
   }
 
   async function saveDraft(){
-    if(!draftList.length)return;
+    if(!draftList.length||draftSaving)return;
     setError('');
     setDraftSaving(true);
-    const title=(draftName.trim()||draftTopic.trim()).slice(0,120);
-    const {data:exam,error:examError}=await supabase.from('exams').insert({
-      title,title_en:'',topic:draftTopic.trim(),level:'basic',status:'draft',
-    }).select('id').single();
-    if(examError||!exam){
-      console.error('[admin] draft exam insert failed',examError?.code,examError?.message);
-      setError(examError?.message??'Error');
-      setDraftSaving(false);
-      return;
-    }
-    const {error:qError}=await supabase.from('exam_questions').insert(
-      draftList.map((q,i)=>({
-        exam_id:Number(exam.id),
-        position:i+1,
-        kind:q.kind,
-        prompt:q.prompt,
-        prompt_en:q.prompt_en,
-        options:q.options,
-        answer:q.kind==='mcq'?q.answer:null,
-        rubric:q.rubric,
-        concept:'',
-        points:q.points,
-      })),
-    );
-    if(qError){
-      // The paper without questions would show students an empty exam, so
-      // archive the shell and let the admin retry.
-      console.error('[admin] draft questions failed',qError.code,qError.message);
-      await supabase.from('exams').update({status:'archived'}).eq('id',Number(exam.id));
-      setError(qError.message);
-      setDraftSaving(false);
+    const topic=draftTopic.trim();
+    const stored=await saveDraftPaper({
+      title:(draftName.trim()||topic).slice(0,120),
+      topic,
+      source:'ai',
+      questions:draftList,
+    });
+    setDraftSaving(false);
+    if(!stored.data){
+      setStateMessage(stored);
       return;
     }
     const examRes=await loadExams();
     setExams(examRes.rows);
     setExamMissing(examRes.missing);
     setDraftSaved(true);
-    setDraftSaving(false);
+  }
+
+  /** A missing table is a different message from a plain failure. */
+  function setStateMessage(result:{state:string;message?:string}){
+    if(result.state==='missing')setError(dict.examMissing);
+    else setError(result.message??'Error');
+  }
+
+  /**
+   * Batch drafting: one request per structure, each stored as its own draft
+   * paper. Sequential on purpose — the provider is rate limited and a stalled
+   * loop is easier to read than twelve calls that all failed at once. The
+   * structure's own notes from app/structure-facts.ts go with the request, so
+   * the model writes about a verified function and nerve instead of guessing.
+   */
+  async function runBatch(){
+    if(batchBusy)return;
+    const group=EXAM_GROUPS.find(item=>item.id===batchGroup)??EXAM_GROUPS[0];
+    const parts=group.parts.filter(key=>batchParts.includes(key));
+    setError('');
+    setBatchDone('');
+    if(!parts.length){setError(dict.batchPickParts);return;}
+    setBatchBusy(true);
+    let made=0;
+    let failed=0;
+    for(const part of parts){
+      setBatchDone(`${groupLabel(group.id,lang)} · ${partLabel(part,lang)}`);
+      try{
+        const fact=resolveStructureFact(part);
+        const res=await fetch('/api/exam',{
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({
+            mode:'draft',
+            lang,
+            topic:`${groupLabel(group.id,lang)}: ${partLabel(part,lang)}`,
+            count:Number(batchCount)||5,
+            group:group.id,
+            part,
+            facts:{name:part,latin:fact?.latin??'',function:fact?.function??'',nerve:fact?.nerve??''},
+          }),
+        });
+        const body=await res.json() as {ok?:boolean;questions?:DraftQ[];message?:string};
+        const questions=body.questions??[];
+        if(!res.ok||!body.ok||!questions.length){failed+=1;continue;}
+        // The same title shape the seeded bank uses: "Яс: гуяны яс".
+        const stored=await saveDraftPaper({
+          title:`${groupLabel(group.id,'mn')}: ${partTitle(part,'mn')}`,
+          titleEn:`${groupLabel(group.id,'en')}: ${part}`,
+          topic:groupLabel(group.id,'mn'),
+          groupKey:group.id,
+          partKey:part,
+          partMn:partTitle(part,'mn'),
+          source:'ai',
+          timeLimitMin:6,
+          passPct:70,
+          questions,
+        });
+        if(stored.data)made+=1;
+        else failed+=1;
+      }catch{
+        failed+=1;
+      }
+    }
+    const examRes=await loadExams();
+    setExams(examRes.rows);
+    setExamMissing(examRes.missing);
+    setBatchBusy(false);
+    setBatchDone(made?dict.batchDone(made,failed):dict.batchEmpty);
   }
 
   async function openUser(row:Profile){
@@ -519,7 +605,10 @@ export default function AdminPage(){
                       <tbody>
                         {exams.map(exam=>(
                           <tr key={exam.id} className="border-t border-slate-100">
-                            <td className="py-2">{lang==='mn'?exam.title:exam.title_en||exam.title}</td>
+                            <td className="py-2">
+                              <p>{lang==='mn'?exam.title:exam.title_en||exam.title}</p>
+                              {exam.group_key&&<p className="text-xs text-slate-500">{`${groupLabel(exam.group_key,lang)}${exam.part_key?` · ${partLabel(exam.part_key,lang)}`:''}${exam.source==='ai'?' · AI':''}`}</p>}
+                            </td>
                             <td className="text-slate-500">{exam.topic||dict.none}</td>
                             <td>{exam.question_count}</td>
                             <td>{exam.total_points}</td>
@@ -586,6 +675,44 @@ export default function AdminPage(){
                     </div>
                   </div>
                 </div>}
+
+              <div className="mt-6 rounded-2xl border border-slate-200 p-4">
+                <p className="text-sm font-semibold">{dict.batchTitle}</p>
+                <p className="mt-1 mb-3 text-sm text-slate-600">{dict.batchLead}</p>
+                <div className="grid gap-3 sm:grid-cols-[200px_120px_auto] sm:items-end">
+                  <label className="grid gap-1 text-sm">
+                    <span>{dict.batchGroup}</span>
+                    <NativeSelect className="w-full" value={batchGroup} onChange={e=>{setBatchGroup(e.target.value as ExamGroupId);setBatchParts([]);}}>
+                      {EXAM_GROUPS.map(group=><NativeSelectOption key={group.id} value={group.id}>{`${groupLabel(group.id,lang)} (${group.parts.length})`}</NativeSelectOption>)}
+                    </NativeSelect>
+                  </label>
+                  <label className="grid gap-1 text-sm">
+                    <span>{dict.batchCount}</span>
+                    <Input inputMode="numeric" value={batchCount} onChange={e=>setBatchCount(e.target.value.replace(/\D/g,'').slice(0,2))}/>
+                  </label>
+                  <Button disabled={batchBusy} onClick={runBatch}>{batchBusy?dict.draftWorking:dict.batchRun}</Button>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-500">{dict.batchParts}</span>
+                  <Button size="sm" variant="ghost" disabled={batchBusy}
+                    onClick={()=>setBatchParts(batchParts.length?[]:(EXAM_GROUPS.find(g=>g.id===batchGroup)?.parts??[]))}>
+                    {batchParts.length?dict.batchClear:dict.batchAll}
+                  </Button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(EXAM_GROUPS.find(g=>g.id===batchGroup)?.parts??[]).map(part=>{
+                    const on=batchParts.includes(part);
+                    return (
+                      <label key={part} className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm ${on?'border-slate-900 bg-slate-900 text-white':'border-slate-200 text-slate-700'}`}>
+                        <input type="checkbox" className="sr-only" checked={on} disabled={batchBusy} onChange={()=>setBatchParts(p=>on?p.filter(x=>x!==part):[...p,part])}/>
+                        {partLabel(part,lang)}
+                      </label>
+                    );
+                  })}
+                </div>
+                {batchBusy&&<p className="mt-3 text-sm text-slate-500">{dict.draftWorking} {batchDone}</p>}
+                {!batchBusy&&batchDone&&<p className="mt-3 text-sm text-emerald-700">{batchDone}</p>}
+              </div>
             </>}
         </CardContent>
       </Card>

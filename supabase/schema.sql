@@ -237,6 +237,31 @@ drop policy if exists "quiz_results_insert_own" on public.quiz_results;
 create policy "quiz_results_insert_own" on public.quiz_results
   for insert with check (auth.uid () = user_id);
 
+-- AI teacher: which chapter each asked question belongs to. The browser
+-- client logs one row per asked question (fire and forget) and reads the
+-- recent history back to rebuild the student's learning profile on another
+-- device. Only the student (and an admin) can read their own rows.
+create table if not exists public.teacher_questions (
+  id bigserial primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  chapter_id text not null,
+  question text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists teacher_questions_user_recent
+  on public.teacher_questions (user_id, created_at desc);
+
+alter table public.teacher_questions enable row level security;
+
+drop policy if exists "teacher_questions_select_own" on public.teacher_questions;
+create policy "teacher_questions_select_own" on public.teacher_questions
+  for select using (auth.uid () = user_id or public.is_admin ());
+
+drop policy if exists "teacher_questions_insert_own" on public.teacher_questions;
+create policy "teacher_questions_insert_own" on public.teacher_questions
+  for insert with check (auth.uid () = user_id);
+
 -- ============================================================
 -- 7. Triggers that keep profiles in sync with auth.users.
 -- ============================================================

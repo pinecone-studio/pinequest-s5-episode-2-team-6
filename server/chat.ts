@@ -5,7 +5,9 @@
  * OpenAI-compatible chat-completions endpoint, and relays the answer as
  * server-sent events so the panel can render it as it arrives. */
 
-import type {AssistantChatRequest, AssistantHealth, AssistantReference, AssistantSelection, ChatTurn} from '../app/llm-types';
+import type {AssistantChatRequest, AssistantHealth, AssistantReference, AssistantSelection, ChatTurn, TeacherStudentContext} from '../app/llm-types';
+import {buildTeacherSystemPrompt} from './teacher';
+import {CHAPTERS, chapterById} from '../app/teacher/textbook';
 
 export type LlmEnv = Record<string, string | undefined>;
 
@@ -252,6 +254,24 @@ export function buildSystemPrompt(context: {selection?: AssistantSelection | nul
   return `${SYSTEM_PROMPT}\n\n<atlas_context>\n${clipBlock(contextBlock, MAX_CONTEXT_CHARS)}\n</atlas_context>`;
 }
 
+function sanitizeStudent(value: unknown): TeacherStudentContext | null {
+  if (!value || typeof value !== 'object') return null;
+  const student = value as Partial<TeacherStudentContext>;
+  const known = new Set(CHAPTERS.map(chapter => chapter.id));
+  const topics = (Array.isArray(student.topics) ? student.topics : [])
+    .filter((topic): topic is {chapterId: string; questions: number; level: number} => {
+      return !!topic && typeof topic.chapterId === 'string' && known.has(topic.chapterId) && typeof topic.questions === 'number' && Number.isFinite(topic.questions);
+    })
+    .map(topic => ({chapterId: topic.chapterId, questions: Math.max(0, Math.floor(topic.questions)), level: Math.min(3, Math.max(1, Math.round(topic.level || 1)))}))
+    .slice(0, 8);
+  const recentQuestions = (Array.isArray(student.recentQuestions) ? student.recentQuestions : [])
+    .filter((question): question is string => typeof question === 'string' && !!question.trim())
+    .map(question => clip(question, 300))
+    .slice(0, 8);
+  if (!topics.length && !recentQuestions.length) return null;
+  return {topics, recentQuestions};
+}
+
 /** Validate and trim the client transcript. */
 export function buildMessages(body: AssistantChatRequest): {system: string; messages: ChatTurn[]} {
   const raw = Array.isArray(body?.messages) ? body.messages : [];
@@ -262,6 +282,16 @@ export function buildMessages(body: AssistantChatRequest): {system: string; mess
     .slice(-MAX_MESSAGES);
   if (!messages.some(message => message.role === 'user')) {
     throw new ChatError(400, 'invalid_request', 'At least one user message is required.');
+  }
+  if (body?.mode === 'teacher') {
+    const chapterId = body.textbook?.chapterId;
+    return {
+      system: buildTeacherSystemPrompt({
+        chapterId: chapterId && chapterById(chapterId) ? chapterId : undefined,
+        student: sanitizeStudent(body.student),
+      }),
+      messages,
+    };
   }
   return {
     system: buildSystemPrompt({

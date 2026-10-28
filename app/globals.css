@@ -671,3 +671,34 @@ button.intro-target{position:relative}
 .standard-figure-dialog .standard-figure-controls .small-number{color:#405368}
 .standard-figure-dialog .source-link,.standard-figure-dialog .standard-figure-credit a{color:#24617e}
 .standard-figure-dialog button:focus-visible{outline:2px solid #24617e;outline-offset:2px}
+
+/* The structure card stays on screen at every size. It opens small; a drag or the phone grab bar grows it. */
+@media(min-width:768px) and (min-height:601px){
+ .detail-sheet{top:calc(12px + var(--site-nav-h))!important;right:max(16px,env(safe-area-inset-right))!important;left:auto!important;bottom:auto!important;width:min(340px,calc(100vw - 48px))!important;max-width:calc(100vw - 32px)!important;height:var(--detail-height,auto)!important;max-height:min(520px,calc(100dvh - var(--site-nav-h) - 96px))!important}
+ .detail-sheet[data-height]{max-height:calc(100dvh - var(--site-nav-h) - 24px)!important}
+ .detail-sheet[data-width]{width:min(var(--detail-width),calc(100vw - var(--detail-right,16px) - 16px))!important;max-width:calc(100vw - var(--detail-right,16px) - 16px)!important}
+ .detail-sheet[data-right]{right:max(12px,var(--detail-right))!important}
+}
+/* Wide screens: the assistant holds the right edge, so the card steps left of it. */
+@media(min-width:1180px) and (min-height:601px){
+ body:has(.studio.chat-open) .detail-sheet{right:calc(min(372px,100vw - 28px) + 40px)!important}
+ body:has(.studio.chat-open) .detail-sheet[data-right]{right:calc(min(372px,100vw - 28px) + 40px)!important}
+}
+/* Tablet width with the assistant open: the card sits low on the left, still clear of the screen edges. */
+@media(min-width:768px) and (max-width:1179px) and (min-height:601px){
+ body:has(.studio.chat-open) .detail-sheet{top:auto!important;bottom:max(16px,env(safe-area-inset-bottom))!important;left:max(16px,env(safe-area-inset-left))!important;right:auto!important;width:min(340px,calc(100vw - 420px))!important;max-height:min(480px,calc(100dvh - var(--site-nav-h) - 32px))!important}
+}
+/* Phones upright: a short card over the model. The grab bar opens it to the space under the navigation. */
+@media(max-width:767px) and (orientation:portrait){
+ .detail-sheet,.detail-sheet.is-isolated{left:12px!important;right:12px!important;top:auto!important;bottom:calc(52px + env(safe-area-inset-bottom))!important;width:auto!important;max-width:none!important;height:auto!important;max-height:min(40dvh,360px)!important;padding:22px 16px 14px!important}
+ .detail-sheet.is-full,.detail-sheet.is-full.is-isolated{top:calc(8px + var(--site-nav-h))!important;max-height:none!important}
+ .detail-sheet:not(.is-full) .detail-scroll{max-height:18dvh}
+ /* The assistant starts below the navigation, so its height stops above the card. */
+ body:has(.detail-sheet:not(.is-full)) .ai-panel{max-height:calc(100dvh - min(40dvh,360px) - 52px - var(--site-nav-h) - 116px)}
+}
+/* Phones on their side: a right-hand card between the navigation and the bottom edge.
+   The assistant, if it is open, takes the left side so the two do not cover each other. */
+@media(max-height:600px) and (orientation:landscape){
+ .detail-sheet,.detail-sheet.is-isolated{top:calc(8px + var(--site-nav-h))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;right:max(12px,env(safe-area-inset-right))!important;left:auto!important;width:min(320px,46vw)!important;max-width:calc(100vw - 24px)!important;max-height:none!important;height:auto!important}
+ body:has(.detail-sheet) .ai-panel{left:max(12px,env(safe-area-inset-left))!important;right:auto!important;width:min(340px,calc(100vw - 360px))!important;top:8px!important;max-height:calc(100dvh - var(--site-nav-h) - 24px)!important}
+}

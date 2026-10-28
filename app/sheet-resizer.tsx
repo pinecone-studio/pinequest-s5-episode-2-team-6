@@ -118,6 +118,19 @@ export default function SheetResizer() {
 
   useEffect(() => {
     for (const size of ['right', 'height', 'width'] as const) resize(size, loadSize(size), false);
+    // A saved size can be larger than the window after a rotate or a narrower display.
+    const onResize = () => {
+      if (drag.current) return;
+      const sheet = grips.bottom.current?.closest<HTMLElement>('.detail-sheet');
+      if (!sheet) return;
+      for (const size of ['height', 'width', 'right'] as const) {
+        if (!sheet.hasAttribute(`data-${size}`)) continue;
+        const current = size === 'right' ? rightGap(sheet) : size === 'height' ? sheet.offsetHeight : sheet.offsetWidth;
+        resize(size, current, false);
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const startDrag = (e: PointerEvent<HTMLDivElement>, edge: Edge) => {

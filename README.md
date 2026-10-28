@@ -101,6 +101,8 @@ The landing page and the atlas are built for phones, tablets and desktops. The l
 
 The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens the quiz page. Those actions are shown as chips under the answer.
 
+The quiz (`/quiz`) deals a fresh run from a bank of 79 questions in `app/quiz/questions.ts`. Each question has one of six topics (bones, muscles, nervous system, joints and ligaments, heart and vessels, organs), a level from 1 to 3, and a concept that opens in the 3D atlas. A visitor picks the topic, level and length, can turn on a 30-second timer per question, and gets shuffled options, a per-topic breakdown and a rerun of the questions they missed. With "AI-written" selected, `POST /api/exam` with `mode: "quiz"` asks the configured LLM for new questions on the same topic and level; rows that are not a clean four-option question are dropped, and the request shares the assistant's per-IP rate limit. Asking the assistant for a quiz on a topic ("Гарын ясаар сорил өг", "quiz me on nerves") opens the quiz with that topic picked.
+
 ### LLM providers
 
 Set one provider in `.env.local` for development and in the Vercel project's Environment Variables for deployment. Keys are read only on the server and are never sent to the browser.

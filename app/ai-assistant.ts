@@ -11,6 +11,7 @@ import {resolveBoneAtlas} from './bone-atlas';
 import {resolveStructureAtlas} from './structure-atlas';
 import {resolveStructureFact,type StructureFact} from './structure-facts';
 import type {AssistantSelection} from './llm-types';
+import type {QuizTopic} from './quiz/questions';
 
 export type {AssistantSelection} from './llm-types';
 
@@ -24,7 +25,7 @@ export type AssistantAction =
   | {kind: 'highlight'; ids: string[]; label: string; select?: boolean}
   | {kind: 'isolate'; ids: string[]; label: string}
   | {kind: 'labels'; on: boolean; label: string}
-  | {kind: 'quiz'; label: string};
+  | {kind: 'quiz'; label: string; topic?: QuizTopic};
 
 export interface AssistantReply {
   text: string;
@@ -374,6 +375,20 @@ function asksForQuiz(question: string): boolean {
   return /\b(quiz|test me|question me|practice)\b/.test(text) || /(сорил|тест|шалга)/u.test(text);
 }
 
+// "Quiz me on bones" opens the quiz with that topic picked.
+const QUIZ_TOPIC_WORDS: [QuizTopic, RegExp][] = [
+  ['heart', /\b(heart|cardiac|vessels?|arter(y|ies)|veins?)\b|(зүрх|судас|артери|вен)/u],
+  ['nerves', /\b(nerves?|nervous|brain|spinal cord)\b|(мэдрэл|тархи|нугас)/u],
+  ['joints', /\b(joints?|ligaments?|tendons?)\b|(^|\s)үе(\s|$)|үений|шөрмөс/u],
+  ['organs', /\b(organs?|liver|lungs?|stomach|kidneys?|gut)\b|(эрхтэн|элэг|уушг|ходоод|бөөр|гэдэс)/u],
+  ['muscles', /\b(muscles?|muscular)\b|(булчин)/u],
+  ['bones', /\b(bones?|skeleton|skeletal)\b|(яс)/u],
+];
+function quizTopic(question: string): QuizTopic | undefined {
+  const text = normalize(question);
+  return QUIZ_TOPIC_WORDS.find(([, pattern]) => pattern.test(text))?.[0];
+}
+
 /** Answer one question against the atlas and return the actions it implies. */
 export function askAtlas(question: string, ctx: AssistantContext): AssistantReply {
   const trimmed = question.trim();
@@ -386,7 +401,7 @@ export function askAtlas(question: string, ctx: AssistantContext): AssistantRepl
   if (asksForQuiz(trimmed)) {
     return {
       text: 'Opening the quiz. It asks about functions, nerves and landmarks, and you pick the answer. The quiz is always one tap away in the navigation bar.',
-      actions: [{kind: 'quiz', label: 'Сорил эхлүүлэх'}],
+      actions: [{kind: 'quiz', label: 'Сорил эхлүүлэх', topic: quizTopic(trimmed)}],
     };
   }
 

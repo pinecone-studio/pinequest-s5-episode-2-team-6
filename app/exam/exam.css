@@ -1,0 +1,114 @@
+/* The exam screen: option rows, the countdown chip and the hand-in dialog. */
+
+.exam-page .exam-option {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #0f172a;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.exam-page .exam-option:hover {
+  border-color: rgb(148 163 184);
+}
+
+.exam-page .exam-option.is-picked {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.exam-page .exam-option-key {
+  display: inline-flex;
+  height: 22px;
+  width: 22px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #f1f5f9;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.exam-page .exam-option.is-picked .exam-option-key {
+  background: #2563eb;
+  color: #fff;
+}
+
+.exam-page .exam-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 6px 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.exam-page .exam-clock.is-low {
+  background: #b91c1c;
+  animation: exam-clock-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes exam-clock-pulse {
+  50% { opacity: 0.72; }
+}
+
+.exam-page .exam-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.exam-page .exam-progress i {
+  display: block;
+  height: 100%;
+  background: #2563eb;
+  transition: width 200ms ease;
+}
+
+.exam-page .exam-pass {
+  border-color: rgb(16 185 129 / 0.5);
+}
+
+.exam-page .exam-fail {
+  border-color: rgb(239 68 68 / 0.45);
+}
+
+.exam-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgb(15 23 42 / 0.45);
+  padding: 20px;
+}
+
+.exam-modal-box {
+  width: min(420px, 100%);
+  border-radius: 18px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exam-page .exam-clock.is-low {
+    animation: none;
+  }
+}

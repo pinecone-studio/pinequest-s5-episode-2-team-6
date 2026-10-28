@@ -40,7 +40,7 @@ const SETUP_HINTS: Record<string, string> = {
   unavailable: 'api/chat серверт ажиллаж байгаа эсэхийг шалгана уу.',
 };
 
-function assistantErrorMessage(code: string): string {
+export function assistantErrorMessage(code: string): string {
   const hint = DEV && SETUP_HINTS[code] ? ` (${SETUP_HINTS[code]})` : '';
   if (code === 'not_configured' || code === 'provider_auth' || code === 'provider_model' || code === 'unavailable') return UNAVAILABLE + hint;
   if (code === 'provider_quota') return 'AI туслахын хэрэглээний хязгаар түр дууссан байна. Дараа дахин оролдоно уу.' + hint;

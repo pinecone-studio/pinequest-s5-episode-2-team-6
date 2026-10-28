@@ -16,6 +16,7 @@ import {useSubscription} from '../../hooks/use-subscription';
 import {fetchExam,fetchExams,fetchMyAttempts,submitAttempt,claimCheckin,fetchXp,papersByGroup,type Exam,type ExamQuestion,type DbState} from '../../lib/exam-store';
 import {groupColor,groupLabel,partLabel} from '../../lib/anatomy-groups';
 import {useLang} from '../locale';
+import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
 import './exam.css';
 
@@ -157,6 +158,7 @@ export default function ExamPage() {
   const [checkinNote, setCheckinNote] = useState('');
   const startedAt = useRef<number>(0);
   const submitted = useRef(false);
+  const scroller = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -201,6 +203,11 @@ export default function ExamPage() {
       alive = false;
     };
   }, [examParam]);
+
+  // Every view shares one scroll layer, so a new paper, question or result starts at the top.
+  useEffect(() => {
+    scroller.current?.scrollTo({top: 0});
+  }, [examParam, index, result]);
 
   const running = Boolean(exam) && !result;
   useEffect(() => {
@@ -291,7 +298,7 @@ export default function ExamPage() {
 
   if (exam && result) {
     return (
-      <main className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
+      <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
         <SiteNav tone="light" />
         <h1 className="mb-1 text-3xl font-semibold">{t.resultTitle}</h1>
         <p className="mb-6 text-sm text-slate-500">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
@@ -343,7 +350,7 @@ export default function ExamPage() {
           <Button onClick={() => { setParams({}); setResult(null); }}>{t.again}</Button>
           <Button variant="outline" onClick={() => { setParams({}); setResult(null); void load(); }}><RotateCcw size={16} />{t.attempts}</Button>
         </div>
-      </main>
+      </PageScroll>
     );
   }
 
@@ -355,7 +362,7 @@ export default function ExamPage() {
       return q.kind === 'mcq' ? given?.choice !== undefined : Boolean(given?.text?.trim());
     }).length;
     return (
-      <main className="exam-page exam-running mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28 text-slate-900">
+      <PageScroll ref={scroller} className="exam-page exam-running mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28 text-slate-900">
         <SiteNav tone="light" />
         <header className="mb-4 flex items-center justify-between gap-4">
           <div>
@@ -413,7 +420,7 @@ export default function ExamPage() {
             </div>
           </div>
         )}
-      </main>
+      </PageScroll>
     );
   }
 
@@ -428,7 +435,7 @@ export default function ExamPage() {
   }
 
   return (
-    <main className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
+    <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
       <SiteNav tone="light" />
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
@@ -488,6 +495,6 @@ export default function ExamPage() {
       )}
       <p className="mt-8 flex items-center gap-2 text-sm text-slate-400"><Trophy size={14} />{t.lead}</p>
       <Link to="/quiz" className="mt-1 inline-flex items-center gap-1 text-sm underline"><ListChecks size={12} />{lang === 'mn' ? 'Бататгал (Quiz)' : 'Practice quiz'}</Link>
-    </main>
+    </PageScroll>
   );
 }

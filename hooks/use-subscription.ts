@@ -1,7 +1,7 @@
 // Track account roles and existing subscriptions for account management.
 // ROM Lab and Plaque Lab are free and do not depend on this hook.
 import {useEffect,useState} from 'react';
-import {supabase} from '../lib/supabase';
+import {supabase,supabaseConfigured} from '../lib/supabase';
 import {useAuth} from './use-auth';
 
 export interface SubscriptionState{
@@ -17,7 +17,10 @@ export interface SubscriptionState{
 }
 
 export function useSubscription():SubscriptionState{
-  const {ready,user}=useAuth();
+  const {ready,user,session}=useAuth();
+  // Roles and subscriptions live in Supabase. A local /api/auth account has no
+  // session there, so asking would only fail; it is a free, non-admin account.
+  const cloud=supabaseConfigured&&!!session;
   // `owner` is the user the state was looked up for, so a newly signed-in user reads as loading
   // from the very first render instead of briefly looking like a free account.
   const [state,setState]=useState<Omit<SubscriptionState,'ready'|'refresh'>&{owner:string|null}>({
@@ -30,6 +33,10 @@ export function useSubscription():SubscriptionState{
     let alive=true;
     if(!user){
       setState({loading:false,isAdmin:false,premium:false,expiresAt:null,owner:null});
+      return;
+    }
+    if(!cloud){
+      setState({loading:false,isAdmin:false,premium:false,expiresAt:null,owner:user.id});
       return;
     }
     setState(s=>({...s,loading:true}));
@@ -52,7 +59,7 @@ export function useSubscription():SubscriptionState{
       });
     })();
     return ()=>{alive=false;};
-  },[user,version]);
+  },[user,cloud,version]);
 
   const {owner,...rest}=state;
   return {

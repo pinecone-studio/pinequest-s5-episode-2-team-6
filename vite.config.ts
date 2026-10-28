@@ -3,10 +3,11 @@ import {defineConfig,loadEnv,type Plugin} from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/postcss';
 import {handleChatRequest,type LlmEnv} from './server/chat';
+import {handleExamRequest} from './server/exam';
 
 const path=(relative:string)=>fileURLToPath(new URL(relative,import.meta.url));
 
-/** Serve the Vercel-style `/api/chat` function during `npm run dev`.
+/** Serve the Vercel-style `/api/chat` and `/api/exam` functions during `npm run dev`.
  *  Vite has no serverless runtime, so this middleware adapts Node's request and
  *  response objects to the Web Request/Response pair used by the handler. */
 function assistantApiPlugin(env:LlmEnv):Plugin{
@@ -14,8 +15,10 @@ function assistantApiPlugin(env:LlmEnv):Plugin{
   name:'human-atlas-assistant-api',
   configureServer(server){
    server.middlewares.use(async(req,res,next)=>{
-    if(!/^\/api\/chat(?:\?|$)/.test(req.url??''))return next();
+    const endpoint=/^\/api\/(chat|exam)(?:\?|$)/.exec(req.url??'')?.[1];
+    if(!endpoint)return next();
     if(req.method!=='GET'&&req.method!=='POST'&&req.method!=='OPTIONS')return next();
+    const handle=endpoint==='exam'?handleExamRequest:handleChatRequest;
     try{
      const chunks:Buffer[]=[];
      for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));
@@ -27,8 +30,8 @@ function assistantApiPlugin(env:LlmEnv):Plugin{
      const abort=new AbortController();
      res.on('close',()=>{if(!res.writableEnded)abort.abort();});
      const body=req.method==='POST'?new Uint8Array(Buffer.concat(chunks)):undefined;
-     const request=new Request(`http://${req.headers.host??'localhost'}${req.url??'/api/chat'}`,{method:req.method,headers,body,signal:abort.signal});
-     const response=await handleChatRequest(request,env);
+     const request=new Request(`http://${req.headers.host??'localhost'}${req.url??`/api/${endpoint}`}`,{method:req.method,headers,body,signal:abort.signal});
+     const response=await handle(request,env);
      res.statusCode=response.status;
      response.headers.forEach((value,key)=>res.setHeader(key,value));
      if(!response.body){res.end();return;}

@@ -8,6 +8,10 @@
     "api/chat.ts": {
       "maxDuration": 60,
       "supportsCancellation": true
+    },
+    "api/exam.ts": {
+      "maxDuration": 60,
+      "supportsCancellation": true
     }
   },
   "rewrites": [

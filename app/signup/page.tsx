@@ -31,9 +31,19 @@ export default function SignupPage(){
     setLoading(true);
     try{
       if(!supabaseConfigured){
-        // Env vars missing: the page still works in demo mode (no backend).
-        await new Promise(r=>setTimeout(r,500));
-        navigate('/login');
+        const res=await fetch('/api/auth',{
+          method:'POST',
+          credentials:'include',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({action:'signup',name,email,password}),
+        });
+        const data=await res.json().catch(()=>({})) as {error?:string};
+        if(!res.ok){
+          setError(data.error==='taken'?t.auth.taken:data.error==='short'?t.auth.short:t.auth.signupFailed);
+          return;
+        }
+        window.dispatchEvent(new Event('anatomn-auth'));
+        navigate('/account',{state:{notice:t.auth.created}});
         return;
       }
       const result=await supabase.auth.signUp({

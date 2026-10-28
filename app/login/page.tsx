@@ -34,18 +34,32 @@ export default function LoginPage(){
     if(!mail||!password){setError(t.auth.missing);return;}
     setLoading(true);
     try{
-      if(!supabaseConfigured){
-        // Env vars missing: the page still works in demo mode (no backend).
-        await new Promise(r=>setTimeout(r,500));
-        navigate(destination);
+      const res=await fetch('/api/auth',{
+        method:'POST',
+        credentials:'include',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'login',email:mail,password}),
+      });
+      if(res.ok){
+        window.dispatchEvent(new Event('anatomn-auth'));
+        navigate(destination,{replace:true});
         return;
       }
-      const {data,error}=await supabase.auth.signInWithPassword({email:mail,password});
-      if(error)throw error;
-      // A session that never landed would leave every guarded page bouncing
-      // back here, so say so instead of navigating into a signed-out app.
-      if(!data.session){setError(explainAuthError('Email not confirmed',lang));return;}
-      navigate(destination,{replace:true});
+      const local=(await res.json().catch(()=>null)) as {error?:string}|null;
+      // A cloud account still signs in when this browser has no local one.
+      if(supabaseConfigured){
+        const {data,error}=await supabase.auth.signInWithPassword({email:mail,password});
+        if(!error){
+          // A session that never landed would leave every guarded page bouncing
+          // back here, so say so instead of navigating into a signed-out app.
+          if(!data.session){setError(explainAuthError('Email not confirmed',lang));return;}
+          navigate(destination,{replace:true});
+          return;
+        }
+        setError(explainAuthError(error.message,lang)||t.auth.failed);
+        return;
+      }
+      setError(local?.error==='invalid'?explainAuthError('invalid login credentials',lang):local?.error==='missing'?t.auth.missing:t.auth.failed);
     }catch(err){
       setError(explainAuthError(err instanceof Error?err.message:'',lang)||t.auth.failed);
     }finally{

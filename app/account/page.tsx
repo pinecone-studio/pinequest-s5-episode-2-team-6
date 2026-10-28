@@ -40,6 +40,8 @@ const copy={
   en:{
     title:'My page',
     signOut:'Sign out',
+    signingOut:'Signing out…',
+    signOutFailed:'Could not sign out. Check the connection and try again.',
     backAtlas:'Back to the atlas',
     admin:'Admin',
     loading:'Loading…',
@@ -112,6 +114,8 @@ const copy={
   mn:{
     title:'Миний хуудас',
     signOut:'Гарах',
+    signingOut:'Гарч байна…',
+    signOutFailed:'Гарж чадсангүй. холболтоо шалгаад дахин оролдоно уу.',
     backAtlas:'Атлас руу буцах',
     admin:'Админ',
     loading:'Ачаалж байна…',
@@ -201,7 +205,7 @@ const EMPTY_FORM:StudyForm={university:'',department:'',study_year:'',specialty:
 const formOf=(p:StudyFields):StudyForm=>({university:p.university,department:p.department,study_year:p.study_year?String(p.study_year):'',specialty:p.specialty});
 
 // One message at a time, shown beside the action that caused it.
-type Spot='page'|'checkin'|'profile'|'pay';
+type Spot='page'|'checkin'|'profile'|'pay'|'leave';
 type Tone='ok'|'warn'|'error';
 interface Note{spot:Spot;tone:Tone;text:string}
 
@@ -264,6 +268,7 @@ export default function AccountPage(){
   const [form,setForm]=useState<StudyForm>(EMPTY_FORM);
   const [savingProfile,setSavingProfile]=useState(false);
   const [spend,setSpend]=useState<Record<string,string>>({});
+  const [leaving,setLeaving]=useState(false);
 
   useEffect(()=>{document.querySelector('meta[name=theme-color]')?.setAttribute('content','#5a8dcb');},[]);
 
@@ -330,14 +335,18 @@ export default function AccountPage(){
 
   useEffect(()=>{load();},[load]);
 
-  if(!ready)return(
+  const waiting=(text:string)=>(
     <div className="dash">
       <div className="dash-bg" aria-hidden><i/><i/></div>
       <SiteNav tone="glass"/>
-      <main className="dash-shell is-loading"><p className="dash-loading"><LoaderCircle size={18} className="dash-spin" aria-hidden/>{dict.loading}</p></main>
+      <main className="dash-shell is-loading"><p className="dash-loading"><LoaderCircle size={18} className="dash-spin" aria-hidden/>{text}</p></main>
     </div>
   );
-  if(!user)return <Navigate to="/login" state={{from:'/account'}} replace/>;
+  if(!ready)return waiting(dict.loading);
+  if(!user){
+    if(leaving)return waiting(dict.signingOut);
+    return <Navigate to="/login" state={{from:'/account'}} replace/>;
+  }
 
   const locale=lang==='mn'?'mn-MN':'en-GB';
   const fmtDate=(v:string)=>new Date(v).toLocaleString(locale,{dateStyle:'medium',timeStyle:'short'});
@@ -477,9 +486,22 @@ export default function AccountPage(){
     setSavingId(null);
   }
 
-  // Navigate before signing out: the guard above would otherwise bounce a
-  // signed-out visitor to /login instead of the landing page.
-  async function leave(){navigate('/',{replace:true});await signOut();}
+  // A sign-out in flight keeps the redirect guard above quiet: the user has
+  // already left the session, so bouncing them to /login would be wrong. If
+  // the request itself fails the session is still live, and the reason is
+  // shown instead of pretending they signed out.
+  async function leave(){
+    if(leaving)return;
+    setLeaving(true);
+    setNote(null);
+    const message=await signOut();
+    if(message){
+      say('leave','error',dict.signOutFailed);
+      setLeaving(false);
+      return;
+    }
+    navigate('/',{replace:true});
+  }
 
   const tiles=[
     {Icon:Award,value:xp,label:dict.tiles.xp,accent:true},
@@ -750,10 +772,14 @@ export default function AccountPage(){
               </div>}
         </section>
 
+        <div className="dash-status dash-wide" aria-live="polite">{noteAt('leave')}</div>
         <footer className="dash-foot dash-wide">
           {isAdmin&&<Link to="/admin" className="dash-secondary dash-glass"><Shield size={17} aria-hidden/>{dict.admin}</Link>}
           <Link to="/atlas" className="dash-secondary dash-glass"><Box size={17} aria-hidden/>{dict.backAtlas}</Link>
-          <button type="button" className="dash-secondary dash-glass" onClick={leave}><LogOut size={17} aria-hidden/>{dict.signOut}</button>
+          <button type="button" className="dash-secondary dash-glass" disabled={leaving} onClick={leave}>
+            {leaving?<LoaderCircle size={17} className="dash-spin" aria-hidden/>:<LogOut size={17} aria-hidden/>}
+            {leaving?dict.signingOut:dict.signOut}
+          </button>
         </footer>
       </main>
     </div>

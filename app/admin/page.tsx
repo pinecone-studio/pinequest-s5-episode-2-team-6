@@ -1,20 +1,27 @@
-// Admin page: the payment queue, the user list with the admin flag and XP,
-// and the exam bank. Confirming a payment is a single update — a database
-// trigger turns it into subscription time automatically. The exam bank holds
-// drafts until an admin publishes them, so a student never sees an unreviewed
-// question; the assistant only writes candidates for this page.
+// Admin page: the payment queue, the exam bank, the user list and one user's
+// panel (points, exam results, payments, premium time). Confirming a payment
+// is a single update — a database trigger turns it into subscription time
+// automatically. The exam bank holds drafts until an admin publishes them, so
+// a student never sees an unreviewed question; the assistant only writes
+// candidates for this page. Everything the panel shows is read through the
+// admin policies in supabase/schema.sql, so it is a teacher's view of the same
+// rows the student sees on /account.
 import {useCallback,useEffect,useState} from 'react';
 import {Navigate} from 'react-router-dom';
 import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
+import {NativeSelect,NativeSelectOption} from '@/components/ui/native-select';
 import {supabase} from '../../lib/supabase';
 import {useSubscription} from '../../hooks/use-subscription';
 import {useAuth} from '../../hooks/use-auth';
 import {useLang} from '../locale';
 import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
+import {resolveStructureFact} from '../structure-facts';
+import {EXAM_GROUPS,groupLabel,partLabel,partTitle,type ExamGroupId} from '../../lib/anatomy-groups';
+import {fetchProfile,saveDraftPaper,type StudentProfile} from '../../lib/exam-store';
 
 const copy={
   en:{
@@ -51,10 +58,36 @@ const copy={
     draftKind:{mcq:'Multiple choice',case:'Case'},
     draftAnswer:'Correct answer',
     draftRubric:'Marking notes',
+    batchTitle:'Generate a whole group',
+    batchLead:'Pick an anatomy group and its structures. The assistant writes one draft paper per structure, grounded on the atlas notes; nothing reaches a student until you publish it.',
+    batchGroup:'Group',
+    batchParts:'Structures',
+    batchAll:'Select all',
+    batchClear:'Clear',
+    batchCount:'Questions per paper',
+    batchRun:'Write the papers',
+    batchPickParts:'Choose at least one structure.',
+    batchDone:(made:number,failed:number)=>`${made} draft paper${made===1?'':'s'} saved${failed?`, ${failed} failed`:''}.`,
+    batchEmpty:'The assistant wrote no usable question for these structures.',
     grantXp:'Grant XP',
     grantXpHint:'Points to add',
     grantedXp:(v:string)=>`Balance: ${v} XP`,
     grantFail:'Could not grant XP.',
+    panel:'User panel',
+    view:'Open',
+    close:'Close',
+    loading:'Loading…',
+    xpBalance:'XP',attendance:'Days attended',examsSat:'Exams sat',examsPassed:'Passed',avgScore:'Average score',
+    school:'School details',university:'University',department:'Department',specialty:'Specialty',year:'Year',
+    noSchool:'Not filled in yet.',
+    attempts:'Exam results',noAttempts:'No exam handed in yet.',
+    paper:'Paper',score:'Score',passedText:'Passed',failedText:'Not passed',
+    paymentsOf:'Payments',noPaymentsOf:'No payment yet.',
+    practice:'Quiz practice',noPractice:'No quiz result.',
+    premiumUntil:'Premium until',premiumNone:'Free access',
+    grantPremium:'Add premium days',grantPremiumHint:'Days',
+    premiumGiven:(v:string)=>`Premium extended to ${v}`,
+    panelMissing:'The exam and XP tables are missing for this user. Run supabase/schema.sql.',
   },
   mn:{
     title:'Админ',
@@ -90,10 +123,36 @@ const copy={
     draftKind:{mcq:'Олон сонголт',case:'Кэйс'},
     draftAnswer:'Зөв хариулт',
     draftRubric:'Үнэлгээний заавар',
+    batchTitle:'Бүлэг бүрэн үүсгэх',
+    batchLead:'Анатомийн бүлэг, доторх хэсгүүдийг сонгоно уу. Туслах хэсэг бүрт нэг бэлтгэл шалгалт бичнэ. Та нийтлэх хүртэл хүүдэд харагдахгүй.',
+    batchGroup:'Бүлэг',
+    batchParts:'Анатомийн хэсгүүд',
+    batchAll:'Бүгдийг сонгох',
+    batchClear:'Цэвэрлэх',
+    batchCount:'Нэг шалгалтад асуулт',
+    batchRun:'Шалгалтуудыг бичих',
+    batchPickParts:'Дор хаяж нэг хэсэг сонгоно уу.',
+    batchDone:(made:number,failed:number)=>`${made} бэлтгэл шалгалт хадгалагдлаа${failed?`, ${failed} амжилтгүй`:''}.`,
+    batchEmpty:'Эдгээр хэсэгт туслах ашиглах боломжтой асуулт бичсэнгүй.',
     grantXp:'XP өгөх',
     grantXpHint:'Нэмэх оноо',
     grantedXp:(v:string)=>`Үлдэгдэл: ${v} XP`,
     grantFail:'XP өгч чадсангүй.',
+    panel:'Хэрэглэгчийн самбар',
+    view:'Дэлгэрэнгүй',
+    close:'Хаах',
+    loading:'Ачаалж байна…',
+    xpBalance:'XP',attendance:'Ирсэн өдөр',examsSat:'Өгсөн шалгалт',examsPassed:'Тэнцсэн',avgScore:'Дундаж оноо',
+    school:'Сургуулийн мэдээлэл',university:'Сургууль',department:'Салбар',specialty:'Мэргэжил',year:'Курс',
+    noSchool:'Одоогоор бөглөөгүй.',
+    attempts:'Шалгалтын дүн',noAttempts:'Шалгалт өгөөгүй.',
+    paper:'Бичиг',score:'Оноо',passedText:'Тэнцсэн',failedText:'Тэнцээгүй',
+    paymentsOf:'Төлбөр',noPaymentsOf:'Төлбөр байхгүй.',
+    practice:'Quiz дасгал',noPractice:'Quiz үр дүн байхгүй.',
+    premiumUntil:'Эрхийн төгсгөл',premiumNone:'Үнэгүй эрх',
+    grantPremium:'Эрх нэмэх',grantPremiumHint:'Хоног',
+    premiumGiven:(v:string)=>`Эрх ${v} хүртэл сунгалаа`,
+    panelMissing:'Энэ хэрэглэгчийн шалгалт, XP-ийн хүснэгт байхгүй байна. supabase/schema.sql-ийг ажиллуулна уу.',
   },
 } as const;
 
@@ -104,6 +163,7 @@ interface Payment{id:number;user_id:string;plan:string;amount_mnt:number;status:
 interface ExamRow{
   id:number;title:string;title_en:string;topic:string;level:string;
   time_limit_min:number;pass_pct:number;status:string;
+  group_key:string;part_key:string;part_mn:string;source:string;
   question_count:number;total_points:number;
 }
 // The shape /api/exam returns for mode 'draft'. Kept here so the browser
@@ -117,6 +177,11 @@ interface DraftQ{
   rubric:string;
   points:number;
 }
+
+interface XpRow{id:number;kind:string;points:number;day:string;note:string;created_at:string}
+interface AttemptRow{id:number;exam_id:number;score_pct:number;passed:boolean;xp_awarded:number;created_at:string}
+interface SubRow{id:number;plan:string;expires_at:string}
+interface QuizRow{id:number;score:number;total:number;created_at:string}
 
 /** Every paper, draft included, with how many questions it holds. */
 async function loadExams(): Promise<{rows:ExamRow[];missing:boolean}>{
@@ -138,8 +203,74 @@ async function loadExams(): Promise<{rows:ExamRow[];missing:boolean}>{
     tally.set(q.exam_id,entry);
   }
   return {
-    rows:rows.map(r=>({...r,question_count:tally.get(r.id)?.count??0,total_points:tally.get(r.id)?.points??0})) as ExamRow[],
+    rows:rows.map(r=>({
+      ...r,
+      group_key:r.group_key??'',
+      part_key:r.part_key??'',
+      part_mn:r.part_mn??'',
+      source:r.source??'manual',
+      question_count:tally.get(r.id)?.count??0,
+      total_points:tally.get(r.id)?.points??0,
+    })) as ExamRow[],
     missing:false,
+  };
+}
+
+/**
+ * One student as the admin sees them: the same rows the /account dashboard
+ * reads, looked up by user id. Each query is filtered by the admin policies in
+ * supabase/schema.sql, and a missing table only dims the panel — the list
+ * beside it keeps working.
+ */
+interface UserDetail{
+  profile:StudentProfile|null;
+  xp:number;
+  events:XpRow[];
+  attempts:AttemptRow[];
+  payments:Payment[];
+  subs:SubRow[];
+  quizzes:QuizRow[];
+  titles:Record<number,string>;
+  missing:boolean;
+}
+
+async function loadUserDetail(userId:string,lang:'en'|'mn'): Promise<UserDetail>{
+  const [
+    profRes,
+    {data:balance,error:balanceError},
+    {data:events,error:eventsError},
+    {data:attempts,error:attemptsError},
+    {data:pay},
+    {data:subs},
+    {data:quizzes},
+  ] = await Promise.all([
+    fetchProfile(userId),
+    supabase.rpc('xp_balance',{p_user:userId}),
+    supabase.from('xp_events').select('id,kind,points,day,note,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(60),
+    supabase.from('exam_attempts').select('id,exam_id,score_pct,passed,xp_awarded,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(60),
+    supabase.from('payments').select('id,user_id,plan,amount_mnt,status,reference,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(60),
+    supabase.from('subscriptions').select('id,plan,expires_at').eq('user_id',userId).order('expires_at',{ascending:false}),
+    supabase.from('quiz_results').select('id,score,total,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(30),
+  ]);
+  const attemptRows=(attempts??[]) as AttemptRow[];
+  const examIds=[...new Set(attemptRows.map(a=>a.exam_id))];
+  const titles:Record<number,string>={};
+  if(examIds.length){
+    const {data:rows}=await supabase.from('exams').select('id,title,title_en').in('id',examIds);
+    for(const row of (rows??[]) as {id:number;title:string;title_en:string}[]){
+      titles[row.id]=lang==='mn'?row.title:row.title_en||row.title;
+    }
+  }
+  return {
+    profile:profRes.data,
+    xp:Number(balance)||0,
+    events:(events??[]) as XpRow[],
+    attempts:attemptRows,
+    payments:(pay??[]) as Payment[],
+    subs:(subs??[]) as SubRow[],
+    quizzes:(quizzes??[]) as QuizRow[],
+    titles,
+    missing:Boolean(balanceError||eventsError||attemptsError),
   };
 }
 
@@ -160,8 +291,17 @@ export default function AdminPage(){
   const [draftBusy,setDraftBusy]=useState(false);
   const [draftSaving,setDraftSaving]=useState(false);
   const [draftSaved,setDraftSaved]=useState(false);
+  const [batchGroup,setBatchGroup]=useState<ExamGroupId>('skeletal');
+  const [batchParts,setBatchParts]=useState<string[]>([]);
+  const [batchCount,setBatchCount]=useState('5');
+  const [batchBusy,setBatchBusy]=useState(false);
+  const [batchDone,setBatchDone]=useState('');
   const [grant,setGrant]=useState<Record<string,string>>({});
   const [grantNotice,setGrantNotice]=useState('');
+  const [selected,setSelected]=useState<Profile|null>(null);
+  const [detail,setDetail]=useState<UserDetail|null>(null);
+  const [detailBusy,setDetailBusy]=useState(false);
+  const [premiumDays,setPremiumDays]=useState('30');
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
   const [query,setQuery]=useState('');
@@ -183,7 +323,9 @@ export default function AdminPage(){
     setExams(examRes.rows);
     setExamMissing(examRes.missing);
     setLoading(false);
-  },[user]);
+    // Keep an open user panel in step with the tables it reads.
+    if(selected)setDetail(await loadUserDetail(selected.id,lang));
+  },[user,selected,lang]);
 
   useEffect(()=>{if(ready&&isAdmin)load();},[ready,isAdmin,load]);
 
@@ -239,47 +381,109 @@ export default function AdminPage(){
   }
 
   async function saveDraft(){
-    if(!draftList.length)return;
+    if(!draftList.length||draftSaving)return;
     setError('');
     setDraftSaving(true);
-    const title=(draftName.trim()||draftTopic.trim()).slice(0,120);
-    const {data:exam,error:examError}=await supabase.from('exams').insert({
-      title,title_en:'',topic:draftTopic.trim(),level:'basic',status:'draft',
-    }).select('id').single();
-    if(examError||!exam){
-      console.error('[admin] draft exam insert failed',examError?.code,examError?.message);
-      setError(examError?.message??'Error');
-      setDraftSaving(false);
-      return;
-    }
-    const {error:qError}=await supabase.from('exam_questions').insert(
-      draftList.map((q,i)=>({
-        exam_id:Number(exam.id),
-        position:i+1,
-        kind:q.kind,
-        prompt:q.prompt,
-        prompt_en:q.prompt_en,
-        options:q.options,
-        answer:q.kind==='mcq'?q.answer:null,
-        rubric:q.rubric,
-        concept:'',
-        points:q.points,
-      })),
-    );
-    if(qError){
-      // The paper without questions would show students an empty exam, so
-      // archive the shell and let the admin retry.
-      console.error('[admin] draft questions failed',qError.code,qError.message);
-      await supabase.from('exams').update({status:'archived'}).eq('id',Number(exam.id));
-      setError(qError.message);
-      setDraftSaving(false);
+    const topic=draftTopic.trim();
+    const stored=await saveDraftPaper({
+      title:(draftName.trim()||topic).slice(0,120),
+      topic,
+      source:'ai',
+      questions:draftList,
+    });
+    setDraftSaving(false);
+    if(!stored.data){
+      setStateMessage(stored);
       return;
     }
     const examRes=await loadExams();
     setExams(examRes.rows);
     setExamMissing(examRes.missing);
     setDraftSaved(true);
-    setDraftSaving(false);
+  }
+
+  /** A missing table is a different message from a plain failure. */
+  function setStateMessage(result:{state:string;message?:string}){
+    if(result.state==='missing')setError(dict.examMissing);
+    else setError(result.message??'Error');
+  }
+
+  /**
+   * Batch drafting: one request per structure, each stored as its own draft
+   * paper. Sequential on purpose — the provider is rate limited and a stalled
+   * loop is easier to read than twelve calls that all failed at once. The
+   * structure's own notes from app/structure-facts.ts go with the request, so
+   * the model writes about a verified function and nerve instead of guessing.
+   */
+  async function runBatch(){
+    if(batchBusy)return;
+    const group=EXAM_GROUPS.find(item=>item.id===batchGroup)??EXAM_GROUPS[0];
+    const parts=group.parts.filter(key=>batchParts.includes(key));
+    setError('');
+    setBatchDone('');
+    if(!parts.length){setError(dict.batchPickParts);return;}
+    setBatchBusy(true);
+    let made=0;
+    let failed=0;
+    for(const part of parts){
+      setBatchDone(`${groupLabel(group.id,lang)} · ${partLabel(part,lang)}`);
+      try{
+        const fact=resolveStructureFact(part);
+        const res=await fetch('/api/exam',{
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({
+            mode:'draft',
+            lang,
+            topic:`${groupLabel(group.id,lang)}: ${partLabel(part,lang)}`,
+            count:Number(batchCount)||5,
+            group:group.id,
+            part,
+            facts:{name:part,latin:fact?.latin??'',function:fact?.function??'',nerve:fact?.nerve??''},
+          }),
+        });
+        const body=await res.json() as {ok?:boolean;questions?:DraftQ[];message?:string};
+        const questions=body.questions??[];
+        if(!res.ok||!body.ok||!questions.length){failed+=1;continue;}
+        // The same title shape the seeded bank uses: "Яс: гуяны яс".
+        const stored=await saveDraftPaper({
+          title:`${groupLabel(group.id,'mn')}: ${partTitle(part,'mn')}`,
+          titleEn:`${groupLabel(group.id,'en')}: ${part}`,
+          topic:groupLabel(group.id,'mn'),
+          groupKey:group.id,
+          partKey:part,
+          partMn:partTitle(part,'mn'),
+          source:'ai',
+          timeLimitMin:6,
+          passPct:70,
+          questions,
+        });
+        if(stored.data)made+=1;
+        else failed+=1;
+      }catch{
+        failed+=1;
+      }
+    }
+    const examRes=await loadExams();
+    setExams(examRes.rows);
+    setExamMissing(examRes.missing);
+    setBatchBusy(false);
+    setBatchDone(made?dict.batchDone(made,failed):dict.batchEmpty);
+  }
+
+  async function openUser(row:Profile){
+    setError('');
+    setGrantNotice('');
+    setSelected(row);
+    setDetail(null);
+    setDetailBusy(true);
+    try{
+      setDetail(await loadUserDetail(row.id,lang));
+    }catch(err){
+      console.error('[admin] user panel load failed',err);
+      setError(dict.panelMissing);
+    }
+    setDetailBusy(false);
   }
 
   async function grantXp(row:Profile){
@@ -295,6 +499,31 @@ export default function AdminPage(){
     }
     setGrantNotice(`${row.name||row.email}: ${dict.grantedXp(String(Number(data)||0))}`);
     setGrant(g=>({...g,[row.id]:''}));
+    if(selected?.id===row.id)setDetail(await loadUserDetail(row.id,lang));
+  }
+
+  // Premium time without a payment record: the subscriptions table has an
+  // insert policy for admins, and the client picks up the new expiry through
+  // useSubscription().refresh(). Existing time is stacked, never shortened.
+  async function givePremium(row:Profile){
+    setError('');
+    setGrantNotice('');
+    const days=Math.round(Number(premiumDays)||0);
+    if(!days||days<1||days>365){setError(dict.grantPremiumHint);return;}
+    const current=detail?.subs[0]?.expires_at;
+    const base=current&&new Date(current).getTime()>Date.now()?current:new Date().toISOString();
+    const until=new Date(new Date(base).getTime()+days*86400000).toISOString();
+    const {error}=await supabase.from('subscriptions').insert({
+      user_id:row.id,plan:days>=330?'yearly':'monthly',starts_at:base,expires_at:until,
+    });
+    if(error){
+      console.error('[admin] premium grant failed',error.code,error.message);
+      setError(error.message);
+      return;
+    }
+    setGrantNotice(dict.premiumGiven(new Date(until).toLocaleDateString()));
+    setDetail(await loadUserDetail(row.id,lang));
+    refresh();
   }
 
   const term=query.trim().toLowerCase();
@@ -377,7 +606,10 @@ export default function AdminPage(){
                       <tbody>
                         {exams.map(exam=>(
                           <tr key={exam.id} className="border-t border-slate-100">
-                            <td className="py-2">{lang==='mn'?exam.title:exam.title_en||exam.title}</td>
+                            <td className="py-2">
+                              <p>{lang==='mn'?exam.title:exam.title_en||exam.title}</p>
+                              {exam.group_key&&<p className="text-xs text-slate-500">{`${groupLabel(exam.group_key,lang)}${exam.part_key?` · ${partLabel(exam.part_key,lang)}`:''}${exam.source==='ai'?' · AI':''}`}</p>}
+                            </td>
                             <td className="text-slate-500">{exam.topic||dict.none}</td>
                             <td>{exam.question_count}</td>
                             <td>{exam.total_points}</td>
@@ -444,6 +676,44 @@ export default function AdminPage(){
                     </div>
                   </div>
                 </div>}
+
+              <div className="mt-6 rounded-2xl border border-slate-200 p-4">
+                <p className="text-sm font-semibold">{dict.batchTitle}</p>
+                <p className="mt-1 mb-3 text-sm text-slate-600">{dict.batchLead}</p>
+                <div className="grid gap-3 sm:grid-cols-[200px_120px_auto] sm:items-end">
+                  <label className="grid gap-1 text-sm">
+                    <span>{dict.batchGroup}</span>
+                    <NativeSelect className="w-full" value={batchGroup} onChange={e=>{setBatchGroup(e.target.value as ExamGroupId);setBatchParts([]);}}>
+                      {EXAM_GROUPS.map(group=><NativeSelectOption key={group.id} value={group.id}>{`${groupLabel(group.id,lang)} (${group.parts.length})`}</NativeSelectOption>)}
+                    </NativeSelect>
+                  </label>
+                  <label className="grid gap-1 text-sm">
+                    <span>{dict.batchCount}</span>
+                    <Input inputMode="numeric" value={batchCount} onChange={e=>setBatchCount(e.target.value.replace(/\D/g,'').slice(0,2))}/>
+                  </label>
+                  <Button disabled={batchBusy} onClick={runBatch}>{batchBusy?dict.draftWorking:dict.batchRun}</Button>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-500">{dict.batchParts}</span>
+                  <Button size="sm" variant="ghost" disabled={batchBusy}
+                    onClick={()=>setBatchParts(batchParts.length?[]:(EXAM_GROUPS.find(g=>g.id===batchGroup)?.parts??[]))}>
+                    {batchParts.length?dict.batchClear:dict.batchAll}
+                  </Button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(EXAM_GROUPS.find(g=>g.id===batchGroup)?.parts??[]).map(part=>{
+                    const on=batchParts.includes(part);
+                    return (
+                      <label key={part} className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm ${on?'border-slate-900 bg-slate-900 text-white':'border-slate-200 text-slate-700'}`}>
+                        <input type="checkbox" className="sr-only" checked={on} disabled={batchBusy} onChange={()=>setBatchParts(p=>on?p.filter(x=>x!==part):[...p,part])}/>
+                        {partLabel(part,lang)}
+                      </label>
+                    );
+                  })}
+                </div>
+                {batchBusy&&<p className="mt-3 text-sm text-slate-500">{dict.draftWorking} {batchDone}</p>}
+                {!batchBusy&&batchDone&&<p className="mt-3 text-sm text-emerald-700">{batchDone}</p>}
+              </div>
             </>}
         </CardContent>
       </Card>
@@ -459,7 +729,7 @@ export default function AdminPage(){
             :<div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-slate-500">
-                  <th className="py-2">{dict.name}</th><th>{dict.email}</th><th>{dict.registered}</th><th>{dict.role}</th><th>{dict.grantXp}</th>
+                  <th className="py-2">{dict.name}</th><th>{dict.email}</th><th>{dict.registered}</th><th>{dict.role}</th><th>{dict.actions}</th>
                 </tr></thead>
                 <tbody>
                   {visible.map(profile=>(
@@ -478,18 +748,7 @@ export default function AdminPage(){
                         </div>
                       </td>
                       <td>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            className="w-20"
-                            inputMode="numeric"
-                            aria-label={dict.grantXpHint}
-                            value={grant[profile.id]??''}
-                            onChange={e=>setGrant(g=>({...g,[profile.id]:e.target.value.replace(/-/g,'').replace(/\D/g,'')}))}
-                          />
-                          <Button size="sm" variant="outline" disabled={!grant[profile.id]} onClick={()=>grantXp(profile)}>
-                            {dict.grantXp}
-                          </Button>
-                        </div>
+                        <Button size="sm" variant="outline" onClick={()=>openUser(profile)}>{dict.view}</Button>
                       </td>
                     </tr>
                   ))}
@@ -498,7 +757,148 @@ export default function AdminPage(){
             </div>}
         </CardContent>
       </Card>
-      {grantNotice&&<p className="mt-4 text-sm text-emerald-700">{grantNotice}</p>}
+
+      {selected&&
+        <Card className="mt-6">
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <CardTitle className="text-lg">{`${dict.panel}: ${selected.name||selected.email}`}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={()=>{setSelected(null);setDetail(null);}}>{dict.close}</Button>
+          </CardHeader>
+          <CardContent>
+            {detailBusy
+              ?<p className="text-sm text-slate-500">{dict.loading}</p>
+              :!detail
+                ?<p className="text-sm text-slate-500">{dict.panelMissing}</p>
+                :<>
+                  {detail.missing&&<p className="mb-3 text-sm text-amber-700">{dict.panelMissing}</p>}
+
+                  <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    {[
+                      {label:dict.xpBalance,value:String(detail.xp)},
+                      {label:dict.attendance,value:String(new Set(detail.events.filter(e=>e.kind==='checkin').map(e=>e.day)).size)},
+                      {label:dict.examsSat,value:String(detail.attempts.length)},
+                      {label:dict.examsPassed,value:String(detail.attempts.filter(a=>a.passed).length)},
+                      {label:dict.avgScore,value:detail.attempts.length?`${Math.round(detail.attempts.reduce((s,a)=>s+a.score_pct,0)/detail.attempts.length)}%`:'—'},
+                    ].map(tile=>(
+                      <div key={tile.label} className="rounded-xl border border-slate-200 px-3 py-2">
+                        <p className="text-xs text-slate-500">{tile.label}</p>
+                        <p className="text-xl font-semibold">{tile.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mb-5 grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="mb-1 font-medium">{dict.school}</p>
+                      {detail.profile&&(detail.profile.university||detail.profile.department||detail.profile.specialty||detail.profile.study_year)
+                        ?<ul className="space-y-0.5 text-slate-600">
+                          <li>{dict.university}: {detail.profile.university||dict.none}</li>
+                          <li>{dict.department}: {detail.profile.department||dict.none}</li>
+                          <li>{dict.specialty}: {detail.profile.specialty||dict.none}</li>
+                          <li>{dict.year}: {detail.profile.study_year||dict.none}</li>
+                        </ul>
+                        :<p className="text-slate-500">{dict.noSchool}</p>}
+                    </div>
+                    <div>
+                      <p className="mb-1 font-medium">{dict.premiumUntil}</p>
+                      <p className="text-slate-600">
+                        {detail.subs.some(s=>new Date(s.expires_at).getTime()>Date.now())
+                          ?new Date(detail.subs[0].expires_at).toLocaleDateString()
+                          :dict.premiumNone}
+                      </p>
+                      <div className="mt-3 flex items-end gap-2">
+                        <label className="grid gap-1 text-sm">
+                          <span>{dict.grantPremiumHint}</span>
+                          <Input
+                            className="w-24"
+                            inputMode="numeric"
+                            value={premiumDays}
+                            onChange={e=>setPremiumDays(e.target.value.replace(/\D/g,''))}
+                          />
+                        </label>
+                        <Button size="sm" variant="outline" onClick={()=>givePremium(selected)}>{dict.grantPremium}</Button>
+                      </div>
+                      <div className="mt-4 flex items-end gap-2">
+                        <label className="grid gap-1 text-sm">
+                          <span>{dict.grantXpHint}</span>
+                          <Input
+                            className="w-24"
+                            inputMode="numeric"
+                            aria-label={dict.grantXpHint}
+                            value={grant[selected.id]??''}
+                            onChange={e=>setGrant(g=>({...g,[selected.id]:e.target.value.replace(/\D/g,'')}))}
+                          />
+                        </label>
+                        <Button size="sm" variant="outline" disabled={!grant[selected.id]} onClick={()=>grantXp(selected)}>{dict.grantXp}</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-5 grid gap-5 lg:grid-cols-2">
+                    <div>
+                      <p className="mb-2 font-medium">{dict.attempts}</p>
+                      {detail.attempts.length===0
+                        ?<p className="text-sm text-slate-500">{dict.noAttempts}</p>
+                        :<div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead><tr className="text-left text-slate-500">
+                              <th className="py-1">{dict.paper}</th><th>{dict.score}</th><th>{dict.examStatus}</th><th>{dict.created}</th>
+                            </tr></thead>
+                            <tbody>
+                              {detail.attempts.map(a=>(
+                                <tr key={a.id} className="border-t border-slate-100">
+                                  <td className="py-1">{detail.titles[a.exam_id]||`#${a.exam_id}`}</td>
+                                  <td>{a.score_pct}%</td>
+                                  <td><Badge variant={a.passed?'default':'secondary'}>{a.passed?dict.passedText:dict.failedText}</Badge></td>
+                                  <td className="text-slate-500">{fmt(a.created_at)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>}
+                    </div>
+                    <div>
+                      <p className="mb-2 font-medium">{dict.practice}</p>
+                      {detail.quizzes.length===0
+                        ?<p className="text-sm text-slate-500">{dict.noPractice}</p>
+                        :<ul className="space-y-1 text-sm">
+                          {detail.quizzes.map(q=>(
+                            <li key={q.id} className="flex items-center justify-between gap-3 border-t border-slate-100 pt-1">
+                              <span>{q.score}/{q.total}</span>
+                              <span className="text-slate-500">{fmt(q.created_at)}</span>
+                            </li>
+                          ))}
+                        </ul>}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 font-medium">{dict.paymentsOf}</p>
+                    {detail.payments.length===0
+                      ?<p className="text-sm text-slate-500">{dict.noPaymentsOf}</p>
+                      :<div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead><tr className="text-left text-slate-500">
+                            <th className="py-1">{dict.plan}</th><th>{dict.amount}</th><th>{dict.examStatus}</th><th>{dict.ref}</th><th>{dict.created}</th>
+                          </tr></thead>
+                          <tbody>
+                            {detail.payments.map(p=>(
+                              <tr key={p.id} className="border-t border-slate-100">
+                                <td className="py-1">{p.plan==='yearly'?'1 жил':'1 сар'}</td>
+                                <td>{p.amount_mnt.toLocaleString()}₮</td>
+                                <td><Badge variant={p.status==='completed'?'default':p.status==='rejected'?'destructive':'secondary'}>{statusLabel(p.status)}</Badge></td>
+                                <td className="text-slate-500">{p.reference||dict.none}</td>
+                                <td className="text-slate-500">{fmt(p.created_at)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>}
+                  </div>
+                </>}
+            {grantNotice&&<p className="mt-4 text-sm text-emerald-700">{grantNotice}</p>}
+          </CardContent>
+        </Card>}
     </PageScroll>
   );
 }

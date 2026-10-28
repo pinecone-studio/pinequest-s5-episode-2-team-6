@@ -35,6 +35,16 @@ export interface DraftRequest {
   lang?: string;
   topic: string;
   count: number;
+  /** Anatomy group key from lib/anatomy-groups.ts, e.g. 'skeletal'. */
+  group?: string;
+  /** The atlas structure the paper is about, e.g. 'femur'. */
+  part?: string;
+  /**
+   * Verified notes copied from app/structure-facts.ts. The model writes around
+   * them instead of inventing an action or an artery, which is what keeps a
+   * generated paper usable without a teacher rewriting it.
+   */
+  facts?: {name?: string; latin?: string; function?: string; nerve?: string};
 }
 
 export interface QuizRequest {
@@ -97,6 +107,8 @@ const GRADE_SYSTEM = `Та анагаахын анатомийн шалгалт�
 const DRAFT_SYSTEM = `Та анагаахын сургалтын асуулт зохиогч.
 Өгөгдсөн сэдвээр бодит, стандарт анагаахын мэдлэг дээр тулгуурласан асуулт зохионо. Таамаг, баталгаажуулаагүй статистик, эмийн худалдааны нэр бичихгүй.
 Олон сонголттой асуулт бүрт зөвхөн нэг зөв хариулт, 4 сонголт байна. "case" асуулт богино клиник байдал дүрсэлж, rubric-т бүтэн хариултын шаардлагыг тодорхой бичнэ.
+Зөв хариултыг сонголтуудын аль ч байрлалд тавьж болно, гэхдээ асуулт бүрд ижил дугаарыг давуу тал болгохгүй.
+Хэрэглэгч "Бүтэц"-ийн мэдээлэл (латин, үүрэг, мэдрэл) өгвөл асуултаа зөвхөн тэр бүтцээр нь зохиож, өгөгдсөн үнэн зөв байдлаас хазайхгүй.
 prompt — монгол, prompt_en — англи. Бүх текст монгол/англи хэлээр, бусад хэлний үг холихгүй.
 Зөвхөн JSON объект буцаана: {"questions":[{"kind":"mcq"|"case","prompt":"...","prompt_en":"...","options":["...","...","...","..."],"answer":<0..3 эсвэл null>,"rubric":"...","points":<тоо>}]}`;
 
@@ -190,10 +202,35 @@ export async function gradeCases(config: LlmConfig, request: GradeRequest, signa
   return {scores, caseScore, caseMax, summary: String(parsed?.summary ?? '').slice(0, 1200)};
 }
 
+/** Move the correct answer out of the slot the model usually picks (A). */
+function spreadOptions(question: DraftQuestion): DraftQuestion {
+  if (question.kind !== 'mcq' || question.answer === null || question.options.length < 2) return question;
+  const order = question.options.map((_, index) => index);
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [order[index], order[swap]] = [order[swap], order[index]];
+  }
+  return {
+    ...question,
+    options: order.map(index => question.options[index] ?? ''),
+    answer: order.indexOf(question.answer),
+  };
+}
+
+function draftBrief(request: DraftRequest, count: number): string {
+  const lines = [`Сэдэв: ${request.topic}`, `Асуултын тоо: ${count} (дор хаяж нэг нь "case"). Нийт оноо ойролцоогоор ${count * 2} байна.`];
+  const facts = request.facts ?? {};
+  const detail = [facts.latin, facts.function && `үйл: ${facts.function}`, facts.nerve && `мэдрэл: ${facts.nerve}`].filter(Boolean).join('; ');
+  if (String(request.part ?? '').trim()) {
+    lines.push(`Бүтэц: ${String(request.part).trim()}${detail ? ` — ${detail}` : ''}`);
+    lines.push('Асуулт бүр энэ бүтцээс шууд асууж, өөр цээжний асуулт давхцуулахгүй.');
+  }
+  return lines.join('\n');
+}
+
 export async function draftQuestions(config: LlmConfig, request: DraftRequest, signal: AbortSignal): Promise<DraftQuestion[]> {
   const count = Math.max(1, Math.min(10, Math.round(request.count) || 5));
-  const user = `Сэдэв: ${request.topic}\nАсуултын тоо: ${count} (дор хаяж нэг нь "case"). Нийт оноо ойролцоогоор ${count * 2} байна.`;
-  const raw = await complete(config, DRAFT_SYSTEM, user, signal);
+  const raw = await complete(config, DRAFT_SYSTEM, draftBrief(request, count), signal);
   const parsed = parseJsonObject(raw);
   const rows = Array.isArray(parsed?.questions) ? (parsed.questions as Record<string, unknown>[]) : [];
   return rows.slice(0, count).map(row => {
@@ -202,14 +239,14 @@ export async function draftQuestions(config: LlmConfig, request: DraftRequest, s
     const answer = Number.isInteger(Number(row.answer)) && Number(row.answer) >= 0 && Number(row.answer) < options.length ? Number(row.answer) : null;
     return {
       kind,
-      prompt: String(row.prompt ?? '').slice(0, 1200),
-      prompt_en: String(row.prompt_en ?? '').slice(0, 1200),
+      prompt: String(row.prompt ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
+      prompt_en: String(row.prompt_en ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
       options: kind === 'mcq' ? options : [],
       answer: kind === 'mcq' ? answer : null,
-      rubric: String(row.rubric ?? '').slice(0, 1200),
+      rubric: String(row.rubric ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
       points: Math.max(1, Math.min(10, Math.round(Number(row.points) || 1))),
     };
-  }).filter(row => row.prompt && (row.kind === 'case' || (row.options.length >= 2 && row.answer !== null)));
+  }).filter(row => row.prompt && (row.kind === 'case' || (row.options.length >= 2 && row.answer !== null))).map(spreadOptions);
 }
 
 /** Fresh practice questions. Rows that are not a clean four-option question with one answer are dropped. */

@@ -2,7 +2,7 @@ import {flushSync} from 'react-dom';
 import {registerAtlasTools} from './agent-tools';
 import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {useLocation,useNavigate} from 'react-router-dom';
-import {Activity,ArrowUpRight,ChevronRight,CircleQuestionMark,Focus,Info,Layers3,Palette,RotateCcw,Search,Sparkles,X,PersonStanding} from 'lucide-react';
+import {Activity,ArrowUpRight,ChevronRight,CircleQuestionMark,Focus,Info,Layers3,LayoutGrid,Palette,RotateCcw,Search,Sparkles,X,PersonStanding} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
 import {Slider} from '@/components/ui/slider';
@@ -144,6 +144,12 @@ export default function Home(){
  const toggleChat=()=>{setDetails(false);setPanel(null);setRomOpen(false);setAbout(false);setChatOpen(open=>!open);};
  // The assistant reads the same reference notes the interface shows and can drive the model.
  const brief=useMemo(()=>{
+ // The masthead tools fold into one button and fan out to its left. The intro opens the tray on the steps that
+ // point at them; a click elsewhere (but not on the intro itself) or Escape folds it again.
+ const [tools,setTools]=useState(false),toolsRef=useRef<HTMLElement>(null);
+ const toolsActive=chatOpen||romOpen||panel==='search';
+ useEffect(()=>{if(introTarget==='ask'||introTarget==='search'||introTarget==='top')setTools(true);},[introTarget]);
+ useEffect(()=>{if(!tools)return;const away=(e:PointerEvent)=>{const el=e.target as Element;if(!toolsRef.current?.contains(el)&&!el.closest?.('.intro-panel'))setTools(false);};const esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setTools(false);};document.addEventListener('pointerdown',away);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('pointerdown',away);document.removeEventListener('keydown',esc);};},[tools]);
   if(!atlas||!chosen)return null;
   const found=describeStructure(atlas,chosen.name);
   // Only a curated fact fills the function line; without one describeStructure repeats the overview's first sentence,
@@ -207,7 +213,7 @@ export default function Home(){
   <PaywallDialog open={paywall} onClose={()=>setPaywall(false)}/>
   {/* No visible title over the model; the heading stays for screen readers. */}
   <h1 className="sr-only">Anatomn</h1>
-  <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={`${romOpen?'active':''} ${ring('top')}`} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
+  <nav ref={toolsRef} className={`top-actions ${tools?'is-open':''}`} aria-label="Explorer panels"><div className="atlas-tools" id="atlas-tools"><Button variant="ghost" style={{'--i':3} as CSSProperties} className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={()=>{setTools(false);toggleChat();}} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" style={{'--i':2} as CSSProperties} className={`${romOpen?'active':''} ${ring('top')}`} onClick={()=>{setTools(false);romOpen?setRomOpen(false):openRom();}} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" style={{'--i':1} as CSSProperties} className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>{setTools(false);openPanel('search');}} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" style={{'--i':0} as CSSProperties} className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setTools(false);setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></div><Button variant="ghost" className={`icon-button tools-toggle ${toolsActive&&!tools?'has-active':''}`} onClick={()=>setTools(open=>!open)} aria-expanded={tools} aria-controls="atlas-tools" aria-label={tools?t.hideTools:t.showTools}>{tools?<X size={18}/>:<LayoutGrid size={18}/>}</Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>
   {intro!==null&&<IntroPanel step={intro} phone={phone} tucked={introTucked} onStep={setIntro} onClose={()=>setIntro(null)}/>}
   <RomPanel parts={romParts} open={romOpen} onClose={()=>setRomOpen(false)} onActivation={onActivation} onRomFocus={onRomFocus}/>

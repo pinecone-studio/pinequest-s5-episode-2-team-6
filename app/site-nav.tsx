@@ -1,5 +1,5 @@
 import {Link,NavLink} from 'react-router-dom';
-import {Activity,Box,House,ListChecks,LogIn,UserRound} from 'lucide-react';
+import {Activity,Bone,Box,House,ListChecks,LogIn,UserRound} from 'lucide-react';
 import {useAuth} from '../hooks/use-auth';
 import {useLang} from './locale';
 import './site-nav.css';
@@ -17,6 +17,7 @@ export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 
     {to: '/', label: t.site.home, Icon: House},
     {to: '/atlas', label: t.site.atlas, Icon: Box},
     {to: '/plaque', label: t.site.plaque, Icon: Activity},
+    {to: '/fracture', label: lang==='mn'?'Хугарлын лаб':'Fracture Lab', Icon: Bone},
     {to: '/quiz', label: t.site.quiz, Icon: ListChecks},
   ];
   return (

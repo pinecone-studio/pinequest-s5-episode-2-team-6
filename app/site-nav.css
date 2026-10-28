@@ -41,7 +41,7 @@
  .site-nav .site-login{width:34px}
  .site-nav .site-lang button{min-width:30px;height:28px;padding:0 6px}
 }
-@media(max-width:400px){.site-nav .site-brand-name{display:none}}
-@media(max-width:340px){.site-nav{gap:4px;padding-left:10px}.site-nav .site-links a{width:32px}.site-nav .site-lang button{min-width:26px;padding:0 4px}}
+@media(max-width:480px){.site-nav .site-brand-name{display:none}}
+@media(max-width:340px){.site-nav{gap:4px;padding-left:8px}.site-nav .site-links a{width:28px}.site-nav .site-lang button{min-width:24px;padding:0 3px}.site-nav .site-login{width:28px}.site-end{gap:3px}}
 @media(max-height:600px) and (orientation:landscape){:root{--site-nav-h:54px}.site-nav{top:6px;height:40px}}
 @media(prefers-reduced-motion:reduce){.site-nav :is(a,button){transition:none}}

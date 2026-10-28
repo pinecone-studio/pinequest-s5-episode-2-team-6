@@ -1,5 +1,5 @@
 import {useEffect,useState,type ComponentType} from 'react';
-import {Activity,Box,Check,ChevronLeft,ChevronRight,Compass,Hand,House,Info,ListChecks,Menu,MousePointerClick,PersonStanding,Pointer,Search,SlidersHorizontal,Smartphone,Sparkles,X} from 'lucide-react';
+import {Activity,Bone,Box,Check,ChevronLeft,ChevronRight,Compass,Hand,House,Info,ListChecks,Menu,MousePointerClick,PersonStanding,Pointer,Search,SlidersHorizontal,Smartphone,Sparkles,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {useLang} from './locale';
 
@@ -33,7 +33,7 @@ const PHONE: StepShape[] = [
   {icon: Pointer, spot: 'tap'},
   {icon: SlidersHorizontal, target: 'dock'},
   {icon: Sparkles, target: 'top', legend: [Sparkles, PersonStanding, Search, Info]},
-  {icon: Menu, target: 'nav', legend: [House, Box, Activity, ListChecks]},
+  {icon: Menu, target: 'nav', legend: [House, Box, Activity, Bone, ListChecks]},
   {icon: Smartphone},
   {icon: PersonStanding, target: 'rom'},
   {icon: Activity, target: 'nav'},

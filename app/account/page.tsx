@@ -104,7 +104,8 @@ export default function AccountPage(){
     let alive=true;
     setPayments([]);
     setLoading(true);
-    supabase.from('payments').select('*').order('created_at',{ascending:false}).then(({data})=>{
+    const ownId=user.id;
+    supabase.from('payments').select('*').eq('user_id',ownId).order('created_at',{ascending:false}).then(({data})=>{
       if(alive){setPayments((data??[]) as Record<string,unknown>[]);setLoading(false);}
     });
     return ()=>{alive=false;};

@@ -37,9 +37,10 @@ export function useSubscription():SubscriptionState{
     setState(s=>({...s,loading:true}));
     (async()=>{
       // One profile row owns is_admin; subscriptions own premium time.
+      // The user_id filter is explicit because the RLS policy also lets an admin read every row.
       const [{data:profile},{data:subs}]=await Promise.all([
         supabase.from('profiles').select('is_admin').eq('id',user.id).maybeSingle(),
-        supabase.from('subscriptions').select('expires_at').order('expires_at',{ascending:false}),
+        supabase.from('subscriptions').select('expires_at').eq('user_id',user.id).order('expires_at',{ascending:false}),
       ]);
       if(!alive)return;
       const now=Date.now();

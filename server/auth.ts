@@ -39,6 +39,9 @@ export interface PublicUser {
   name: string;
 }
 
+// Vercel's /tmp is per instance and wiped on cold starts, so this store only
+// holds up for local development. Deployed builds sign up through Supabase
+// instead: `.env.production` sets the VITE_SUPABASE_* values for them.
 const file =
   process.env.AUTH_STORE_PATH ||
   (process.env.VERCEL ? join('/tmp', 'anatomn-auth-users.json') : join(process.cwd(), 'data', 'auth-users.json'));

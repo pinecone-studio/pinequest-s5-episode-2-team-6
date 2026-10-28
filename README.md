@@ -165,7 +165,7 @@ VITE_SUPABASE_URL=https://wckcbyobgpjwiolsdjjd.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-They live in `.env.local` (gitignored — copy them from `.env.example`, which ships the team's public values) and must also be added to the Vercel project's Environment Variables for deployments.
+For local development they live in `.env.local` (gitignored — copy them from `.env.example`, which ships the team's public values). Production builds read them from the committed `.env.production`, so a Vercel deployment signs people up through Supabase with no dashboard setup; Environment Variables set in the Vercel project override that file. Without them a deployment would fall back to the file account store in `server/auth.ts`, which on Vercel lives in a per-instance `/tmp` folder and loses accounts and sessions on every cold start.
 
 ### Local sign-in checklist
 

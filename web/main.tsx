@@ -16,6 +16,7 @@ const AccountPage=lazy(()=>import('../app/account/page'));
 const AdminPage=lazy(()=>import('../app/admin/page'));
 const FracturePage=lazy(()=>import('../app/fracture/page'));
 const TeacherPage=lazy(()=>import('../app/teacher/page'));
+const AuthCallbackPage=lazy(()=>import('../app/auth/callback/page'));
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
@@ -29,6 +30,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/fracture" element={<FracturePage/>}/>
         <Route path="/login" element={<LoginPage/>}/>
         <Route path="/signup" element={<SignupPage/>}/>
+        {/* Google returns here with its code; the page hands the student on to where they were going. */}
+        <Route path="/auth/callback" element={<AuthCallbackPage/>}/>
         <Route path="/quiz" element={<QuizPage/>}/>
         <Route path="/teacher" element={<TeacherPage/>}/>
         <Route path="/exam" element={<ExamPage/>}/>

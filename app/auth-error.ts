@@ -9,6 +9,7 @@ const TABLE: [string, string, string][] = [
   ['password should have at least', 'The password is too short.', 'Нууц үг хэт богино байна.'],
   ['failed to fetch', 'Could not reach the server. Check the connection and try again.', 'Серверт хүрсэнгүй. холболтоо шалгаад дахин оролдоно уу.'],
   ['too many requests', 'Too many attempts. Wait a minute and try again.', 'Хэт олон оролдлого хийв. нэг минутын дараа дахин оролдоно уу.'],
+  ['is not enabled', 'Google sign-in is not switched on for this project yet. Use your email and password.', 'Google-ээр нэвтрэх боломж одоогол нээгдээгүй байна. Имэйл болон нууц үгээрээ нэвтэрнэ үү.'],
 ];
 
 export function explainAuthError(message: string, lang: Lang): string {

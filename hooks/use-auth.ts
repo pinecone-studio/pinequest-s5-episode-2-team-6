@@ -12,6 +12,9 @@ export interface AuthState{
 
 interface LocalUser{id:string;email:string;name:string}
 
+// The page the student wanted before Google took the browser away.
+const returnKey='anatomn-google-return';
+
 function asUser(row:LocalUser):User{
   return {
     id:row.id,
@@ -87,6 +90,39 @@ export function useAuth():AuthState{
   },[]);
 
   return state;
+}
+
+/**
+ * Sends the browser to Google and back to /auth/callback. The PKCE verifier
+ * Supabase stores lives in this browser's storage, so the round trip has to
+ * finish on the same device. A null return means Google is loading; the page
+ * is replaced by the redirect.
+ */
+export async function signInWithGoogle(returnTo:string):Promise<string|null>{
+  sessionStorage.setItem(returnKey,returnTo.startsWith('/')&&!returnTo.startsWith('//')?returnTo:'/atlas');
+  const {data,error}=await supabase.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo:`${window.location.origin}/auth/callback`,skipBrowserRedirect:true},
+  });
+  if(error)return error.message;
+  if(!data?.url)return 'provider is not enabled';
+  // The client only builds the URL, so an unconfigured provider would answer
+  // with raw GoTrue JSON after the browser already left the app. Asking first
+  // keeps the reason on the page, where it can be said in plain words.
+  const preflight=await fetch(data.url,{redirect:'manual'}).catch(()=>null);
+  if(preflight&&preflight.status>=400){
+    const body=await preflight.json().catch(()=>null);
+    return (body as {msg?:string}|null)?.msg||'provider is not enabled';
+  }
+  window.location.assign(data.url);
+  return null;
+}
+
+/** Where the student was heading before Google took the browser away. */
+export function takeGoogleReturn():string{
+  const path=sessionStorage.getItem(returnKey);
+  sessionStorage.removeItem(returnKey);
+  return path&&path.startsWith('/')&&!path.startsWith('//')?path:'/atlas';
 }
 
 /**

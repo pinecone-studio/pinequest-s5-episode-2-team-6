@@ -456,12 +456,12 @@ export default function ExamPage() {
         <p className="text-sm text-slate-500">{t.empty}</p>
       ) : (
         <div className="space-y-8">
-          {sections.map(section => (
-            <section key={section.groupKey || 'other'} aria-label={section.groupKey ? groupLabel(section.groupKey, lang) : t.other}>
+          {sections.filter(section => Boolean(section.groupKey)).map(section => (
+            <section key={section.groupKey} aria-label={groupLabel(section.groupKey, lang)}>
               <div className="mb-3 flex items-center gap-2">
-                <span className="h-3 w-3 shrink-0 rounded-full" style={{background: section.groupKey ? groupColor(section.groupKey) : '#94a3b8'}} aria-hidden />
-                <h2 className="text-lg font-semibold">{section.groupKey ? groupLabel(section.groupKey, lang) : t.other}</h2>
-                <span className="text-sm text-slate-500">{t.papersInGroup(section.papers.length)}</span>
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{background: groupColor(section.groupKey)}} aria-hidden />
+                <h2 className="text-lg font-semibold">{groupLabel(section.groupKey, lang)}</h2>
+                <span className="ml-auto text-sm text-slate-500">{t.papersInGroup(section.papers.length)}</span>
               </div>
               <div className="space-y-4">
                 {section.papers.map(row => {
@@ -469,21 +469,25 @@ export default function ExamPage() {
                   const passedNow = score !== undefined && score >= row.pass_pct;
                   const part = row.part_key ? partLabel(row.part_key, lang) : '';
                   return (
-                    <Card key={row.id}>
-                      <CardContent className="flex flex-wrap items-center gap-4 p-5">
+                    <Card key={row.id} className="exam-card">
+                      <CardContent className="flex flex-wrap items-center justify-between gap-5 p-5">
                         <div className="min-w-0 flex-1">
-                          <p className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="text-slate-400" />{lang === 'mn' ? row.title : row.title_en || row.title}</p>
+                          <div className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="text-slate-400" />{lang === 'mn' ? row.title : row.title_en || row.title}</div>
                           <p className="mt-1 text-sm text-slate-500">
                             {row.question_count ?? 0} {t.questions} · {row.total_points ?? 0} {t.points} · {row.time_limit_min} {t.minutes} · {t.passMark} {row.pass_pct}%
                           </p>
                           {part && <Link to={`/atlas?focus=${encodeURIComponent(row.part_key)}`} className="mt-1 inline-flex items-center gap-1 text-sm text-blue-700 underline">{part}<span className="text-slate-400">· {t.openPart}</span></Link>}
                         </div>
                         <div className="text-right">
-                          {score === undefined
-                            ? <p className="text-sm text-slate-400">{t.notPassed}</p>
-                            : <p className={`text-xl font-bold ${passedNow ? 'text-emerald-600' : 'text-red-600'}`}>{score}%</p>}
+                          {score === undefined ? (
+                            <p className="text-sm text-slate-400">{t.notPassed}</p>
+                          ) : passedNow ? (
+                            <p className="text-xl font-bold text-emerald-600">{score}%</p>
+                          ) : (
+                            <p className="text-xl font-bold text-slate-900">{score}%</p>
+                          )}
                         </div>
-                        <Button onClick={() => setParams({exam: String(row.id)})}>{score === undefined ? t.start : t.resume}</Button>
+                        <Button className="shrink-0" onClick={() => setParams({exam: String(row.id)})}>{score === undefined ? t.start : t.resume}</Button>
                       </CardContent>
                     </Card>
                   );

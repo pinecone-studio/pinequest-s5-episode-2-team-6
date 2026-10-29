@@ -1,6 +1,6 @@
 import type {Atlas} from './anatomy';
 import {Color} from 'three';
-export interface RenalPreview {ids:string[];flow:number}
+export interface RenalPreview {ids:string[];flow:number;contextIds?:string[]}
 export const renalColor=(flow:number)=>`hsl(${10+Math.max(0,Math.min(1,flow))*150},40%,55%)`;
 export function perfusionTint(preview:RenalPreview|undefined,id:string){
  if(!preview?.ids.includes(id))return [0,0,0];
@@ -19,4 +19,9 @@ export function renalFlow(narrowing:number,length:number){
 export function renalTerritory(atlas:Atlas,side:'Left'|'Right'){
  const artery=`${side.toLowerCase()} renal artery`;
  return atlas.parts.filter(p=>p.system==='arterial'&&(p.name.toLowerCase()===artery||p.name.toLowerCase().endsWith(`of ${artery}`))).map(p=>p.id);
+}
+export function renalLessonPreview(atlas:Atlas,side:'Left'|'Right',flow:number,stage:number):RenalPreview{
+ const ids=renalTerritory(atlas,side);
+ return {ids:stage===0?ids.filter(id=>atlas.parts.find(part=>part.id===id)?.name===`${side} renal artery`):ids,flow,
+  contextIds:stage===2?atlas.parts.filter(part=>part.system==='urinary'&&part.name===`${side} kidney`).map(part=>part.id):[]};
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {renalColor,renalFlow,renalTerritory} from '../app/plaque-model.ts';
+import {renalColor,renalFlow,renalTerritory,renalLessonPreview} from '../app/plaque-model.ts';
 import {perfusionTint} from '../app/plaque-model.ts';
 assert.equal(renalFlow(0,20).flow,1);assert.equal(renalFlow(100,20).flow,0);assert.equal(renalFlow(50,0).flow,1);
 assert.ok(Math.abs(renalFlow(50,20).flow-10/13)<1e-12);
@@ -16,6 +16,13 @@ for(const side of ['Left','Right']){
  for(const p of atlas.parts.filter(p=>p.system!=='arterial'||/suprarenal/i.test(p.name)))assert.deepEqual(perfusionTint({ids,flow:0},p.id),[0,0,0]);
 }
 assert.deepEqual(renalTerritory({parts:[]},'Left'),[]);
+for(const side of ['Left','Right'])for(const flow of [0,.5,1])for(const stage of [0,1,2]){
+ const preview=renalLessonPreview(atlas,side,flow,stage),kidney=atlas.parts.find(part=>part.name===`${side} kidney`);
+ assert.equal(preview.flow,flow);assert.equal(preview.ids.length,stage===0?1:renalTerritory(atlas,side).length);
+ assert.deepEqual(preview.contextIds,stage===2?[kidney.id]:[]);
+ assert.ok(preview.ids.every(id=>renalTerritory(atlas,side).includes(id)));
+ assert.deepEqual(perfusionTint(preview,kidney.id),[0,0,0],'Kidney anatomy must not be tinted as flow or injury');
+}
 console.log('Verified baseline, occlusion, analytical flow, monotonicity, invalid inputs, and bilateral supply mappings.');
 const {Color}=await import('three');
 for(const flow of [0,.5,1]){const color=new Color(renalColor(flow));assert.ok([color.r,color.g,color.b].every(v=>v>0&&v<=1));}

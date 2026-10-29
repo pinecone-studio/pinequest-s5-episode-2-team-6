@@ -7,9 +7,10 @@ import {Label} from '@/components/ui/label';
 import {useLang} from '../locale';
 import SiteNav from '../site-nav';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
+import {explainAuthError} from '../auth-error';
 
 export default function LoginPage(){
-  const {t}=useLang();
+  const {t,lang}=useLang();
   const navigate=useNavigate();
   const location=useLocation();
   const [email,setEmail]=useState('');
@@ -25,20 +26,42 @@ export default function LoginPage(){
   async function onSubmit(e:FormEvent){
     e.preventDefault();
     setError('');
-    if(!email||!password){setError(t.auth.missing);return;}
+    if(loading)return;
+    // A pasted address usually carries a space or capitals; both break the
+    // lookup while still looking correct on screen.
+    const mail=email.trim().toLowerCase();
+    setEmail(mail);
+    if(!mail||!password){setError(t.auth.missing);return;}
     setLoading(true);
     try{
-      if(!supabaseConfigured){
-        // Env vars missing: the page still works in demo mode (no backend).
-        await new Promise(r=>setTimeout(r,500));
-        navigate(destination);
+      const res=await fetch('/api/auth',{
+        method:'POST',
+        credentials:'include',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'login',email:mail,password}),
+      });
+      if(res.ok){
+        window.dispatchEvent(new Event('anatomn-auth'));
+        navigate(destination,{replace:true});
         return;
       }
-      const {error}=await supabase.auth.signInWithPassword({email,password});
-      if(error)throw error;
-      navigate(destination);
+      const local=(await res.json().catch(()=>null)) as {error?:string}|null;
+      // A cloud account still signs in when this browser has no local one.
+      if(supabaseConfigured){
+        const {data,error}=await supabase.auth.signInWithPassword({email:mail,password});
+        if(!error){
+          // A session that never landed would leave every guarded page bouncing
+          // back here, so say so instead of navigating into a signed-out app.
+          if(!data.session){setError(explainAuthError('Email not confirmed',lang));return;}
+          navigate(destination,{replace:true});
+          return;
+        }
+        setError(explainAuthError(error.message,lang)||t.auth.failed);
+        return;
+      }
+      setError(local?.error==='invalid'?explainAuthError('invalid login credentials',lang):local?.error==='missing'?t.auth.missing:t.auth.failed);
     }catch(err){
-      setError(err instanceof Error&&err.message?t.auth.failed+' — '+err.message:t.auth.failed);
+      setError(explainAuthError(err instanceof Error?err.message:'',lang)||t.auth.failed);
     }finally{
       setLoading(false);
     }

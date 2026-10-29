@@ -14,6 +14,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Ask the AI assistant anything and get a detailed Mongolian answer; anatomy questions can also rotate or highlight the model.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
 - Take the quiz on its own page (`/quiz`), and switch floating labels on.
+- Sit a timed exam on `/exam`; the papers are grouped by anatomy part — bones, muscles, arteries, veins, nerves, the heart — and each one links back to the structure in the 3D atlas.
 - Use compact controls and detail panels on mobile.
 
 ## Run locally
@@ -105,6 +106,8 @@ The landing page and the atlas are built for phones, tablets and desktops. The l
 
 The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens the quiz page. Those actions are shown as chips under the answer.
 
+The quiz (`/quiz`) deals a fresh run from a bank of 79 questions in `app/quiz/questions.ts`. Each question has one of six topics (bones, muscles, nervous system, joints and ligaments, heart and vessels, organs), a level from 1 to 3, and a concept that opens in the 3D atlas. A visitor picks the topic, level and length, can turn on a 30-second timer per question, and gets shuffled options, a per-topic breakdown and a rerun of the questions they missed. With "AI-written" selected, `POST /api/exam` with `mode: "quiz"` asks the configured LLM for new questions on the same topic and level; rows that are not a clean four-option question are dropped, and the request shares the assistant's per-IP rate limit. Asking the assistant for a quiz on a topic ("Гарын ясаар сорил өг", "quiz me on nerves") opens the quiz with that topic picked.
+
 ### LLM providers
 
 Set one provider in `.env.local` for development and in the Vercel project's Environment Variables for deployment. Keys are read only on the server and are never sent to the browser.
@@ -133,7 +136,7 @@ LLM_MODEL=llama3.1
 
 Never commit `.env.local`; it is gitignored. Each teammate should create their own Gemini key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and add it to their local `.env.local`. If the team shares one key, send it through a private password manager or direct message — never through GitHub. For the deployed site, add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in the Vercel project's Environment Variables.
 
-`api/exam.ts` (implementation in `server/exam.ts`) reads the same provider variables: `mode: 'grade'` scores a hand-in's case answers against the stored rubric, `mode: 'draft'` writes candidate questions for the admin screen. Both endpoints run in the dev server too — `vite.config.ts` serves `/api/chat` and `/api/exam` from the same middleware.
+`api/exam.ts` (implementation in `server/exam.ts`) reads the same provider variables: `mode: 'grade'` scores a hand-in's case answers against the stored rubric, `mode: 'draft'` writes candidate questions for the admin screen — optionally grounded on one atlas structure (`group`, `part`, `facts`), and it always re-shuffles the correct answer out of the first option. Both endpoints run in the dev server too — `vite.config.ts` serves `/api/chat` and `/api/exam` from the same middleware.
 
 `LLM_RATE_LIMIT` controls the per-IP request limit (default 30 per minute). The `*_MODEL` variables are optional; the defaults are shown above. If a provider retires a model, point the variable at one your account can use. If no provider is configured, the panel explains what to set; the rest of the atlas, including tours and the quiz, keeps working. Chat messages are sent to the configured provider but are not stored by this app.
 
@@ -167,7 +170,7 @@ VITE_SUPABASE_URL=https://wckcbyobgpjwiolsdjjd.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-They live in `.env.local` (gitignored — copy them from `.env.example`, which ships the team's public values) and must also be added to the Vercel project's Environment Variables for deployments.
+For local development they live in `.env.local` (gitignored — copy them from `.env.example`, which ships the team's public values). Production builds read them from the committed `.env.production`, so a Vercel deployment signs people up through Supabase with no dashboard setup; Environment Variables set in the Vercel project override that file. Without them a deployment would fall back to the file account store in `server/auth.ts`, which on Vercel lives in a per-instance `/tmp` folder and loses accounts and sessions on every cold start.
 
 ### Local sign-in checklist
 
@@ -175,10 +178,30 @@ They live in `.env.local` (gitignored — copy them from `.env.example`, which s
 
 - Add your dev origin under Supabase Dashboard → Authentication → URL Configuration → **Redirect URLs**. Vite falls back to 3017, 3018… whenever 3016 is busy, so list the ports you actually use.
 - With Authentication → Providers → Email → **Confirm email** enabled, a new account cannot sign in until its emailed link is opened: `signUp` returns no session and `/signup` routes to `/login` with the check-your-email note. GoTrue rejects reserved domains such as `example.com`, so a throwaway test address needs a real-looking domain.
+- Both pages trim and lower-case the address, ignore a second submit while a request is in flight, and translate the raw GoTrue message into plain Mongolian through `app/auth-error.ts` (`invalid login credentials`, `Email not confirmed`, `User already registered`, …). After a successful sign-in the redirect uses `replace: true`, so Back does not return to the form.
+- Signing out from `/account` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
 
 ### One-time database setup
 
-Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe. Pages that need the newer tables show a "run the schema" notice instead of failing, so an unmigrated database still renders the app.
+Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the three steps in order; each one is safe to run twice.
+
+1. [`supabase/schema.sql`](supabase/schema.sql) — creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with the policies behind the admin panel, and adds the triggers that keep profiles in sync with `auth.users` and do all the scoring. The `exams` table carries `group_key`, `part_key`, `part_mn` and `source`; the file also `alter table … add column if not exists` them, so a database migrated before the grouping exists only needs this file re-run.
+2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 published papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper. Skip it if you would rather generate the bank from `/admin` instead.
+3. Promote yourself, then refresh `/admin` (step 3 needs the profile row from step 1):
+
+```sql
+update public.profiles set is_admin = true where email = 'you@example.com';
+```
+
+Pages that need the newer tables show a "run schema.sql" notice instead of failing, so an unmigrated database still renders the app.
+
+### Exam bank: groups, structures, AI drafts
+
+`lib/anatomy-groups.ts` is the catalogue. Every group is an atlas system id (`skeletal`, `muscular`, `arterial`, `venous`, `nervous`, `cardiac`) and lists the structures a paper can be written about. The keys are atlas concept names, so the link under a paper (`/exam`) and the `concept` column on its questions resolve to the same part in the 3D atlas, and Mongolian names come from `app/mongolian-names.ts` rather than a second translation table.
+
+- **/exam** lists published papers in those groups, with the group's atlas colour, a per-group count and the structure each paper covers. Papers with an empty `group_key` (anything written before the bank was grouped) fall into a last "Бусад шалгалт" section.
+- **/admin → Шалгалтын сан** has two drafting paths. "AI draft" writes one paper from a free-text topic for a single review. "Generate a whole group" picks a group and any of its structures and writes one draft paper per structure, sending the verified Latin name, function and nerve from `app/structure-facts.ts` with the request so the model writes about real anatomy. Correct answers are re-shuffled out of slot A, and every paper is stored with `status = 'draft'`, `source = 'ai'`, `group_key`, `part_key`, `part_mn` and `concept = part_key`. Nothing is readable by a student until an admin presses **Нийтлэх**.
+- Drafting costs one provider call per structure and the calls run one after another — about five to ten seconds each with the default `gemini-3.5-flash-lite`, so a whole group takes a couple of minutes. Grading and scores never come from the browser: see the next section.
 
 ### Roles: user, premium, admin
 
@@ -190,7 +213,7 @@ Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → *
 update public.profiles set is_admin = true where email = 'you@example.com';
 ```
 
-`/admin` shows the user list (search, toggle admin, grant XP), the payment queue (confirm/reject pending transfers) and the exam bank (publish, archive, or draft questions with the assistant).
+`/admin` shows the payment queue (confirm/reject pending transfers), the exam bank (publish, archive, draft one paper or a whole group with the assistant) and the user list. **Дэлгэрэнгүй** on a user row opens that student's panel: XP balance, days attended, papers sat with their scores, quiz practice, payments, and two admin actions — grant XP and add premium days without a payment record. Everything the panel reads goes through the admin policies in `supabase/schema.sql` (the `quiz_results` select policy includes `public.is_admin ()` for exactly this reason).
 
 ### XP, exams and what the browser cannot fake
 

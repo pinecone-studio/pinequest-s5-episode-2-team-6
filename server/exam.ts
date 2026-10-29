@@ -1,17 +1,20 @@
 /** Server side of the exam module: /api/exam
  *
- * Two jobs, both of which need the model and neither of which the browser
+ * Three jobs, all of which need the model and none of which the browser
  * should do:
  *   grade — score a student's free-text case answers against the rubric the
  *           team stored with the question.
  *   draft — write candidate questions for an admin to review. A draft never
  *           reaches a student until its exam row is published.
+ *   quiz  — write a fresh set of practice questions for /quiz on a topic and
+ *           level the visitor picked. Practice is never scored on the server,
+ *           so these go straight to the browser.
  *
  * Scores are clamped here and again in the database trigger, so a model that
  * hands out more points than a question is worth cannot inflate a grade.
  */
 
-import {resolveLlmConfig, type LlmConfig, type LlmEnv} from './chat';
+import {checkRateLimit, resolveLlmConfig, type LlmConfig, type LlmEnv} from './chat';
 
 export interface CaseQuestion {
   id: number;
@@ -32,6 +35,24 @@ export interface DraftRequest {
   lang?: string;
   topic: string;
   count: number;
+  /** Anatomy group key from lib/anatomy-groups.ts, e.g. 'skeletal'. */
+  group?: string;
+  /** The atlas structure the paper is about, e.g. 'femur'. */
+  part?: string;
+  /**
+   * Verified notes copied from app/structure-facts.ts. The model writes around
+   * them instead of inventing an action or an artery, which is what keeps a
+   * generated paper usable without a teacher rewriting it.
+   */
+  facts?: {name?: string; latin?: string; function?: string; nerve?: string};
+}
+
+export interface QuizRequest {
+  mode: 'quiz';
+  lang?: string;
+  topic: string;
+  level?: number;
+  count?: number;
 }
 
 export interface GradedCase {
@@ -50,6 +71,32 @@ export interface DraftQuestion {
   points: number;
 }
 
+export interface PracticeQuestion {
+  topic: QuizTopicId;
+  level: 1 | 2 | 3;
+  prompt: string;
+  options: string[];
+  answer: number;
+  explain: string;
+  concept: string;
+}
+
+// The quiz page's topics, in the words the model is given.
+const QUIZ_TOPICS = {
+  bones: 'яс ба араг яс',
+  muscles: 'булчин, тэдгээрийн үйлдэл',
+  nerves: 'мэдрэлийн систем: захын мэдрэл, гавлын мэдрэл, тархи, нугас',
+  joints: 'үе, холбоос, шөрмөс',
+  heart: 'зүрх ба цусны судас',
+  organs: 'дотор эрхтэн: амьсгал, хоол боловсруулах, шээс ялгаруулах, дотоод шүүрлийн',
+} as const;
+type QuizTopicId = keyof typeof QUIZ_TOPICS;
+const QUIZ_LEVELS = {
+  1: 'хялбар — бүтцийн нэр, байрлал, үндсэн үүрэг',
+  2: 'дунд — үйлдэл, мэдрүүлэлт, цусан хангамж, холбоо',
+  3: 'хүнд — клиник тохиолдол, гэмтлийн шинж, нарийн анатоми',
+} as const;
+
 const JSON_HEADERS = {'content-type': 'application/json; charset=utf-8'};
 
 const GRADE_SYSTEM = `Та анагаахын анатомийн шалгалтын үнэлгээч багш.
@@ -60,8 +107,18 @@ const GRADE_SYSTEM = `Та анагаахын анатомийн шалгалт�
 const DRAFT_SYSTEM = `Та анагаахын сургалтын асуулт зохиогч.
 Өгөгдсөн сэдвээр бодит, стандарт анагаахын мэдлэг дээр тулгуурласан асуулт зохионо. Таамаг, баталгаажуулаагүй статистик, эмийн худалдааны нэр бичихгүй.
 Олон сонголттой асуулт бүрт зөвхөн нэг зөв хариулт, 4 сонголт байна. "case" асуулт богино клиник байдал дүрсэлж, rubric-т бүтэн хариултын шаардлагыг тодорхой бичнэ.
+Зөв хариултыг сонголтуудын аль ч байрлалд тавьж болно, гэхдээ асуулт бүрд ижил дугаарыг давуу тал болгохгүй.
+Хэрэглэгч "Бүтэц"-ийн мэдээлэл (латин, үүрэг, мэдрэл) өгвөл асуултаа зөвхөн тэр бүтцээр нь зохиож, өгөгдсөн үнэн зөв байдлаас хазайхгүй.
 prompt — монгол, prompt_en — англи. Бүх текст монгол/англи хэлээр, бусад хэлний үг холихгүй.
 Зөвхөн JSON объект буцаана: {"questions":[{"kind":"mcq"|"case","prompt":"...","prompt_en":"...","options":["...","...","...","..."],"answer":<0..3 эсвэл null>,"rubric":"...","points":<тоо>}]}`;
+
+const QUIZ_SYSTEM = `Та анагаахын оюутанд зориулсан анатомийн дасгал сорилын асуулт зохиогч.
+Стандарт анатомийн сурах бичигт байдаг, маргаангүй баримт дээр асуулт зохионо. Таамаг, статистик, эмийн худалдааны нэр бичихгүй.
+Асуулт бүр яг 4 сонголттой, зөвхөн нэг нь зөв. Буруу сонголтууд бодит бүтцийн нэр, ижил төрлийн, үнэмшилтэй байна. "Бүгд зөв", "аль нь ч биш" сонголт хэрэглэхгүй.
+Зөв хариултын байрлалыг асуулт бүрт өөр өөр байлга. Асуултууд хоорондоо давтагдахгүй.
+explain — зөв хариулт яагаад зөвийг 1-2 өгүүлбэрээр тайлбарлана.
+concept — асуултын гол бүтцийн англи анатомийн нэр, жижиг үсгээр (жишээ: "biceps brachii", "femur", "mitral valve", "sciatic nerve"). 3D атлас дээр энэ нэрээр хайна.
+Зөвхөн JSON объект буцаана: {"questions":[{"topic":"<сэдвийн id>","level":<1|2|3>,"prompt":"...","options":["...","...","...","..."],"answer":<0..3>,"explain":"...","concept":"..."}]}`;
 
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {status, headers: JSON_HEADERS});
@@ -81,7 +138,7 @@ export function parseJsonObject(raw: string): Record<string, unknown> | null {
   }
 }
 
-async function complete(config: LlmConfig, system: string, user: string, signal: AbortSignal): Promise<string> {
+async function complete(config: LlmConfig, system: string, user: string, signal: AbortSignal, {temperature = 0.2, maxTokens = 2048} = {}): Promise<string> {
   if (config.provider === 'gemini') {
     const response = await fetch(`${config.baseUrl}/models/${encodeURIComponent(config.model)}:generateContent`, {
       method: 'POST',
@@ -89,7 +146,7 @@ async function complete(config: LlmConfig, system: string, user: string, signal:
       body: JSON.stringify({
         systemInstruction: {parts: [{text: system}]},
         contents: [{role: 'user', parts: [{text: user}]}],
-        generationConfig: {temperature: 0.2, maxOutputTokens: 2048},
+        generationConfig: {temperature, maxOutputTokens: maxTokens},
       }),
       signal,
     });
@@ -103,8 +160,8 @@ async function complete(config: LlmConfig, system: string, user: string, signal:
     headers: {'content-type': 'application/json', authorization: `Bearer ${config.apiKey}`},
     body: JSON.stringify({
       model: config.model,
-      temperature: 0.2,
-      max_tokens: 2048,
+      temperature,
+      max_tokens: maxTokens,
       messages: [{role: 'system', content: system}, {role: 'user', content: user}],
     }),
     signal,
@@ -145,10 +202,35 @@ export async function gradeCases(config: LlmConfig, request: GradeRequest, signa
   return {scores, caseScore, caseMax, summary: String(parsed?.summary ?? '').slice(0, 1200)};
 }
 
+/** Move the correct answer out of the slot the model usually picks (A). */
+function spreadOptions(question: DraftQuestion): DraftQuestion {
+  if (question.kind !== 'mcq' || question.answer === null || question.options.length < 2) return question;
+  const order = question.options.map((_, index) => index);
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [order[index], order[swap]] = [order[swap], order[index]];
+  }
+  return {
+    ...question,
+    options: order.map(index => question.options[index] ?? ''),
+    answer: order.indexOf(question.answer),
+  };
+}
+
+function draftBrief(request: DraftRequest, count: number): string {
+  const lines = [`Сэдэв: ${request.topic}`, `Асуултын тоо: ${count} (дор хаяж нэг нь "case"). Нийт оноо ойролцоогоор ${count * 2} байна.`];
+  const facts = request.facts ?? {};
+  const detail = [facts.latin, facts.function && `үйл: ${facts.function}`, facts.nerve && `мэдрэл: ${facts.nerve}`].filter(Boolean).join('; ');
+  if (String(request.part ?? '').trim()) {
+    lines.push(`Бүтэц: ${String(request.part).trim()}${detail ? ` — ${detail}` : ''}`);
+    lines.push('Асуулт бүр энэ бүтцээс шууд асууж, өөр цээжний асуулт давхцуулахгүй.');
+  }
+  return lines.join('\n');
+}
+
 export async function draftQuestions(config: LlmConfig, request: DraftRequest, signal: AbortSignal): Promise<DraftQuestion[]> {
   const count = Math.max(1, Math.min(10, Math.round(request.count) || 5));
-  const user = `Сэдэв: ${request.topic}\nАсуултын тоо: ${count} (дор хаяж нэг нь "case"). Нийт оноо ойролцоогоор ${count * 2} байна.`;
-  const raw = await complete(config, DRAFT_SYSTEM, user, signal);
+  const raw = await complete(config, DRAFT_SYSTEM, draftBrief(request, count), signal);
   const parsed = parseJsonObject(raw);
   const rows = Array.isArray(parsed?.questions) ? (parsed.questions as Record<string, unknown>[]) : [];
   return rows.slice(0, count).map(row => {
@@ -157,14 +239,57 @@ export async function draftQuestions(config: LlmConfig, request: DraftRequest, s
     const answer = Number.isInteger(Number(row.answer)) && Number(row.answer) >= 0 && Number(row.answer) < options.length ? Number(row.answer) : null;
     return {
       kind,
-      prompt: String(row.prompt ?? '').slice(0, 1200),
-      prompt_en: String(row.prompt_en ?? '').slice(0, 1200),
+      prompt: String(row.prompt ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
+      prompt_en: String(row.prompt_en ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
       options: kind === 'mcq' ? options : [],
       answer: kind === 'mcq' ? answer : null,
-      rubric: String(row.rubric ?? '').slice(0, 1200),
+      rubric: String(row.rubric ?? '').replace(/\s*\n\s*/g, ' ').slice(0, 1200),
       points: Math.max(1, Math.min(10, Math.round(Number(row.points) || 1))),
     };
-  }).filter(row => row.prompt && (row.kind === 'case' || (row.options.length >= 2 && row.answer !== null)));
+  }).filter(row => row.prompt && (row.kind === 'case' || (row.options.length >= 2 && row.answer !== null))).map(spreadOptions);
+}
+
+/** Fresh practice questions. Rows that are not a clean four-option question with one answer are dropped. */
+export async function practiceQuestions(config: LlmConfig, request: QuizRequest, signal: AbortSignal): Promise<PracticeQuestion[]> {
+  const count = Math.max(3, Math.min(10, Math.round(Number(request.count)) || 5));
+  const topic = request.topic in QUIZ_TOPICS ? (request.topic as QuizTopicId) : null;
+  const level = request.level === 1 || request.level === 2 || request.level === 3 ? request.level : null;
+  const english = request.lang === 'en';
+  const user = [
+    topic
+      ? `Сэдэв (id "${topic}"): ${QUIZ_TOPICS[topic]}.`
+      : `Сэдэв: холимог. Асуултуудыг эдгээр сэдвүүдэд тэнцүү хуваа: ${Object.entries(QUIZ_TOPICS).map(([id, label]) => `"${id}" — ${label}`).join('; ')}.`,
+    level ? `Түвшин ${level}: ${QUIZ_LEVELS[level]}.` : `Түвшин: 1, 2, 3-ыг холино (${Object.entries(QUIZ_LEVELS).map(([id, label]) => `${id} — ${label}`).join('; ')}).`,
+    `Асуултын тоо: ${count}.`,
+    english
+      ? 'Write prompt, options and explain in English.'
+      : 'prompt, options, explain-ийг монголоор бич. Булчин, яс, мэдрэлийн латин нэрийг латинаар нь үлдээнэ (жишээ: "Biceps brachii", "Median мэдрэл").',
+  ].join('\n');
+  const raw = await complete(config, QUIZ_SYSTEM, user, signal, {temperature: 0.8, maxTokens: 6144});
+  const parsed = parseJsonObject(raw);
+  const rows = Array.isArray(parsed?.questions) ? (parsed.questions as Record<string, unknown>[]) : [];
+  const seen = new Set<string>();
+  const out: PracticeQuestion[] = [];
+  for (const row of rows) {
+    const prompt = String(row.prompt ?? '').trim().slice(0, 600);
+    const options = Array.isArray(row.options) ? row.options.map(option => String(option).trim().slice(0, 200)) : [];
+    const answer = Number(row.answer);
+    if (!prompt || seen.has(prompt) || options.length !== 4 || options.some(option => !option) || new Set(options).size !== 4) continue;
+    if (!Number.isInteger(answer) || answer < 0 || answer > 3) continue;
+    seen.add(prompt);
+    const rowLevel = Number(row.level);
+    out.push({
+      topic: topic ?? (String(row.topic) in QUIZ_TOPICS ? (String(row.topic) as QuizTopicId) : 'organs'),
+      level: level ?? (rowLevel === 1 || rowLevel === 2 || rowLevel === 3 ? rowLevel : 2),
+      prompt,
+      options,
+      answer,
+      explain: String(row.explain ?? '').trim().slice(0, 800),
+      concept: String(row.concept ?? '').trim().toLowerCase().slice(0, 120),
+    });
+    if (out.length >= count) break;
+  }
+  return out;
 }
 
 export async function handleExamRequest(request: Request, env: LlmEnv = process.env): Promise<Response> {
@@ -178,11 +303,16 @@ export async function handleExamRequest(request: Request, env: LlmEnv = process.
   if (!config) {
     return json({ok: false, error: 'no-llm', message: 'GEMINI_API_KEY is not configured on this deployment.'}, 500);
   }
-  let body: GradeRequest | DraftRequest;
+  let body: GradeRequest | DraftRequest | QuizRequest;
   try {
-    body = (await request.json()) as GradeRequest | DraftRequest;
+    body = (await request.json()) as GradeRequest | DraftRequest | QuizRequest;
   } catch {
     return json({ok: false, error: 'bad-json', message: 'Request body is not JSON.'}, 400);
+  }
+  // Practice generation is open to every visitor, so it shares the assistant's per-IP limit.
+  if (body.mode === 'quiz') {
+    const retryAfter = checkRateLimit(request, env);
+    if (retryAfter) return json({ok: false, error: 'rate-limited', message: 'Too many requests. Try again shortly.'}, 429);
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45000);
@@ -198,7 +328,12 @@ export async function handleExamRequest(request: Request, env: LlmEnv = process.
       const questions = await draftQuestions(config, body, controller.signal);
       return json({ok: true, questions});
     }
-    return json({ok: false, error: 'bad-mode', message: 'mode must be grade or draft.'}, 400);
+    if (body.mode === 'quiz') {
+      const questions = await practiceQuestions(config, body, controller.signal);
+      if (!questions.length) return json({ok: false, error: 'empty', message: 'The model returned no usable questions.'}, 502);
+      return json({ok: true, questions});
+    }
+    return json({ok: false, error: 'bad-mode', message: 'mode must be grade, draft or quiz.'}, 400);
   } catch (error) {
     console.error('[exam] provider call failed', error instanceof Error ? error.message : error);
     return json({ok: false, error: 'provider', message: 'Үнэлгээ авахад алдаа гарлаа. Дахин оролдоно уу.'}, 502);

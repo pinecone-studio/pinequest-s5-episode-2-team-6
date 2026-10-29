@@ -13,15 +13,17 @@ import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {useAuth} from '../../hooks/use-auth';
 import {useSubscription} from '../../hooks/use-subscription';
-import {fetchExam,fetchExams,fetchMyAttempts,submitAttempt,claimCheckin,fetchXp,type Exam,type ExamQuestion,type DbState} from '../../lib/exam-store';
+import {fetchExam,fetchExams,fetchMyAttempts,submitAttempt,claimCheckin,fetchXp,papersByGroup,type Exam,type ExamQuestion,type DbState} from '../../lib/exam-store';
+import {groupColor,groupLabel,partLabel} from '../../lib/anatomy-groups';
 import {useLang} from '../locale';
+import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
 import './exam.css';
 
 const copy = {
   en: {
     title: 'Exams',
-    lead: 'A timed paper with real exam questions. Your score is calculated on the server, and passing earns XP.',
+    lead: 'A timed paper with real exam questions. Papers are grouped by anatomy part, the score is calculated on the server, and passing earns XP.',
     back: 'Back to the atlas',
     loading: 'Loading…',
     empty: 'No published exam yet.',
@@ -69,10 +71,13 @@ const copy = {
     confirmSubmit: 'Hand in',
     cancel: 'Keep working',
     confirmLead: 'You cannot change the answers after handing in.',
+    papersInGroup: (n: number) => `${n} ${n === 1 ? 'paper' : 'papers'}`,
+    other: 'Other papers',
+    openPart: 'See it in the atlas',
   },
   mn: {
     title: 'Шалгалт',
-    lead: 'Хугацаатай жинхэнэ шалгалт. Оноог сервер тооцож, тэнцсэн бол XP олгоно.',
+    lead: 'Хугацаатай жинхэнэ шалгалт. Бичгүүдийг яс, булчин, судас зэрэг анатомийн хэсгээр бүлэглэсэн. Оноог сервер тооцож, тэнцсэн бол XP олгоно.',
     back: 'Атлас руу буцах',
     loading: 'Ачаалж байна…',
     empty: 'Одоогоор нээлттэй шалгалт байхгүй.',
@@ -120,6 +125,9 @@ const copy = {
     confirmSubmit: 'Гардуулах',
     cancel: 'Үргэлжлүүлэх',
     confirmLead: 'Гардуулсны дараа хариугаа өөрчлөх боломжгүй.',
+    papersInGroup: (n: number) => `${n} шалгалт`,
+    other: 'Бусад шалгалт',
+    openPart: 'Атлас дээр харах',
   },
 } as const;
 
@@ -150,6 +158,7 @@ export default function ExamPage() {
   const [checkinNote, setCheckinNote] = useState('');
   const startedAt = useRef<number>(0);
   const submitted = useRef(false);
+  const scroller = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -195,6 +204,11 @@ export default function ExamPage() {
     };
   }, [examParam]);
 
+  // Every view shares one scroll layer, so a new paper, question or result starts at the top.
+  useEffect(() => {
+    scroller.current?.scrollTo({top: 0});
+  }, [examParam, index, result]);
+
   const running = Boolean(exam) && !result;
   useEffect(() => {
     if (!running) return;
@@ -204,6 +218,7 @@ export default function ExamPage() {
 
   const caseQuestions = useMemo(() => questions.filter(q => q.kind === 'case'), [questions]);
   const totalPoints = useMemo(() => questions.reduce((sum, q) => sum + q.points, 0), [questions]);
+  const sections = useMemo(() => papersByGroup(exams), [exams]);
 
   async function handIn() {
     if (!user || !exam || submitted.current) return;
@@ -283,7 +298,7 @@ export default function ExamPage() {
 
   if (exam && result) {
     return (
-      <main className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
+      <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
         <SiteNav tone="light" />
         <h1 className="mb-1 text-3xl font-semibold">{t.resultTitle}</h1>
         <p className="mb-6 text-sm text-slate-500">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
@@ -335,7 +350,7 @@ export default function ExamPage() {
           <Button onClick={() => { setParams({}); setResult(null); }}>{t.again}</Button>
           <Button variant="outline" onClick={() => { setParams({}); setResult(null); void load(); }}><RotateCcw size={16} />{t.attempts}</Button>
         </div>
-      </main>
+      </PageScroll>
     );
   }
 
@@ -347,7 +362,7 @@ export default function ExamPage() {
       return q.kind === 'mcq' ? given?.choice !== undefined : Boolean(given?.text?.trim());
     }).length;
     return (
-      <main className="exam-page exam-running mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28 text-slate-900">
+      <PageScroll ref={scroller} className="exam-page exam-running mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28 text-slate-900">
         <SiteNav tone="light" />
         <header className="mb-4 flex items-center justify-between gap-4">
           <div>
@@ -405,7 +420,7 @@ export default function ExamPage() {
             </div>
           </div>
         )}
-      </main>
+      </PageScroll>
     );
   }
 
@@ -420,7 +435,7 @@ export default function ExamPage() {
   }
 
   return (
-    <main className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
+    <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
       <SiteNav tone="light" />
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
@@ -440,33 +455,46 @@ export default function ExamPage() {
       ) : exams.length === 0 ? (
         <p className="text-sm text-slate-500">{t.empty}</p>
       ) : (
-        <div className="space-y-4">
-          {exams.map(row => {
-            const score = best.get(row.id);
-            const passedNow = score !== undefined && score >= row.pass_pct;
-            return (
-              <Card key={row.id}>
-                <CardContent className="flex flex-wrap items-center gap-4 p-5">
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="text-slate-400" />{lang === 'mn' ? row.title : row.title_en || row.title}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {row.question_count ?? 0} {t.questions} · {row.total_points ?? 0} {t.points} · {row.time_limit_min} {t.minutes} · {t.passMark} {row.pass_pct}%
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {score === undefined
-                      ? <p className="text-sm text-slate-400">{t.notPassed}</p>
-                      : <p className={`text-xl font-bold ${passedNow ? 'text-emerald-600' : 'text-red-600'}`}>{score}%</p>}
-                  </div>
-                  <Button onClick={() => setParams({exam: String(row.id)})}>{score === undefined ? t.start : t.resume}</Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="space-y-8">
+          {sections.map(section => (
+            <section key={section.groupKey || 'other'} aria-label={section.groupKey ? groupLabel(section.groupKey, lang) : t.other}>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{background: section.groupKey ? groupColor(section.groupKey) : '#94a3b8'}} aria-hidden />
+                <h2 className="text-lg font-semibold">{section.groupKey ? groupLabel(section.groupKey, lang) : t.other}</h2>
+                <span className="text-sm text-slate-500">{t.papersInGroup(section.papers.length)}</span>
+              </div>
+              <div className="space-y-4">
+                {section.papers.map(row => {
+                  const score = best.get(row.id);
+                  const passedNow = score !== undefined && score >= row.pass_pct;
+                  const part = row.part_key ? partLabel(row.part_key, lang) : '';
+                  return (
+                    <Card key={row.id}>
+                      <CardContent className="flex flex-wrap items-center gap-4 p-5">
+                        <div className="min-w-0 flex-1">
+                          <p className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="text-slate-400" />{lang === 'mn' ? row.title : row.title_en || row.title}</p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {row.question_count ?? 0} {t.questions} · {row.total_points ?? 0} {t.points} · {row.time_limit_min} {t.minutes} · {t.passMark} {row.pass_pct}%
+                          </p>
+                          {part && <Link to={`/atlas?focus=${encodeURIComponent(row.part_key)}`} className="mt-1 inline-flex items-center gap-1 text-sm text-blue-700 underline">{part}<span className="text-slate-400">· {t.openPart}</span></Link>}
+                        </div>
+                        <div className="text-right">
+                          {score === undefined
+                            ? <p className="text-sm text-slate-400">{t.notPassed}</p>
+                            : <p className={`text-xl font-bold ${passedNow ? 'text-emerald-600' : 'text-red-600'}`}>{score}%</p>}
+                        </div>
+                        <Button onClick={() => setParams({exam: String(row.id)})}>{score === undefined ? t.start : t.resume}</Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
       <p className="mt-8 flex items-center gap-2 text-sm text-slate-400"><Trophy size={14} />{t.lead}</p>
       <Link to="/quiz" className="mt-1 inline-flex items-center gap-1 text-sm underline"><ListChecks size={12} />{lang === 'mn' ? 'Бататгал (Quiz)' : 'Practice quiz'}</Link>
-    </main>
+    </PageScroll>
   );
 }

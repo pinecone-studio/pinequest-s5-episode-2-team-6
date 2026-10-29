@@ -9,7 +9,8 @@ import './plaque.css';
 // active and closing it goes back to /atlas.
 export default function PlaquePanel({atlas,open,onPreview,onClose}:{atlas:Atlas|null;open:boolean;onPreview:(preview:RenalPreview|null)=>void;onClose:()=>void}){
  const {t:{plaque:t}}=useLang();
- const [side,setSide]=useState<'Left'|'Right'>('Left'),[narrowing,setNarrowing]=useState(0),[length,setLength]=useState(20);
+ const [side,setSide]=useState<'Left'|'Right'>('Left'),[chosenNarrowing,setNarrowing]=useState(0),[length,setLength]=useState(20),[comparing,setComparing]=useState(false);
+ const narrowing=comparing?0:chosenNarrowing;
  const {flow,arterialLoss}=renalFlow(narrowing,length),percent=Math.round(flow*100),gap=40*(1-narrowing/100),a=160-length,b=160+length;
  const territory=atlas?renalTerritory(atlas,side):[],sideName=t.sides[side];
  const close=useRef<HTMLButtonElement>(null),closeLab=useRef(onClose);
@@ -25,8 +26,11 @@ export default function PlaquePanel({atlas,open,onPreview,onClose}:{atlas:Atlas|
    <div className="rom-status"><span className="rom-status-dot"/>{t.status}</div>
    <div className="rom-side-toggle" role="group" aria-label={t.tree}>{(['Left','Right'] as const).map(value=><Button key={value} variant="ghost" aria-pressed={side===value} onClick={()=>setSide(value)}>{t.artery(t.sides[value])}</Button>)}</div>
    <section className="rom-muscles-card"><h3>{t.cutaway}</h3>
-    <label htmlFor="plaque-narrowing">{t.narrowing} <output>{narrowing}%</output></label><input id="plaque-narrowing" type="range" min="0" max="100" value={narrowing} onChange={e=>setNarrowing(Number(e.target.value))}/>
-    <label htmlFor="plaque-length">{t.segment} <output>{length} {t.mm}</output></label><input id="plaque-length" type="range" min="5" max="60" value={length} onChange={e=>setLength(Number(e.target.value))}/>
+    <div className="plaque-presets" role="group" aria-label={t.presets}>{[0,25,50,75,100].map(value=><Button key={value} variant="ghost" aria-pressed={narrowing===value} aria-label={`${t.narrowing}: ${value}%`} onClick={()=>{setComparing(false);setNarrowing(value);}}>{value}%</Button>)}</div>
+    <Button variant="outline" className="plaque-compare" aria-pressed={comparing} disabled={chosenNarrowing===0} onClick={()=>setComparing(value=>!value)}>{comparing?t.restoreNarrowing(chosenNarrowing):t.compareHealthy}</Button>
+    <p role="status">{comparing?t.comparisonHint:t.presets}</p>
+    <label htmlFor="plaque-narrowing">{t.narrowing} <output>{narrowing}%</output></label><input id="plaque-narrowing" type="range" min="0" max="100" value={narrowing} disabled={comparing} onChange={e=>setNarrowing(Number(e.target.value))}/>
+    <label htmlFor="plaque-length">{t.segment} <output>{length} {t.mm}</output></label><input id="plaque-length" type="range" min="5" max="60" value={length} disabled={comparing} onChange={e=>setLength(Number(e.target.value))}/>
     <svg viewBox="0 0 320 160" role="img" aria-label={t.cutawayLabel(narrowing,length)}>
      <rect x="18" y="37" width="284" height="96" rx="12" fill="#a34a4a"/><rect x="20" y="45" width="280" height="80" fill="#e8bf62"/><path d={lumen} fill="#d86868"/>
      {flow>0&&Array.from({length:4},(_,i)=><circle key={`${i}-${flow}`} cy="85" r="3" fill="white"><animate attributeName="cx" from="25" to="295" dur={`${2/flow}s`} begin={`${-i*.5/flow}s`} repeatCount="indefinite"/></circle>)}
@@ -42,7 +46,7 @@ export default function PlaquePanel({atlas,open,onPreview,onClose}:{atlas:Atlas|
    </svg><p>{t.colorNote}</p></section>
    <p className="perfusion-legend"><span style={{background:renalColor(0)}}/>{t.legendNone} <span style={{background:renalColor(.5)}}/>50% <span style={{background:renalColor(1)}}/>{t.legendFull}</p>
    <p className="rom-muscles-idle" role="status">{territory.length?t.isolated(sideName,territory.length,percent):t.waiting}</p>
-   <Button variant="outline" className="rom-secondary" onClick={()=>{setNarrowing(0);setLength(20);}}><RotateCcw size={15}/>{t.reset}</Button>
+   <Button variant="outline" className="rom-secondary" onClick={()=>{setComparing(false);setNarrowing(0);setLength(20);}}><RotateCcw size={15}/>{t.reset}</Button>
    <p className="rom-disclaimer">{t.disclaimer} <a href="https://www.niddk.nih.gov/health-information/kidney-disease/renal-artery-stenosis" target="_blank" rel="noreferrer">{t.about}</a></p>
   </aside>;
 }

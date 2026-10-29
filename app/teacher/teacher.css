@@ -2,7 +2,14 @@
    per-chapter learning progress and the student's question history. */
 
 .teacher-page {
-  min-height: 100dvh;
+  /* globals.css locks html/body/#root scrolling for the fixed-viewport atlas,
+     so this page needs to be its own scroll container. */
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4d78 transparent;
   padding-top: var(--site-nav-h, 56px);
   background:
     radial-gradient(1100px 500px at 85% -10%, rgba(56, 132, 255, 0.16), transparent 60%),

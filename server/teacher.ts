@@ -6,8 +6,8 @@
  * with what to read and do next. It does not reproduce the book's text; it
  * teaches in its own words and points the student to the chapter. */
 
-import type {TeacherStudentContext} from '../app/llm-types';
-import {TEXTBOOK, chapterById, type TextbookChapter} from '../app/teacher/textbook';
+import type {TeacherStudentContext} from '../app/llm-types.js';
+import {TEXTBOOK, chapterById, type TextbookChapter} from '../app/teacher/textbook.js';
 
 function chapterBlock(chapter: TextbookChapter | null): string {
   if (!chapter) {

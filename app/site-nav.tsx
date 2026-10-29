@@ -1,5 +1,5 @@
 import {Link,NavLink} from 'react-router-dom';
-import {Activity,Bone,Box,House,ListChecks,LogIn,ScrollText,UserRound} from 'lucide-react';
+import {Activity,Bone,Box,GraduationCap,House,ListChecks,LogIn,ScrollText,UserRound} from 'lucide-react';
 import {useAuth} from '../hooks/use-auth';
 import {useLang} from './locale';
 import './site-nav.css';
@@ -19,6 +19,7 @@ export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 
     {to: '/plaque', label: t.site.plaque, Icon: Activity},
     {to: '/fracture', label: lang==='mn'?'Хугарлын лаб':'Fracture Lab', Icon: Bone},
     {to: '/quiz', label: t.site.quiz, Icon: ListChecks},
+    {to: '/teacher', label: t.site.teacher, Icon: GraduationCap},
     {to: '/exam', label: t.site.exam, Icon: ScrollText},
   ];
   return (

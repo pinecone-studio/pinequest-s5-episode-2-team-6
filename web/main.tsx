@@ -1,6 +1,6 @@
 import {lazy,Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
-import {BrowserRouter,Routes,Route} from 'react-router-dom';
+import {BrowserRouter,Navigate,Routes,Route} from 'react-router-dom';
 import LandingPage from '../app/landing/page';
 import {LangProvider} from '../app/locale';
 import '../app/globals.css';
@@ -32,7 +32,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/quiz" element={<QuizPage/>}/>
         <Route path="/teacher" element={<TeacherPage/>}/>
         <Route path="/exam" element={<ExamPage/>}/>
-        <Route path="/account" element={<AccountPage/>}/>
+        <Route path="/profile" element={<AccountPage/>}/>
+        {/* The profile used to live at /account; old links and bookmarks land on it. */}
+        <Route path="/account" element={<Navigate to="/profile" replace/>}/>
         <Route path="/admin" element={<AdminPage/>}/>
       </Routes>
     </Suspense>

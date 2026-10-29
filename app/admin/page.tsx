@@ -5,7 +5,7 @@
 // a student never sees an unreviewed question; the assistant only writes
 // candidates for this page. Everything the panel shows is read through the
 // admin policies in supabase/schema.sql, so it is a teacher's view of the same
-// rows the student sees on /account.
+// rows the student sees on /profile.
 import {useCallback,useEffect,useState} from 'react';
 import {Navigate} from 'react-router-dom';
 import {Badge} from '@/components/ui/badge';
@@ -217,7 +217,7 @@ async function loadExams(): Promise<{rows:ExamRow[];missing:boolean}>{
 }
 
 /**
- * One student as the admin sees them: the same rows the /account dashboard
+ * One student as the admin sees them: the same rows the /profile dashboard
  * reads, looked up by user id. Each query is filtered by the admin policies in
  * supabase/schema.sql, and a missing table only dims the panel — the list
  * beside it keeps working.

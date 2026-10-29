@@ -190,7 +190,7 @@ For local development they live in `.env.local` (gitignored — copy them from `
 - Add your dev origin under Supabase Dashboard → Authentication → URL Configuration → **Redirect URLs**. Vite falls back to 3017, 3018… whenever 3016 is busy, so list the ports you actually use.
 - With Authentication → Providers → Email → **Confirm email** enabled, a new account cannot sign in until its emailed link is opened: `signUp` returns no session and `/signup` routes to `/login` with the check-your-email note. GoTrue rejects reserved domains such as `example.com`, so a throwaway test address needs a real-looking domain.
 - Both pages trim and lower-case the address, ignore a second submit while a request is in flight, and translate the raw GoTrue message into plain Mongolian through `app/auth-error.ts` (`invalid login credentials`, `Email not confirmed`, `User already registered`, …). After a successful sign-in the redirect uses `replace: true`, so Back does not return to the form.
-- Signing out from `/account` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
+- Signing out from `/profile` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
 
 ### One-time database setup
 
@@ -217,7 +217,7 @@ Pages that need the newer tables show a "run schema.sql" notice instead of faili
 ### Roles: user, premium, admin
 
 - **User** — every signup. Free access to the whole atlas plus search, the quiz and the exams.
-- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/account` for the payment queue and the XP discount.
+- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/profile` for the payment queue and the XP discount.
 - **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
 
 ```sql
@@ -234,7 +234,7 @@ update public.profiles set is_admin = true where email = 'you@example.com';
 
 ### Data flow of one payment
 
-1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
+1. User presses **Төлөх** on `/profile` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
 2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
 3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
 4. `useSubscription()` picks up the change for account status. Lab access is independent of subscription status.

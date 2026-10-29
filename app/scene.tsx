@@ -17,7 +17,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{}),nameOf=useRef(label);
  latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};nameOf.current=label;
  useEffect(()=>{
-  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',lastFocus='',lastAim='',aimOffset=false,layoutKey='',amount=0;
+  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',lastFocus='',lastAim='',lastVesselFrame='',aimOffset=false,layoutKey='',amount=0;
   let lastState:SceneState|null=null,lastLook:Appearance|null=null;let lastActivationKey='';
   // Glass backdrops clear to transparent so the page's gradient shows through, and drop the ground.
   let glass=false;
@@ -264,7 +264,7 @@ void main(){
      // Isolation already singles the selection out, so isolated parts drop the highlight tint and keep their own color.
      const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected&&!s.isolate?255:0;
      // Unused selection channels tint the selected renal arterial tree, or give the liver its own tissue color.
-     const perfused=s.plaque?.id===p.id&&s.plaque.narrowing>0?[232,191,98]:perfusionTint(s.perfusion,p.id);selectedData.set(perfused.some(Boolean)?perfused:tissueTints[i],i*4+1);
+     const flowTint=perfusionTint(s.perfusion,p.id),perfused=flowTint.some(Boolean)?flowTint:s.plaque?.id===p.id&&s.plaque.narrowing>0?[232,191,98]:flowTint;selectedData.set(perfused.some(Boolean)?perfused:tissueTints[i],i*4+1);
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
@@ -310,6 +310,17 @@ void main(){
      if(!box.isEmpty()&&bottom-top>80){camera.clearViewOffset();const y=(1-box.getCenter(new T.Vector3()).project(camera).y)*h/2;camera.setViewOffset(w,h,0,y-(top+bottom)/2,w,h);dirty=true;}
     }else if(lastFocus&&!s.isolate){camera.clearViewOffset();dirty=true;}
     lastFocus=focusKey;
+   }
+   const vesselPanel=document.querySelector('#atlas-plaque-lab')?.getBoundingClientRect(),origin=el.getBoundingClientRect();
+   const vesselFrame=vesselPanel?`${s.selected.join(',')}:${s.visible.join(',')}:${s.reset}:${s.focus}:${el.clientWidth}:${el.clientHeight}:${Math.round(vesselPanel.top)}:${Math.round(vesselPanel.left)}`:'';
+   if(vesselFrame!==lastVesselFrame){
+    if(vesselPanel){const box=new T.Box3();atlas.parts.forEach((part,i)=>{if(s.selected.length?s.selected.includes(part.id):s.visible.includes(part.system))box.union(bounds[i]);});
+     if(!box.isEmpty()){const w=el.clientWidth,h=el.clientHeight,mobile=w<768&&h>w,left=16,right=mobile?w-16:vesselPanel.left-origin.left-16,top=mobile?80:100,bottom=mobile?vesselPanel.top-origin.top-12:h-24;
+      const availableWidth=Math.max(120,right-left),availableHeight=Math.max(80,bottom-top),center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());
+      const distance=Math.max(.04,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.3);
+      camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);controls.target.copy(center);camera.position.copy(center).addScaledVector(new T.Vector3(.2,.1,1).normalize(),distance);controls.maxDistance=Math.max(40,distance*2);controls.update();dirty=true;}
+    }else if(lastVesselFrame){camera.clearViewOffset();fit(s.view,amount);dirty=true;}
+    lastVesselFrame=vesselFrame;
    }
    controls.enableRotate=amount<.8;controls.mouseButtons.LEFT=amount<.8?T.MOUSE.ROTATE:T.MOUSE.PAN;controls.touches.ONE=amount<.8?T.TOUCH.ROTATE:T.TOUCH.PAN;ground.visible=platform.visible=ring.visible=innerRing.visible=amount<.5&&!s.isolate;if(glass)ground.visible=false;markers.visible=amount>.75;controls.autoRotate=s.rotate&&!s.isolate&&amount<.4;controls.autoRotateSpeed=.65;controls.update();if(controls.autoRotate)dirty=true;
    if(dirty){renderer.render(scene,camera);targets=[];if(amount>.45){const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);atlas.parts.forEach((p,i)=>{if(data[i*4+3]<.5||(hasSolid&&p.system==='integumentary'))return;let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;for(let corner=0;corner<8;corner++){projected.set(p.bounds[(corner&1)?1:0][0]+data[i*4],p.bounds[(corner&2)?1:0][1]+data[i*4+1],p.bounds[(corner&4)?1:0][2]+data[i*4+2]).project(camera);const x=(projected.x+1)*el.clientWidth/2,y=(1-projected.y)*el.clientHeight/2;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}projected.copy(centers[i]).add(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])).project(camera);if(projected.z< -1||projected.z>1)return;targets.push({index:i,x:(projected.x+1)*el.clientWidth/2,y:(1-projected.y)*el.clientHeight/2,left,right,top,bottom});});}}

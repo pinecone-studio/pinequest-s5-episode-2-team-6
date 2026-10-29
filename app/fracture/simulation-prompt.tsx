@@ -16,8 +16,8 @@ export default function SimulationPrompt({atlas,onRun,onBones}:{atlas:Atlas|null
   if(atlas){
    const result=resolveBoneRequest(value,bones);
    if(result.request){setFeedback(mn?`${result.request.boneIds.length} яс олдлоо. Доороос ясаа сонгож үзээрэй.`:`Matched ${result.request.boneIds.length} bone mesh part${result.request.boneIds.length===1?'':'s'}. Inspect each match in the bone selector below.`);onBones(result.request);return;}
-   if(result.error==='pattern'){setFeedback(mn?'Хөндлөн, ташуу, эсвэл хоёр зүсэлттэй гурван хэсгийн жишээнээс сонгоно уу.':'Supported animations use crosswise, oblique, or segmental cuts. Spiral, compression, greenstick, stress, comminuted, and open fractures need different models and are not available yet.');return;}
-   if(result.error==='location'){setFeedback(mn?'Гол хэсэг эсвэл загварын дээд, доод гуравны нэгийг сонгоно уу.':'This viewer supports center, upper-third, and lower-third cuts. Joint, head, neck, proximal, and distal injury-specific models are not available yet.');return;}
+   if(result.error==='pattern'){setFeedback(mn?'Хөндлөн, ташуу, сегментчилсэн, шаантаг эсвэл тууш хэлбэрээс сонгоно уу.':'Supported animations: transverse, oblique, segmental, wedge, and longitudinal. Spiral, compression, greenstick, stress, comminuted, and open fractures need different models.');return;}
+   if(result.error==='location'){setFeedback(mn?'Гол хэсэг эсвэл дээд, доод гуравны нэгийг сонгоно уу. Шаантаг хэлбэрийг гуя, шаант, тахилзуур, бугалга, цацраг, богтос, эгэмд үзүүлнэ.':'Choose a center or third-of-model cut. Wedge examples support femur, tibia, fibula, humerus, radius, ulna, and clavicle shafts. Joint, head, neck, proximal, and distal injury models are unavailable.');return;}
   }
   const request=resolveSimulationRequest(value);
   if(request?.mode==='fall'){setFeedback(mn?'Уналтын жишээ эхэллээ.':'Starting the authored backward-fall lesson.');onRun(request);return;}

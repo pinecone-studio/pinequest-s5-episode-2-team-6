@@ -9,7 +9,7 @@ export const FRACTURE_SCENARIOS=[
   detail:'A sports collision can injure the tibia. This preset starts with an angled shaft break; actual patterns vary.',detailMn:'Спортын мөргөлдөөнөөр шаант яс гэмтэж болно. Энэ жишээ гол хэсгийн ташуу хугарлаар эхэлнэ; бодит хугарлын хэлбэр өөр байж болно.',source:source+'tibia-shinbone-shaft-fractures/'},
 ] as const;
 
-export type FracturePattern='transverse'|'oblique'|'segmental';
+export type FracturePattern='transverse'|'oblique'|'segmental'|'wedge'|'longitudinal';
 export interface BoneRequest {boneIds:string[];pattern:FracturePattern;aligned:boolean;location:number;scenario?:'fall'|'crash'|'impact'}
 export type BoneResolution={request:BoneRequest;error?:never}|{error:'bone'|'pattern'|'location';request?:never};
 const ordinals=['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','eleventh','twelfth'];
@@ -64,5 +64,6 @@ export function resolveBoneRequest(input:string,parts:Part[]):BoneResolution{
   const result=resolveBoneRequest(`${scenario.bone} ${scenario.pattern}`,parts);
   return result.request?{request:{...result.request,scenario:scenario.id}}:result;
  }
- return {request:{boneIds:matches.map(part=>part.id),pattern:/\b(segmental|three fragments|3 fragments)\b|гурван хэсэг/.test(raw)?'segmental':/\b(oblique|angled|diagonal)\b|ташуу/.test(raw)?'oblique':'transverse',aligned:/\b(nondisplaced|non[ -]displaced|aligned|undisplaced)\b|зөрөөгүй/.test(raw),location:/\b(upper third|top third)\b/.test(raw)?.68:/\b(lower third|bottom third)\b/.test(raw)?.32:.5}};
+ if(/\b(wedge|butterfly)\b|шаантаг/.test(raw)&&matches.some(part=>!/^\w+ (femur|tibia|fibula|humerus|radius|ulna|clavicle)$/.test(part.name)))return {error:'location'};
+ return {request:{boneIds:matches.map(part=>part.id),pattern:/\b(wedge|butterfly)\b|шаантаг/.test(raw)?'wedge':/\b(longitudinal|lengthwise)\b|тууш/.test(raw)?'longitudinal':/\b(segmental|three fragments|3 fragments)\b|гурван хэсэг/.test(raw)?'segmental':/\b(oblique|angled|diagonal)\b|ташуу/.test(raw)?'oblique':'transverse',aligned:/\b(nondisplaced|non[ -]displaced|aligned|undisplaced)\b|зөрөөгүй/.test(raw),location:/\b(upper third|top third)\b/.test(raw)?.68:/\b(lower third|bottom third)\b/.test(raw)?.32:.5}};
 }

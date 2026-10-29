@@ -85,6 +85,19 @@
   border-color: rgb(16 185 129 / 0.5);
 }
 
+.exam-page .exam-card {
+  border: 1px solid rgb(226 232 240);
+  border-radius: 16px;
+  background: #fff;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.exam-page .exam-card:hover {
+  border-color: rgb(148 163 184);
+  box-shadow: 0 4px 12px -4px rgb(15 23 42 / 0.08);
+  transform: translateY(-1px);
+}
+
 .exam-page .exam-fail {
   border-color: rgb(239 68 68 / 0.45);
 }

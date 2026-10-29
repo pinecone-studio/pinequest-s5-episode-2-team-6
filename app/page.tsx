@@ -253,7 +253,7 @@ export default function Home(){
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
   <PlaquePanel atlas={atlas} open={plaqueOpen&&plaqueMode==='renal'} onPreview={previewPlaque} onClose={()=>navigate('/atlas')}/>
-  {plaqueOpen&&plaqueMode==='body'&&!details&&<AtlasPlaquePanel atlas={atlas} selected={selected} plaque={wholePlaque} placing={placingPlaque} onPick={()=>setPlacingPlaque(value=>!value)} onSelect={id=>{choosePart(id);setDetails(false);setState(s=>({...s,focus:(s.focus??0)+1}));}} onPlace={setWholePlaque} onInspect={()=>setDetails(true)} onRenal={()=>setPlaqueMode('renal')} onClose={()=>navigate('/atlas')}/>}
+  {plaqueOpen&&plaqueMode==='body'&&!details&&!chatOpen&&!romOpen&&<AtlasPlaquePanel atlas={atlas} selected={selected} plaque={wholePlaque} placing={placingPlaque} onPick={()=>setPlacingPlaque(value=>!value)} onSelect={id=>{choosePart(id);setDetails(false);setState(s=>({...s,focus:(s.focus??0)+1}));}} onPlace={setWholePlaque} onInspect={()=>setDetails(true)} onRenal={()=>setPlaqueMode('renal')} onClose={()=>navigate('/atlas')}/>}
   {plaqueOpen&&plaqueMode==='renal'&&<Button className="atlas-plaque-return" onClick={()=>{setPlaqueMode('body');setPerfusion(null);}}>{lang==='mn'?t.site.plaque:'Whole-atlas plaque'}</Button>}
   {/* No visible title over the model; the heading stays for screen readers. */}
   <h1 className="sr-only">Anatomn</h1>

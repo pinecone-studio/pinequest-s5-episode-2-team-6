@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1920"/>
+<title>Anatomn — Hackathon</title>
+<style>
+  :root {
+    --ink: #141816;
+    --bone: #f3ecdf;
+    --bone-2: #e7dfd0;
+    --blood: #9d2c2c;
+    --mute: #8a8175;
+    --mute-2: #a3988a;
+    --line: #d9d0c3;
+    --paper: #f7f3eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0c0e0d; }
+  body { font-family: Inter, "Noto Sans", sans-serif; }
+  .deck { display: flex; flex-direction: column; gap: 28px; padding: 28px; width: max-content; }
+  .slide {
+    width: 1920px; height: 1080px; position: relative; overflow: hidden;
+    background: var(--bone); color: var(--ink);
+  }
+  .ink { background: var(--ink); color: var(--bone); }
+  .kicker {
+    position: absolute; left: 96px; top: 72px;
+    font-size: 18px; font-weight: 600; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--mute);
+  }
+  .ink .kicker { color: var(--mute-2); }
+  .num {
+    position: absolute; right: 96px; top: 72px;
+    font-size: 18px; font-weight: 500; letter-spacing: 0.18em; color: var(--mute);
+  }
+  .ink .num { color: var(--mute-2); }
+  .src {
+    position: absolute; left: 96px; right: 96px; bottom: 48px;
+    font-size: 16px; line-height: 1.45; color: var(--mute); font-weight: 400;
+  }
+  .ink .src { color: #6f675e; }
+  .rule { position: absolute; left: 96px; right: 96px; height: 1px; background: var(--line); }
+  .ink .rule { background: #2a302c; }
+
+  /* 01 */
+  .s1 .mark {
+    position: absolute; left: 96px; top: 72px;
+    font-size: 20px; font-weight: 600; letter-spacing: 0.42em; color: var(--mute-2);
+  }
+  .s1 h1 {
+    position: absolute; left: 96px; top: 300px;
+    font-size: 128px; font-weight: 600; letter-spacing: -0.045em;
+    line-height: 0.96; color: var(--bone);
+  }
+  .s1 h1 em { font-style: normal; color: #c9bfb0; }
+  .s1 .foot {
+    position: absolute; left: 96px; right: 96px; bottom: 72px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-size: 26px; font-weight: 500; color: var(--mute-2); letter-spacing: -0.01em;
+  }
+  .s1 .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 14px; background: var(--blood); }
+
+  /* 02 */
+  .s2 .big {
+    position: absolute; left: 96px; top: 300px;
+    font-size: 220px; font-weight: 600; letter-spacing: -0.06em; line-height: 0.85;
+  }
+  .s2 .who {
+    position: absolute; left: 104px; top: 540px;
+    font-size: 42px; font-weight: 500; letter-spacing: -0.02em;
+  }
+  .s2 .col {
+    position: absolute; left: 1040px; top: 320px;
+    font-size: 84px; font-weight: 600; letter-spacing: -0.045em; line-height: 1.02;
+  }
+  .s2 .v {
+    position: absolute; left: 980px; top: 300px; bottom: 420px; width: 1px; background: var(--line);
+  }
+
+  /* 03 */
+  .s3 .books {
+    position: absolute; left: 96px; right: 96px; top: 200px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px;
+  }
+  .book {
+    height: 620px; padding: 40px 40px 36px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background: var(--ink); color: var(--bone);
+  }
+  .book:nth-child(2) { background: var(--blood); }
+  .book:nth-child(3) { background: var(--bone-2); color: var(--ink); border: 1px solid #cfc6b8; }
+  .book .price { font-size: 72px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+  .book .name { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+  .book .meta { margin-top: 10px; font-size: 22px; font-weight: 500; opacity: 0.72; }
+
+  /* 04 */
+  .s4 .left, .s4 .right { position: absolute; top: 400px; }
+  .s4 .left { left: 96px; }
+  .s4 .right { left: 1180px; }
+  .s4 .amt { font-size: 88px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+  .s4 .cap { margin-top: 18px; font-size: 28px; font-weight: 500; color: var(--mute-2); }
+  .s4 .times {
+    position: absolute; left: 860px; top: 384px;
+    font-size: 108px; font-weight: 600; letter-spacing: -0.06em; color: var(--blood); line-height: 1;
+  }
+
+  /* 05 */
+  .s5 h1 {
+    position: absolute; left: 96px; top: 160px;
+    font-size: 92px; font-weight: 600; letter-spacing: -0.045em;
+  }
+  .s5 ol {
+    position: absolute; left: 96px; right: 96px; top: 340px;
+    list-style: none;
+  }
+  .s5 li {
+    display: grid; grid-template-columns: 120px 1fr;
+    align-items: center;
+    height: 112px;
+    border-top: 1px solid var(--line);
+    font-size: 48px; font-weight: 600; letter-spacing: -0.03em;
+  }
+  .s5 li:last-child { border-bottom: 1px solid var(--line); }
+  .s5 .i { font-size: 22px; font-weight: 600; letter-spacing: 0.14em; color: var(--mute); }
+
+  /* 06 */
+  .s6 .hero {
+    position: absolute; left: 96px; top: 200px;
+    font-size: 200px; font-weight: 600; letter-spacing: -0.06em; line-height: 0.85;
+  }
+  .s6 .hero span { display: block; margin-top: 18px; font-size: 32px; font-weight: 500; letter-spacing: 0; color: var(--mute); }
+  .s6 .row {
+    position: absolute; left: 96px; right: 96px; bottom: 140px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px;
+  }
+  .s6 .row b { display: block; font-size: 64px; font-weight: 600; letter-spacing: -0.04em; }
+  .s6 .row span { display: block; margin-top: 8px; font-size: 22px; color: var(--mute); font-weight: 500; }
+
+  /* 07 */
+  .s7 .amt {
+    position: absolute; left: 96px; top: 280px;
+    font-size: 140px; font-weight: 600; letter-spacing: -0.055em; line-height: 0.9;
+  }
+  .s7 .sub {
+    position: absolute; left: 104px; top: 450px;
+    font-size: 36px; font-weight: 500; color: var(--mute);
+  }
+  .s7 .band {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 280px;
+    background: var(--ink); color: var(--bone);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 96px;
+  }
+  .s7 .band b { font-size: 72px; font-weight: 600; letter-spacing: -0.04em; }
+  .s7 .band span { display: block; margin-top: 8px; font-size: 22px; color: var(--mute-2); font-weight: 500; }
+  .s7 .side { text-align: right; font-size: 28px; font-weight: 500; line-height: 1.45; color: var(--bone); }
+  .s7 .side em { font-style: normal; color: var(--mute-2); }
+
+  /* 08 */
+  .s8 .grid {
+    position: absolute; left: 96px; right: 96px; top: 380px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 48px;
+  }
+  .s8 .grid b { display: block; font-size: 84px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+  .s8 .grid span { display: block; margin-top: 16px; font-size: 28px; font-weight: 500; color: var(--mute-2); }
+  .s8 .grid .hot b { color: var(--blood); }
+
+  /* 09 */
+  .s9 h1 {
+    position: absolute; left: 96px; top: 280px;
+    font-size: 120px; font-weight: 600; letter-spacing: -0.05em; line-height: 0.95;
+  }
+  .s9 .url {
+    position: absolute; left: 96px; top: 560px;
+    font-size: 40px; font-weight: 500; letter-spacing: -0.02em; color: var(--blood);
+  }
+  .s9 .foot {
+    position: absolute; left: 96px; bottom: 80px;
+    font-size: 24px; font-weight: 500; color: var(--mute);
+  }
+
+  .scmp h1 {
+    position: absolute; left: 96px; top: 140px;
+    font-size: 72px; font-weight: 600; letter-spacing: -0.045em; color: var(--bone);
+  }
+  .scmp table {
+    position: absolute; left: 96px; right: 96px; top: 280px;
+    width: calc(100% - 192px); border-collapse: collapse;
+  }
+  .scmp th, .scmp td {
+    text-align: left; font-weight: 500; vertical-align: middle;
+    height: 132px; border-bottom: 1px solid #2a302c;
+    font-size: 32px; letter-spacing: -0.02em; color: var(--mute-2);
+  }
+  .scmp th { height: 72px; font-size: 22px; font-weight: 600; letter-spacing: 0.04em; color: var(--mute); border-bottom-color: #3a423d; }
+  .scmp td:first-child, .scmp th:first-child { width: 28%; color: var(--bone); font-weight: 600; }
+  .scmp td.us, .scmp th.us { color: var(--bone); }
+  .scmp th.us { color: #e7c3c0; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide ink s1" data-n="1">
+    <div class="bar"></div>
+    <div class="mark">ANATOMN</div>
+    <div class="num">01</div>
+    <h1>Нэг вэб.<br/>Зузаан номгүй.</h1>
+    <div class="foot"><span>АШУҮИС</span><span>1,000 оюутан</span></div>
+  </section>
+
+  <section class="slide s2" data-n="2">
+    <div class="kicker">Асуудал</div>
+    <div class="num">02</div>
+    <div class="big">1,000</div>
+    <div class="who">оюутан · нэг асуудал</div>
+    <div class="v"></div>
+    <div class="col">Хүнд.<br/>Зузаан.<br/>Үнэтэй ном.</div>
+    <div class="src">Багш, оюутан энэ номыг авдаг. Бүгдийг нэг вэб апп дотор.</div>
+  </section>
+
+  <section class="slide s3" data-n="3">
+    <div class="kicker">Бодит үнэ</div>
+    <div class="num">03</div>
+    <div class="books">
+      <article class="book">
+        <div class="price">$94.99</div>
+        <div>
+          <div class="name">Gray's Anatomy<br/>for Students</div>
+          <div class="meta">5-р хэвлэл · 1,168 нүүр</div>
+        </div>
+      </article>
+      <article class="book">
+        <div class="price">$84.99</div>
+        <div>
+          <div class="name">Netter Atlas<br/>of Human Anatomy</div>
+          <div class="meta">9-р хэвлэл · 736 нүүр</div>
+        </div>
+      </article>
+      <article class="book">
+        <div class="price">$89.99</div>
+        <div>
+          <div class="name">Gray's Atlas<br/>of Anatomy</div>
+          <div class="meta">Номын дэлгүүрийн үнэ</div>
+        </div>
+      </article>
+    </div>
+    <div class="src">Elsevier list · Matthews RUSH bookstore. АНУ-ын нээлттэй үнэ. Монголд хүргэлт нэмэгдэнэ.</div>
+  </section>
+
+  <section class="slide ink s4" data-n="4">
+    <div class="kicker">Харьцуулалт</div>
+    <div class="num">04</div>
+    <div class="left">
+      <div class="amt">972,000₮</div>
+      <div class="cap">3 ном · нэг оюутан</div>
+    </div>
+    <div class="times">20×</div>
+    <div class="right">
+      <div class="amt">49,000₮</div>
+      <div class="cap">Anatomn · 1 жил</div>
+    </div>
+    <div class="src">$269.97 × ₮3,598.76 = 971,557₮. Монголбанк, 2026.10.28. Жилийн үнэ бүтээгдэхүүн дээрх багц.</div>
+  </section>
+
+  <section class="slide s5" data-n="5">
+    <div class="kicker">Шийдэл</div>
+    <div class="num">05</div>
+    <h1>Нэг вэб апп.</h1>
+    <ol>
+      <li><span class="i">01</span>3D атлас</li>
+      <li><span class="i">02</span>AI багш</li>
+      <li><span class="i">03</span>Шалгалт</li>
+      <li><span class="i">04</span>Хугарал</li>
+      <li><span class="i">05</span>Судас</li>
+    </ol>
+  </section>
+
+  <section class="slide ink s6" data-n="6">
+    <div class="kicker">Одоо ажиллаж байна</div>
+    <div class="num">06</div>
+    <div class="hero">2,763<span>сонгож болох бүтэц</span></div>
+    <div class="row">
+      <div><b>16</b><span>биеийн систем</span></div>
+      <div><b>205/206</b><span>насанд хүрэгчийн яс</span></div>
+      <div><b>6×25</b><span>хугаацаатай шалгалт</span></div>
+    </div>
+  </section>
+
+  <section class="slide ink scmp" data-n="7">
+    <div class="kicker">Давуу тал</div>
+    <div class="num">07</div>
+    <h1>Яагаад Anatomn.</h1>
+    <table>
+      <thead>
+        <tr><th></th><th class="us">Anatomn</th><th>Ном</th><th>Гадаад 3D</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Монгол хэл</td><td class="us">Монгол + Латин</td><td>Хязгаартай</td><td>Зөвхөн English</td></tr>
+        <tr><td>AI багш</td><td class="us">Gray's дээр</td><td>Байхгүй</td><td>Байхгүй</td></tr>
+        <tr><td>Хугарал</td><td class="us">Лаб дотор</td><td>Байхгүй</td><td>Өндөр үнэ</td></tr>
+        <tr><td>Үнэ</td><td class="us">49,000₮ / жил</td><td>Ном авна</td><td>$80–120 / жил</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="slide s7" data-n="8">
+    <div class="kicker">Загвар</div>
+    <div class="num">08</div>
+    <div class="amt">49,000₮</div>
+    <div class="sub">нэг суудал · нэг жил</div>
+    <div class="band">
+      <div>
+        <b>49 сая₮</b>
+        <span>1,000 суудал · сургууль төлдөг</span>
+      </div>
+      <div class="side">Оюутан 0₮<br/><em>Гадуурх багц 9,900₮ / сар</em></div>
+    </div>
+  </section>
+
+  <section class="slide ink s8" data-n="9">
+    <div class="kicker">1,000 оюутан</div>
+    <div class="num">09</div>
+    <div class="grid">
+      <div><b>972 сая</b><span>номын төсөв</span></div>
+      <div><b>49 сая</b><span>лиценз</span></div>
+      <div class="hot"><b>923 сая</b><span>зөрүү</span></div>
+    </div>
+    <div class="src">АШУҮИС 14,200 суралцагч, 2026.10.28. Кредит 170,000₮ × ~30 = 5.1 сая, Eguur 2025.08.20. 3 ном ≈ жилийн төлбөрийн 19%.</div>
+  </section>
+
+  <section class="slide s9" data-n="10">
+    <div class="kicker">Хүсэлт</div>
+    <div class="num">10</div>
+    <h1>1,000 суудал.</h1>
+    <div class="url">anatomn-test.vercel.app/atlas</div>
+    <div class="foot">АШУҮИС · нэг холбоос · зузаан номгүй</div>
+  </section>
+
+</div>
+<script>
+  const q = new URLSearchParams(location.search).get("n");
+  if (q) {
+    document.querySelectorAll(".slide").forEach(s => {
+      s.style.display = s.dataset.n === q ? "block" : "none";
+    });
+    document.querySelector(".deck").style.padding = "0";
+    document.querySelector(".deck").style.gap = "0";
+    document.body.style.background = "#000";
+  }
+  const slides = [...document.querySelectorAll(".slide")];
+  let i = 0;
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.style.display = k === i ? "block" : "none");
+    document.querySelector(".deck").style.padding = "0";
+    document.querySelector(".deck").style.gap = "0";
+  }
+  if (!q && new URLSearchParams(location.search).get("all") !== "1") {
+    show(0);
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { show(i + 1); e.preventDefault(); }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") { show(i - 1); e.preventDefault(); }
+      if (e.key === "f") document.documentElement.requestFullscreen?.();
+    });
+  }
+</script>
+</body>
+</html>

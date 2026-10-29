@@ -23,7 +23,7 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
   setStatus('loading');let renderer:T.WebGLRenderer;
   try{renderer=new T.WebGLRenderer({antialias:true,alpha:true});}catch{setStatus('error');return;}
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.localClippingEnabled=true;renderer.outputColorSpace=T.SRGBColorSpace;
-  renderer.setClearColor(0x122331);el.appendChild(renderer.domElement);
+  renderer.setClearColor(0x0f182c);el.appendChild(renderer.domElement);
   const scene=new T.Scene();scene.fog=new T.Fog(0x122331,5,12);
   const camera=new T.PerspectiveCamera(38,1,.01,30),controls=new OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true;controls.minDistance=1.5;controls.maxDistance=6;controls.maxPolarAngle=Math.PI*.49;

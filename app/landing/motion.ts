@@ -34,7 +34,7 @@ export function useLandingMotion(scroller:RefObject<HTMLElement|null>,copy:strin
      l.style.opacity=String(Math.max(0,enter-exit));
      l.style.transform=`translate3d(${spread*.08}em,${dir*off*.55}em,0) rotateX(${-dir*off*80}deg) rotateY(${spread*14}deg)`;
      l.style.filter=off>.01?`blur(${off*10}px)`:'';
-     l.style.textShadow=off>.01?`0 ${dir*off*.22}em ${off*10}px rgb(24 26 34 / ${off*.4}),0 ${dir*off*.45}em ${off*16}px rgb(24 26 34 / ${off*.2})`:'';
+     l.style.textShadow=off>.01?`0 ${dir*off*.22}em ${off*10}px rgb(143 183 255 / ${off*.3}),0 ${dir*off*.45}em ${off*16}px rgb(47 102 245 / ${off*.2})`:'';
     });
     if(w.caption)w.caption.style.opacity=String(clamp(shown/n));
    }

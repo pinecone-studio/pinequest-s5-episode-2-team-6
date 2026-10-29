@@ -187,7 +187,7 @@ export default function TeacherPage() {
 
   return (
     <div className="teacher-page">
-      <SiteNav tone="glass" />
+      <SiteNav />
       <main className="teacher-wrap">
         <header className="teacher-hero">
           <p className="teacher-kicker">

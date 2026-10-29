@@ -3,11 +3,11 @@ import {useEffect,useRef} from 'react';
 // The closing wordmark drawn as a few thousand dots. They drift in from a horizontal smear
 // as the section scrolls into view, then step aside around the pointer.
 type Particle={tx:number;ty:number;sx:number;sy:number;delay:number;phase:number;size:number};
-const STOPS=[[47,92,255],[138,77,255],[255,59,85]];
+const STOPS=[[47,102,245],[143,183,255],[64,213,190]];
 const BUCKETS=24;
 const mixStops=(t:number)=>{const s=Math.min(STOPS.length-1.001,t*(STOPS.length-1)),i=Math.floor(s),f=s-i,a=STOPS[i],b=STOPS[i+1];return `rgb(${a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')})`;};
 const COLORS=Array.from({length:BUCKETS},(_,i)=>mixStops(i/(BUCKETS-1)));
-const DUST=['#2f5cff','#8a4dff','#ff3b55','#1d2129'];
+const DUST=['#2f66f5','#8fb7ff','#40d5be','#cdd9f5'];
 
 export default function ParticleLogo({text}:{text:string}){
  const host=useRef<HTMLDivElement>(null);

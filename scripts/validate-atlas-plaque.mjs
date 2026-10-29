@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {createAtlasPlaque} from '../app/atlas-plaque.ts';
+import {createAtlasPlaque,vascularSceneState} from '../app/atlas-plaque.ts';
 const atlas=JSON.parse(fs.readFileSync(new URL('../public/models/atlas.json',import.meta.url)));
+const arterial=atlas.parts.find(p=>p.system==='arterial'),organ=atlas.parts.find(p=>p.name==='Left kidney');
+const initial=Object.freeze({selected:Object.freeze([arterial.id,organ.id]),visible:Object.freeze(['skeletal','urinary','arterial']),isolate:false,explode:1,peel:6,slice:{on:true,axis:'z',depth:.5},view:'front',rotate:false,reset:0});
+for(const systems of [['arterial','venous'],['arterial'],['venous'],['skeletal','urinary']]){
+ const state=vascularSceneState(atlas,initial,systems),shown=atlas.parts.filter(p=>state.visible.includes(p.system)||state.selected.includes(p.id));
+ assert.ok(shown.every(p=>p.system==='arterial'||p.system==='venous'),'No organs, bones, or muscles may enter the vessel workspace');
+ assert.ok(!state.selected.includes(organ.id));assert.equal(state.explode,0);assert.equal(state.peel,0);assert.equal(state.slice.on,false);
+ assert.equal(shown.length,systems.includes('arterial')?639+(systems.includes('venous')?395:0):systems.includes('venous')?395:0);
+}
+assert.equal(initial.selected.length,2);assert.equal(initial.explode,1,'The ordinary anatomy state remains untouched');
+assert.equal(vascularSceneState(atlas,{...initial,isolate:true},['venous']).isolate,false,'A hidden selection cannot isolate a nonvascular scene');
 for(const part of atlas.parts){
  if(part.system==='arterial')for(const n of [0,50,100])assert.deepEqual(createAtlasPlaque(part,n),{id:part.id,narrowing:n});
  else assert.throws(()=>createAtlasPlaque(part,50),RangeError);

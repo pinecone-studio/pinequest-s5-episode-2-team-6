@@ -30,7 +30,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Яс: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Яс: 25 асуулттай шалгалт', 'Bones: 25-question exam', 'Яс', 'basic', 40, 70, 'published', 'skeletal', '', '', 'ai')
+        values ('Яс: 25 асуулттай шалгалт', 'Bones: 25-question exam', 'Яс', 'basic', 40, 80, 'published', 'skeletal', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.
@@ -77,7 +77,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Булчин: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Булчин: 25 асуулттай шалгалт', 'Muscles: 25-question exam', 'Булчин', 'basic', 40, 70, 'published', 'muscular', '', '', 'ai')
+        values ('Булчин: 25 асуулттай шалгалт', 'Muscles: 25-question exam', 'Булчин', 'basic', 40, 80, 'published', 'muscular', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.
@@ -124,7 +124,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Артерийн судас: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Артерийн судас: 25 асуулттай шалгалт', 'Arteries: 25-question exam', 'Артерийн судас', 'basic', 40, 70, 'published', 'arterial', '', '', 'ai')
+        values ('Артерийн судас: 25 асуулттай шалгалт', 'Arteries: 25-question exam', 'Артерийн судас', 'basic', 40, 80, 'published', 'arterial', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.
@@ -171,7 +171,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Венийн судас: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Венийн судас: 25 асуулттай шалгалт', 'Veins: 25-question exam', 'Венийн судас', 'basic', 40, 70, 'published', 'venous', '', '', 'ai')
+        values ('Венийн судас: 25 асуулттай шалгалт', 'Veins: 25-question exam', 'Венийн судас', 'basic', 40, 80, 'published', 'venous', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.
@@ -218,7 +218,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Мэдрэлийн систем: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Мэдрэлийн систем: 25 асуулттай шалгалт', 'Nervous system: 25-question exam', 'Мэдрэлийн систем', 'basic', 40, 70, 'published', 'nervous', '', '', 'ai')
+        values ('Мэдрэлийн систем: 25 асуулттай шалгалт', 'Nervous system: 25-question exam', 'Мэдрэлийн систем', 'basic', 40, 80, 'published', 'nervous', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.
@@ -265,7 +265,7 @@ begin
       raise notice 'Skipping %: run supabase/exam_bank.sql first.', 'Дотор эрхтэн: 25 асуулттай шалгалт';
     else
       insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-        values ('Дотор эрхтэн: 25 асуулттай шалгалт', 'Internal organs: 25-question exam', 'Дотор эрхтэн', 'basic', 40, 70, 'published', 'organs', '', '', 'ai')
+        values ('Дотор эрхтэн: 25 асуулттай шалгалт', 'Internal organs: 25-question exam', 'Дотор эрхтэн', 'basic', 40, 80, 'published', 'organs', '', '', 'ai')
         returning id into e_id;
 
       -- Reuse the 15 questions from the group's three short papers.

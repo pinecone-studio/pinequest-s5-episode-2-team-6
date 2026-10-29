@@ -208,7 +208,7 @@ void main(){
   };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
-   const changed=lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate||lastState?.peel!==s.peel||lastState?.perfusion!==s.perfusion;
+   const changed=lastState?.plaque!==s.plaque||lastState?.visible!==s.visible||lastState?.selected!==s.selected||lastState?.isolate!==s.isolate||lastState?.peel!==s.peel||lastState?.perfusion!==s.perfusion;
    const moving=Math.abs(amount-s.explode)>.0001;
    if(moving){amount=T.MathUtils.damp(amount,s.explode,8,dt);dirty=true;}
    const slice=s.slice??{on:false,depth:0,axis:'x'};
@@ -257,7 +257,7 @@ void main(){
      // Isolation already singles the selection out, so isolated parts drop the highlight tint and keep their own color.
      const selected=selection.has(p.id);data.set([dx,dy,dz,(s.isolate?selected:(!peeled.has(p.system)&&(visible.has(p.system)||selected)))?1:0],i*4);selectedData[i*4]=selected&&!s.isolate?255:0;
      // Unused selection channels tint the selected renal arterial tree, or give the liver its own tissue color.
-     const perfused=perfusionTint(s.perfusion,p.id);selectedData.set(perfused.some(Boolean)?perfused:tissueTints[i],i*4+1);
+     const perfused=s.plaque?.id===p.id&&s.plaque.narrowing>0?[232,191,98]:perfusionTint(s.perfusion,p.id);selectedData.set(perfused.some(Boolean)?perfused:tissueTints[i],i*4+1);
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }

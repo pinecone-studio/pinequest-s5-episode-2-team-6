@@ -1,0 +1,24 @@
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+import type {Atlas,Part} from './anatomy';
+import {useLang} from './locale';
+import {localName} from './mongolian-names';
+import {resolveVessel,vesselArea} from './vessel-atlas';
+import {createAtlasPlaque,type AtlasPlaque} from './atlas-plaque';
+import './plaque.css';
+export default function AtlasPlaquePanel({atlas,selected,plaque,onSelect,onPlace,onInspect,onRenal,onClose}:{atlas:Atlas|null;selected?:Part;plaque:AtlasPlaque|null;onSelect:(id:string)=>void;onPlace:(p:AtlasPlaque|null)=>void;onInspect:()=>void;onRenal:()=>void;onClose:()=>void}){
+ const {lang}=useLang(),mn=lang==='mn';
+ const [query,setQuery]=useState('');
+ const vessels=atlas?.parts.filter(p=>(p.system==='arterial'||p.system==='venous')&&`${p.name} ${localName(p.name,lang)}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name))??[];
+ const entry=selected?resolveVessel(selected.name):null,active=plaque?.id===selected?.id;
+ return <aside id="atlas-plaque-lab" className="rom-panel glass plaque-panel atlas-plaque-panel" aria-label={mn?'Бүх биеийн товрууны лаб':'Whole-atlas plaque lab'}>
+  <header className="rom-header"><h2>{mn?'Бүх биеийн товруу':'Whole-atlas plaque'}</h2><Button variant="ghost" onClick={onClose}>{mn?'Хаах':'Close'}</Button></header>
+  <p>{mn?'3D дээр бүтэц сонгох эсвэл судас хайна уу. Анатомийн сонголт хэвийн ажиллана.':'Select anatomy in 3D or search for a vessel. Your normal atlas selection and inspection controls stay available.'}</p>
+  <label htmlFor="atlas-plaque-search">{mn?'Судас хайх':'Find a vessel'}</label><input id="atlas-plaque-search" type="search" value={query} onChange={event=>setQuery(event.target.value)}/>
+  <label htmlFor="atlas-plaque-vessel">{mn?'Судас сонгох':'Choose vessel'}</label><select id="atlas-plaque-vessel" value={selected?.id??''} onChange={event=>onSelect(event.target.value)}><option value="">{mn?'Сонгоно уу':'Select a vessel'}</option>{vessels.map(part=><option key={part.id} value={part.id}>{localName(part.name,lang)} · {part.id}</option>)}</select>
+  {selected&&<section className="rom-muscles-card"><h3>{localName(selected.name,lang)}</h3><p>{entry?vesselArea(entry,lang):(mn?'Энэ бүтцийн эрхтний хангамж баталгаажаагүй.':'A specific supply territory is not mapped for this structure.')}</p><Button variant="outline" onClick={onInspect}>{mn?'Анатомийг судлах':'Inspect anatomy'}</Button></section>}
+  {selected?.system==='arterial'?<section className="rom-muscles-card"><Button onClick={()=>onPlace(createAtlasPlaque(selected,50))}>{mn?'Энд товруу байрлуулах':'Place plaque on this artery'}</Button>{active&&<><label htmlFor="atlas-plaque-narrowing">{mn?'Диаметрийн нарийсал':'Diameter narrowing'}<output>{plaque!.narrowing}%</output></label><input id="atlas-plaque-narrowing" type="range" min="0" max="100" value={plaque!.narrowing} onChange={event=>onPlace(createAtlasPlaque(selected,Number(event.target.value),plaque!.point))}/></>}<p>{mn?'Товруу артерийн хөндийг нарийсгаж, цааших эдийн цусан хангамжийг хязгаарлаж болно. Нарийсалтын хувь нь урсгал, эрхтний гэмтлийн хувь биш.':'Plaque narrows the arterial lumen and can limit downstream blood supply. Narrowing percentage is not a flow or organ-damage percentage.'}</p></section>:<p>{mn?'Артерийн товруу байрлуулахын тулд артери сонгоно уу. Венийн бөглөрөл нь өөр механизмтай.':'Choose an artery to place atherosclerotic plaque. Veins remain selectable; venous obstruction has a different mechanism.'}</p>}
+  {plaque&&<p role="status">{mn?'Товрууны байрлал':'Plaque site'}: {atlas?.parts.find(p=>p.id===plaque.id)?.name} · {plaque.narrowing}% <Button variant="ghost" onClick={()=>onPlace(null)}>{mn?'Арилгах':'Remove'}</Button></p>}
+  <p>{mn?'Алтан өнгө нь сонгосон судсыг тэмдэглэнэ; эрхтний гэмтлийн зураглал биш.':'Gold marks the chosen vessel; it is not a tissue-injury map.'} <a href="https://www.nhlbi.nih.gov/health/atherosclerosis" target="_blank" rel="noreferrer">NHLBI ↗</a></p><Button variant="outline" onClick={onRenal}>{mn?'Бөөрний хэлхээний загвар':'Open renal circuit model'}</Button>
+ </aside>;
+}

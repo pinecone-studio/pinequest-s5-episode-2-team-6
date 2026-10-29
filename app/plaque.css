@@ -12,6 +12,7 @@
 .plaque-panel .plaque-compare{width:100%;min-height:44px;white-space:normal;height:auto;padding:8px}
 .plaque-panel .plaque-compare[aria-pressed=true]{background:#315f4c;color:#fff}
 .plaque-panel input:disabled{opacity:.45;cursor:default}
+.atlas-plaque-panel{z-index:24}.atlas-plaque-panel input[type=search]{width:100%;padding:10px;border:1px solid #6a7889;border-radius:8px;background:#203245;color:white}.atlas-plaque-panel p{font-size:12px;line-height:1.6}.atlas-plaque-panel>section{margin:12px 0}.atlas-plaque-return{position:absolute;z-index:26;right:24px;bottom:18px}
 .plaque-panel .plaque-hemo-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.plaque-panel .plaque-hemo-metrics strong{font-size:13px}
 .plaque-panel select{width:100%;padding:10px;margin:8px 0;border:1px solid currentColor;border-radius:8px;background:#203245;color:#fff;font:inherit;font-size:12px;min-height:44px}
 .plaque-supply-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:10px 0}.plaque-panel .plaque-supply-steps button{min-height:44px;padding:4px;font-size:11px;white-space:normal}.plaque-panel .plaque-supply-steps button[aria-pressed=true]{background:#315f4c;color:#fff}

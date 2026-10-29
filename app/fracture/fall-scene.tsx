@@ -5,10 +5,14 @@ import type {Atlas} from '../anatomy';
 import {decodeModelResponse} from '../model-download';
 import {boneSegment,fallPose,segmentEndpoints,type Segment} from './fall-model';
 import {fragmentPose,INITIAL_FRACTURE} from './model';
+import {anatomyId,type AnatomyId} from './education';
+import {createAnatomyOverlay} from './anatomy-overlay';
+import type {Lang} from '../landing/copy';
 
-export default function FallScene({progress,reset,label}:{progress:number;reset:number;label:string}){
+export default function FallScene({progress,reset,label,overlays=false,focused=null,lang='en',onAnatomySelect=()=>{}}:{progress:number;reset:number;label:string;overlays?:boolean;focused?:AnatomyId|null;lang?:Lang;onAnatomySelect?:(id:AnatomyId)=>void}){
  const host=useRef<HTMLDivElement>(null),latest=useRef(progress),resetRef=useRef(reset);
  latest.current=progress;resetRef.current=reset;
+ const overlayOptions=useRef({overlays,focused,lang,onAnatomySelect});overlayOptions.current={overlays,focused,lang,onAnatomySelect};
  const [status,setStatus]=useState<'loading'|'ready'|'error'>('loading'),[attempt,setAttempt]=useState(0);
  useEffect(()=>{
   const el=host.current!,abort=new AbortController();let disposed=false,frame=0,lastReset=resetRef.current;
@@ -43,6 +47,10 @@ export default function FallScene({progress,reset,label}:{progress:number;reset:
   const bodyGroups=new Map<Segment,T.Group>(),restPose=fallPose(0);
   const groupFor=(segment:Segment)=>{let g=bodyGroups.get(segment);if(!g){g=new T.Group();bodyGroups.set(segment,g);scene.add(g);}return g;};
   const boneMaterial=material(0xe6debf,{roughness:.55}),armMaterial=material(0xb9dbe0,{roughness:.45});
+  const selectedMaterial=material(0xdff878,{emissive:0x92ae25,emissiveIntensity:.35});
+  const anatomyMeshes:{mesh:T.Mesh;original:T.Material;id:AnatomyId}[]=[];
+  const anatomyAnchors=new Map<AnatomyId,{point:T.Vector3;segment:Segment;count:number}>();
+  const anatomyOverlay=createAnatomyOverlay(el,id=>overlayOptions.current.onAnatomySelect(id));
   const fractureMaterials=[material(0xffcf8d,{side:T.DoubleSide}),material(0xff875e,{side:T.DoubleSide})];
   const fragments:T.Group[]=[],localPlanes:T.Plane[]=[],planes:T.Plane[]=[];
   const pathGeometry=new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(),new T.Vector3()]);geometries.push(pathGeometry);
@@ -69,7 +77,12 @@ export default function FallScene({progress,reset,label}:{progress:number;reset:
    [pose.rightWrist,pose.rightElbow,pose.rightShoulder].forEach((p,i)=>pathPositions.setXYZ(i,p.x-.018,p.y,p.z+.025));pathPositions.needsUpdate=true;loadPath.computeLineDistances();
    const torso=bodyGroups.get('torso');if(torso)marker.position.copy(new T.Vector3(-.075,1.414,.02).sub(new T.Vector3(0,.92,0))).applyQuaternion(torso.quaternion).add(torso.position);
    if(lastReset!==resetRef.current){home();lastReset=resetRef.current;}
-   controls.update();renderer.render(scene,camera);
+   const options=overlayOptions.current,selection=options.overlays?options.focused:null;
+   anatomyMeshes.forEach(({mesh,original,id})=>{mesh.material=id===selection?selectedMaterial:original;});
+   fractureMaterials.forEach(m=>{m.emissive.setHex(selection==='clavicle'?0x9ab32e:0);m.emissiveIntensity=.5;});
+   const points=new Map<AnatomyId,T.Vector3>();
+   anatomyAnchors.forEach(({point,segment,count},id)=>{const group=bodyGroups.get(segment);if(group)points.set(id,point.clone().divideScalar(count).applyMatrix4(group.matrixWorld));});
+   controls.update();anatomyOverlay.update(camera,points,options.overlays,options.focused,options.lang);renderer.render(scene,camera);
   };animate();
   (async()=>{try{
    const response=await fetch('/models/atlas.json',{signal:abort.signal});if(!response.ok)throw new Error('Missing atlas');
@@ -87,6 +100,11 @@ export default function FallScene({progress,reset,label}:{progress:number;reset:
      geometry.setAttribute('normal',new T.BufferAttribute(new Int16Array(buffer,part.normals,part.vertexCount*3),3,true));
      geometry.setIndex(new T.BufferAttribute(new Uint32Array(buffer,part.indices,part.indexCount),1));
      const segment=boneSegment(part.name),group=groupFor(segment),[origin]=segmentEndpoints(segment,restPose);
+     const educationalId=anatomyId(part.name);
+     if(educationalId){
+      const center=new T.Vector3().fromArray(part.bounds[0]).add(new T.Vector3().fromArray(part.bounds[1])).multiplyScalar(.5).sub(origin);
+      const anchor=anatomyAnchors.get(educationalId)??{point:new T.Vector3(),segment,count:0};anchor.point.add(center);anchor.count++;anatomyAnchors.set(educationalId,anchor);
+     }
      if(part.name==='Right clavicle'){
       const center=new T.Vector3().fromArray(part.bounds[0]).add(new T.Vector3().fromArray(part.bounds[1])).multiplyScalar(.5);
       const anchor=new T.Group();anchor.position.copy(center).sub(origin);group.add(anchor);
@@ -96,12 +114,13 @@ export default function FallScene({progress,reset,label}:{progress:number;reset:
       }
      }else{
       const mesh=new T.Mesh(geometry,segment.startsWith('right')&&/Arm|Hand/.test(segment)?armMaterial:boneMaterial);mesh.position.copy(origin).negate();group.add(mesh);
+      if(educationalId)anatomyMeshes.push({mesh,original:mesh.material,id:educationalId});
      }
     }
    }
    if(!disposed)setStatus('ready');
   }catch{if(!disposed)setStatus('error');}})();
-  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();anatomyOverlay.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
  },[attempt]);
  return <div className="fall-stage" ref={host} role="region" aria-label={label} data-phase={fallPose(progress).phase}>
   {status==='loading'&&<p className="fall-loading" role="status">Loading anatomy / Анатоми ачаалж байна…</p>}

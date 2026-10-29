@@ -38,7 +38,7 @@ import './account.css';
 
 const copy={
   en:{
-    title:'My page',
+    title:'Profile',
     signOut:'Sign out',
     signingOut:'Signing out…',
     signOutFailed:'Could not sign out. Check the connection and try again.',
@@ -112,7 +112,7 @@ const copy={
     savedRef:'Transaction number saved.',
   },
   mn:{
-    title:'Миний хуудас',
+    title:'Профайл',
     signOut:'Гарах',
     signingOut:'Гарч байна…',
     signOutFailed:'Гарж чадсангүй. холболтоо шалгаад дахин оролдоно уу.',
@@ -345,7 +345,7 @@ export default function AccountPage(){
   if(!ready)return waiting(dict.loading);
   if(!user){
     if(leaving)return waiting(dict.signingOut);
-    return <Navigate to="/login" state={{from:'/account'}} replace/>;
+    return <Navigate to="/login" state={{from:'/profile'}} replace/>;
   }
 
   const locale=lang==='mn'?'mn-MN':'en-GB';

@@ -1,5 +1,9 @@
 # Anatomn
 
+Fracture Lab (`/fracture`) now opens a full-skeleton fracture explorer covering all **212 skeletal mesh parts (209 distinct names)**. Prompts match atlas bone names, common aliases, sides, numbered ribs, vertebral shorthand such as `C3` and `T7`, and regions such as `skull`, `spine`, `wrist`, `hand`, and `foot`. Try “oblique right femur fracture”, “left radius and left ulna”, or “show every bone fracture”. Multiple matches appear in a bone selector and are animated one at a time; an exact-name searchable catalogue also exposes every mesh, including duplicate-name parts by ID.
+
+The explorer uses the actual bone geometry with crosswise, oblique, or two-cut/three-fragment examples, three selectable cut locations, aligned fragments, reversible timeline controls, and stage explanations. Playback starts after the mesh loads. These are geometry demonstrations on long, short, flat, and irregular bones, not bone-specific clinical injury models or predictions of which bones an impact would break. Spiral, compression, greenstick, stress, comminuted, open, and joint/head/neck injury models are explicitly unsupported. The existing backward-fall lesson and detailed clavicle controls remain available. Run `node --experimental-strip-types scripts/validate-bone-fractures.mjs` to verify prompt coverage and nonempty fracture contours for every skeletal mesh across all three patterns and locations.
+
 An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Take the BodyParts3D adult male reference, supplemented with Z-Anatomy nerves, lymph nodes, glands, middle ear, and joint structures, apart into **2,763 individually selectable meshes**, explore **16 anatomical systems**, and search **3,745 named concepts**.
 
 **[Explore the live demo](https://human-atlas-seven.vercel.app)**
@@ -15,7 +19,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Study with the AI teacher (`/teacher`): lessons anchored to Gray's Anatomy for Students chapters, a learning profile that remembers what you asked, and per-chapter progress.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
 - Take the quiz on its own page (`/quiz`), and switch floating labels on.
-- Sit a timed exam on `/exam`; the papers are grouped by anatomy part — bones, muscles, arteries, veins, nerves, the heart — and each one links back to the structure in the 3D atlas.
+- Sit a timed exam on `/exam`; the bank has six 25-question papers — bones, muscles, arteries, veins, nerves and internal organs — and every question links back to its structure in the 3D atlas.
 - Use compact controls and detail panels on mobile.
 
 ## Run locally
@@ -41,7 +45,7 @@ Vite reads `.env.local` once when the dev server starts, so restart it after edi
 
 The optional anatomy overlay labels the actual moving right clavicle, scapula, humerus, radius, ulna, and hand with screen-space leader lines. Clicking a label or anatomy chip pauses playback, highlights the source structure, and opens its Latin name and role below the viewer. Every stage has bilingual **Observe**, **Anatomy connection**, and **Remember** explanations, including the distinction between an illustrative loading route and measured force. Lesson content and structure mappings live in `app/fracture/education.ts`; run `node scripts/validate-fracture-education.mjs` for prediction ordering/seek gates, bilingual content coverage, and source-bone mapping checks. The lesson links to AAOS and makes no claim of instructor or clinical validation.
 
-The default **Fall scenario** view animates the actual atlas skeleton walking on tiled pavement, slipping forward at the right foot, falling backward, reaching behind with the right arm, and planting the right hand behind the body before an authored right midshaft clavicle fracture. The whole-body skeleton and right-clavicle close-up share one reversible timeline. Play/pause, replay, 0.25×/0.5×/1× speeds, stage buttons, timeline seeking, and camera reset are available on desktop and mobile. **Bone detail** retains the independent left/right fracture controls.
+The **Fall scenario** view animates the actual atlas skeleton walking on tiled pavement, slipping forward at the right foot, falling backward, reaching behind with the right arm, and planting the right hand behind the body before an authored right midshaft clavicle fracture. The whole-body skeleton and right-clavicle close-up share one reversible timeline. Play/pause, replay, 0.25×/0.5×/1× speeds, stage buttons, timeline seeking, and camera reset are available on desktop and mobile. **Clavicle detail** retains the independent left/right fracture controls.
 
 The slip choreography plants the right heel on the patch at 34%, slides it forward 24 cm by 47% while keeping the other foot planted, and delays the torso response until after traction is lost. A cyan arrow traces the slide. Knee yielding, a balancing arm reaction, a lifted recovery step, and gradual palm rotation lead into the existing hand-contact event. These are authored poses, not computed friction/contact dynamics. The fall validator also checks rigid leg lengths, grounded sliding-foot height, planted support-foot position, and continuity of palm orientation at hand contact.
 
@@ -190,15 +194,16 @@ For local development they live in `.env.local` (gitignored — copy them from `
 - Add your dev origin under Supabase Dashboard → Authentication → URL Configuration → **Redirect URLs**. Vite falls back to 3017, 3018… whenever 3016 is busy, so list the ports you actually use.
 - With Authentication → Providers → Email → **Confirm email** enabled, a new account cannot sign in until its emailed link is opened: `signUp` returns no session and `/signup` routes to `/login` with the check-your-email note. GoTrue rejects reserved domains such as `example.com`, so a throwaway test address needs a real-looking domain.
 - Both pages trim and lower-case the address, ignore a second submit while a request is in flight, and translate the raw GoTrue message into plain Mongolian through `app/auth-error.ts` (`invalid login credentials`, `Email not confirmed`, `User already registered`, …). After a successful sign-in the redirect uses `replace: true`, so Back does not return to the form.
-- Signing out from `/account` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
+- Signing out from `/profile` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
 
 ### One-time database setup
 
-Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the three steps in order; each one is safe to run twice.
+Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the four steps in order; each one is safe to run twice.
 
 1. [`supabase/schema.sql`](supabase/schema.sql) — creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `teacher_questions`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with the policies behind the admin panel, and adds the triggers that keep profiles in sync with `auth.users` and do all the scoring. The `exams` table carries `group_key`, `part_key`, `part_mn` and `source`; the file also `alter table … add column if not exists` them, so a database migrated before the grouping exists only needs this file re-run.
-2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 published papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper. Skip it if you would rather generate the bank from `/admin` instead.
-3. Promote yourself, then refresh `/admin` (step 3 needs the profile row from step 1):
+2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 short papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper.
+3. [`supabase/exam_categories.sql`](supabase/exam_categories.sql) — turns the six groups into one **25-question, 40-minute exam** each (50 points, 80% pass). It reuses the 15 questions from each group's three short papers, adds 10 new multiple-choice questions, and archives the short papers so students see one full paper per category. Run it after `exam_bank.sql`; it is idempotent too.
+4. Promote yourself, then refresh `/admin` (step 4 needs the profile row from step 1):
 
 ```sql
 update public.profiles set is_admin = true where email = 'you@example.com';
@@ -208,16 +213,16 @@ Pages that need the newer tables show a "run schema.sql" notice instead of faili
 
 ### Exam bank: groups, structures, AI drafts
 
-`lib/anatomy-groups.ts` is the catalogue. Every group is an atlas system id (`skeletal`, `muscular`, `arterial`, `venous`, `nervous`, `cardiac`) and lists the structures a paper can be written about. The keys are atlas concept names, so the link under a paper (`/exam`) and the `concept` column on its questions resolve to the same part in the 3D atlas, and Mongolian names come from `app/mongolian-names.ts` rather than a second translation table.
+`lib/anatomy-groups.ts` is the catalogue. The six exam groups are `skeletal`, `muscular`, `arterial`, `venous`, `nervous` and `organs` (the `organs` group covers the heart plus the abdominal and thoracic viscera); `cardiac` stays as a legacy key for papers written before the full exams existed. Each group lists the structures a paper can be written about. The keys are atlas concept names, so the link under a paper (`/exam`) and the `concept` column on its questions resolve to the same part in the 3D atlas, and Mongolian names come from `app/mongolian-names.ts` rather than a second translation table.
 
-- **/exam** lists published papers in those groups, with the group's atlas colour, a per-group count and the structure each paper covers. Papers with an empty `group_key` (anything written before the bank was grouped) fall into a last "Бусад шалгалт" section.
+- **/exam** lists published papers in those groups, with the group's atlas colour and a per-group count. `exam_categories.sql` leaves one 25-question paper in each of the six groups; papers with an empty `group_key` (the older team-written sets) fall into a last "Бусад шалгалт" section.
 - **/admin → Шалгалтын сан** has two drafting paths. "AI draft" writes one paper from a free-text topic for a single review. "Generate a whole group" picks a group and any of its structures and writes one draft paper per structure, sending the verified Latin name, function and nerve from `app/structure-facts.ts` with the request so the model writes about real anatomy. Correct answers are re-shuffled out of slot A, and every paper is stored with `status = 'draft'`, `source = 'ai'`, `group_key`, `part_key`, `part_mn` and `concept = part_key`. Nothing is readable by a student until an admin presses **Нийтлэх**.
 - Drafting costs one provider call per structure and the calls run one after another — about five to ten seconds each with the default `gemini-3.5-flash-lite`, so a whole group takes a couple of minutes. Grading and scores never come from the browser: see the next section.
 
 ### Roles: user, premium, admin
 
 - **User** — every signup. Free access to the whole atlas plus search, the quiz and the exams.
-- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/account` for the payment queue and the XP discount.
+- **Premium** — existing subscription records remain available for account administration. ROM Lab and Plaque Lab are free for everyone, including visitors without an account, so a plan no longer unlocks them; the plan cards stay on `/profile` for the payment queue and the XP discount.
 - **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
 
 ```sql
@@ -234,7 +239,7 @@ update public.profiles set is_admin = true where email = 'you@example.com';
 
 ### Data flow of one payment
 
-1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
+1. User presses **Төлөх** on `/profile` → a `payments` row with status `pending` is created, with the price and any XP discount set by the database.
 2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
 3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
 4. `useSubscription()` picks up the change for account status. Lab access is independent of subscription status.

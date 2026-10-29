@@ -1,6 +1,8 @@
 import {useLang} from '../locale';
 import type {FracturePattern} from './bone-requests';
 import {FRACTURE_SCENARIOS} from './bone-requests';
+import FallScene from './fall-scene';
+import type {ScenarioId} from './fall-model';
 
 const classifications=[
  {id:'transverse',en:'Transverse',mn:'Хөндлөн',description:'A line across the bone.',descriptionMn:'Ясыг хөндлөн огтолсон шугам.',line:'M28 45H72'},
@@ -23,22 +25,14 @@ export function FractureClassification({pattern,aligned,bone,onChange}:{pattern:
  </section>;
 }
 
-export function ScenarioDiagram({id,progress}:{id:string;progress:number}){
+export function ScenarioDiagram({id,progress,pattern,location,aligned,reset,onReady}:{id:ScenarioId;progress:number;pattern:FracturePattern;location:number;aligned:boolean;reset:number;onReady:()=>void}){
  const {lang}=useLang(),mn=lang==='mn',scenario=FRACTURE_SCENARIOS.find(item=>item.id===id);
  if(!scenario)return null;
- const t=Math.min(1,Math.max(0,progress/.25)),motion=id==='fall'?t*t:t,contact=progress>=.25,crumple=Math.min(1,Math.max(0,(progress-.25)/.12));
- const marker=id==='fall'?[280,190]:id==='crash'?[297+14*crumple,126]:[230,170];
- return <figure className="fracture-scenario">
+ const contact=progress>=.25;
+ return <figure className="fracture-scenario" data-scenario={id}>
   <figcaption><strong>{mn?scenario.mn:scenario.en} · {scenario.bone}</strong><p>{mn?scenario.detailMn:scenario.detail}</p></figcaption>
-  <svg viewBox="0 0 600 220" role="img" aria-label={`${mn?scenario.mn:scenario.en}: ${mn?(contact?'Хүрэлцсэн · хугарлын жишээ':'Хүрэлцэхийн өмнө'):(contact?'Contact reached; prescribed fracture':'Before contact')}`}>
-   <path d="M30 190H570" stroke="#8aa5b6" strokeWidth="2"/>
-   {id==='fall'?<g transform={`translate(180 0) rotate(${90*motion} 0 190)`} stroke="#cde0e9" strokeWidth="7" fill="none" strokeLinecap="round"><circle cx="0" cy="63" r="14"/><path d="M0 78V138M-25 105L0 90L25 112M0 138L-18 185M0 138L18 185"/><path d="M-12 90H12" stroke="#ffc878"/></g>:id==='crash'?<>
-    <path d="M390 30V190" stroke="#9fb1bd" strokeWidth="12"/>
-    <g transform={`translate(${50+110*motion+14*crumple} 0)`} stroke="#cde0e9" strokeWidth="5" fill="none"><path d={`M10 156V100L50 95L75 42H155L190 95H${230-14*crumple}V156Z`}/><circle cx="48" cy="166" r="20" fill="#1d3344"/><circle cx="190" cy="166" r="20" fill="#1d3344"/><circle cx="110" cy="67" r="12"/><path d="M110 80V124L165 128L180 153M110 90L161 95"/><path d="M110 124L165 128" stroke="#ffc878"/></g>
-   </>:<><g stroke="#cde0e9" strokeWidth="7" fill="none" strokeLinecap="round"><circle cx="210" cy="63" r="14"/><path d="M210 78V130L180 185M210 130L240 185M185 112L210 90L240 108"/><path d="M225 155L240 185" stroke="#ffc878"/></g><circle cx={470-220*motion} cy="170" r="16" fill="#ffc878"/></>}
-   {contact&&<circle cx={marker[0]} cy={marker[1]} r="13" fill="none" stroke="#ff875e" strokeWidth="3"/>}
-  </svg>
-  <p>{mn?(contact?'02 · Хүрэлцсэн — доорх 3D хугарлыг ажиглаарай.':'01 · Хүрэлцэхийн өмнөх хөдөлгөөн'):(contact?'02 · Contact — follow the prescribed fracture in 3D below.':'01 · Motion before contact')}</p>
-  <small>{mn?'Схемчилсэн сургалтын хөдөлгөөн; хүч, гэмтлийн магадлалыг тооцохгүй.':'Schematic choreography; no impact-force or injury-probability calculation.'} <a href={scenario.source} target="_blank" rel="noreferrer">AAOS ↗</a></small>
+  <FallScene scenario={id} progress={progress} reset={reset} label={`${mn?scenario.mn:scenario.en} · ${mn?'Бүтэн араг яс':'Full skeleton'}`} lang={lang} fracture={{bone:scenario.bone,pattern,location,aligned}} onReady={onReady}/>
+  <p>{mn?(contact?'02 · Хүрэлцсэн — хугарлыг томруулсан дүрслэлээс ажиглаарай.':'01 · Хүрэлцэхийн өмнөх хөдөлгөөн'):(contact?'02 · Contact — inspect the synchronized fracture close-up.':'01 · Motion before contact')}</p>
+  <small>{mn?'Чирж эргүүлнэ · гүйлгэж томруулна. Урьдчилан өгсөн сургалтын хөдөлгөөн.':'Drag to orbit · scroll to zoom. Authored educational motion; impact forces are not calculated.'} <a href={scenario.source} target="_blank" rel="noreferrer">AAOS ↗</a></small>
  </figure>;
 }

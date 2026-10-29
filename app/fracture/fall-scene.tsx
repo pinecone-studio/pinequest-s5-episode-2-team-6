@@ -3,15 +3,19 @@ import * as T from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import type {Atlas} from '../anatomy';
 import {decodeModelResponse} from '../model-download';
-import {boneSegment,fallPose,segmentEndpoints,type Segment} from './fall-model';
+import {boneSegment,fallPose,scenarioPose,segmentEndpoints,type Segment,type ScenarioId} from './fall-model';
+import {fractureLayout,fractureContour,fractureAmount} from './bone-geometry';
+import type {FracturePattern} from './bone-requests';
 import {fragmentPose,INITIAL_FRACTURE} from './model';
 import {anatomyId,type AnatomyId} from './education';
 import {createAnatomyOverlay} from './anatomy-overlay';
 import type {Lang} from '../landing/copy';
 
-export default function FallScene({progress,reset,label,overlays=false,focused=null,lang='en',onAnatomySelect=()=>{}}:{progress:number;reset:number;label:string;overlays?:boolean;focused?:AnatomyId|null;lang?:Lang;onAnatomySelect?:(id:AnatomyId)=>void}){
+type ScenarioFracture={bone:string;pattern:FracturePattern;location:number;aligned:boolean};
+export default function FallScene({progress,reset,label,overlays=false,focused=null,lang='en',onAnatomySelect=()=>{},scenario,fracture,onReady=()=>{}}:{progress:number;reset:number;label:string;overlays?:boolean;focused?:AnatomyId|null;lang?:Lang;onAnatomySelect?:(id:AnatomyId)=>void;scenario?:ScenarioId;fracture?:ScenarioFracture;onReady?:()=>void}){
  const host=useRef<HTMLDivElement>(null),latest=useRef(progress),resetRef=useRef(reset);
  latest.current=progress;resetRef.current=reset;
+ const scenarioOptions=useRef({fracture,onReady});scenarioOptions.current={fracture,onReady};
  const overlayOptions=useRef({overlays,focused,lang,onAnatomySelect});overlayOptions.current={overlays,focused,lang,onAnatomySelect};
  const [status,setStatus]=useState<'loading'|'ready'|'error'>('loading'),[attempt,setAttempt]=useState(0);
  useEffect(()=>{
@@ -35,6 +39,20 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
   box(.12,.16,5,1.30,-.08,.25,curb);
   const patchGeometry=new T.CircleGeometry(.23,40);geometries.push(patchGeometry);
   const patch=new T.Mesh(patchGeometry,slick);patch.rotation.x=-Math.PI/2;patch.scale.y=1.45;patch.position.set(-.1,.002,.13);scene.add(patch);
+  patch.visible=!scenario||scenario==='fall';
+  const vehicle=new T.Group();scene.add(vehicle);vehicle.visible=scenario==='crash';
+  const frameMaterial=material(0x3e697e),glass=material(0x79c3d3,{transparent:true,opacity:.18,depthWrite:false}),rubber=material(0x15212b);
+  const carBox=(w:number,h:number,d:number,x:number,y:number,z:number,m:T.Material)=>{const mesh=box(w,h,d,x,y,z,m);vehicle.add(mesh);return mesh;};
+  if(scenario==='crash'){
+   carBox(1.2,.08,1.7,0,.18,0,frameMaterial);carBox(.6,.08,.5,0,.57,-.12,rubber);carBox(.6,.6,.08,0,.9,-.18,rubber);
+   carBox(1.05,.1,.1,0,.58,.5,frameMaterial);carBox(1.1,.3,.3,0,.37,.72,frameMaterial);
+   for(const x of [-.6,.6])carBox(.04,.5,1.4,x,.6,-.1,glass);
+   const wheel=new T.CylinderGeometry(.21,.21,.12,24);geometries.push(wheel);
+   for(const x of [-.65,.65])for(const z of [-.54,.54]){const mesh=new T.Mesh(wheel,rubber);mesh.rotation.z=Math.PI/2;mesh.position.set(x,.22,z);vehicle.add(mesh);}
+   box(2,1,.12,0,.5,.96,curb);
+  }
+  const ballGeometry=new T.SphereGeometry(.13,24,16);geometries.push(ballGeometry);
+  const ball=new T.Mesh(ballGeometry,material(0xe5ab56));scene.add(ball);ball.visible=scenario==='impact';
   const ringGeometry=new T.RingGeometry(.065,.085,48);geometries.push(ringGeometry);
   const contactMaterial=new T.MeshBasicMaterial({color:0xffbd69,transparent:true,opacity:.9,side:T.DoubleSide});materials.push(contactMaterial);
   const contactRing=new T.Mesh(ringGeometry,contactMaterial);contactRing.rotation.x=-Math.PI/2;scene.add(contactRing);
@@ -53,6 +71,8 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
   const anatomyOverlay=createAnatomyOverlay(el,id=>overlayOptions.current.onAnatomySelect(id));
   const fractureMaterials=[material(0xffcf8d,{side:T.DoubleSide}),material(0xff875e,{side:T.DoubleSide})];
   const fragments:T.Group[]=[],localPlanes:T.Plane[]=[],planes:T.Plane[]=[];
+  const bodyFragments:{group:T.Group;local:T.Plane[];world:T.Plane[];edges:T.LineSegments[];normal:T.Vector3;lateral:T.Vector3;span:number;index:number;count:number}[]=[];
+  let fractureAnchor:T.Object3D|undefined;
   const pathGeometry=new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(),new T.Vector3()]);geometries.push(pathGeometry);
   const pathMaterial=new T.LineDashedMaterial({color:0xffc768,dashSize:.035,gapSize:.02,transparent:true,opacity:.85});materials.push(pathMaterial);
   const loadPath=new T.Line(pathGeometry,pathMaterial);scene.add(loadPath);
@@ -61,21 +81,32 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
   const resize=()=>{renderer.setSize(el.clientWidth,el.clientHeight);camera.aspect=el.clientWidth/Math.max(1,el.clientHeight);camera.updateProjectionMatrix();};
   const observer=new ResizeObserver(resize);observer.observe(el);resize();
   const animate=()=>{
-   if(disposed)return;frame=requestAnimationFrame(animate);const pose=fallPose(latest.current);
+   if(disposed)return;frame=requestAnimationFrame(animate);const progress=latest.current,pose=scenario?scenarioPose(progress,scenario):fallPose(progress);
+   const approach=Math.min(1,progress/.25),recoil=Math.min(1,Math.max(0,(progress-.25)/.3));
+   vehicle.position.z=-1.4*(1-approach);vehicle.scale.z=1-.035*recoil;
+   ball.position.set(-1.6+1.35*approach-.5*recoil,.28+.4*recoil,0);ball.rotation.z=progress*8;
    for(const [segment,group] of bodyGroups){
     const [a,b,c,d]=segmentEndpoints(segment,pose);
     group.position.copy(c);group.quaternion.setFromUnitVectors(b.sub(a).normalize(),d.clone().sub(c).normalize());
    }
    fragments.forEach((fragment,i)=>{const p=fragmentPose({...INITIAL_FRACTURE,side:'Right',progress:pose.fracture},i===0);fragment.position.set(p.x,p.y,0);fragment.rotation.z=p.angle;});
+   const amount=scenarioOptions.current.fracture?.aligned?0:fractureAmount(progress);
+   bodyFragments.forEach(({group,normal,lateral,span,index,count})=>{
+    const sign=index-(count-1)/2;group.position.copy(normal).multiplyScalar(sign*span*.055*amount);
+    if(count===3&&index===1)group.position.copy(fracture?.pattern==='wedge'?lateral:new T.Vector3(0,0,1)).multiplyScalar(span*.04*amount);
+    group.rotation.z=sign*.055*amount;
+   });
    scene.updateMatrixWorld(true);
+   bodyFragments.forEach(({group,local,world,edges})=>{local.forEach((plane,i)=>world[i].copy(plane).applyMatrix4(group.matrixWorld));edges.forEach(edge=>{edge.visible=progress>=.25;edge.geometry.setDrawRange(0,Math.floor(edge.geometry.attributes.position.count*Math.min(1,Math.max(0,(progress-.25)/.17))/2)*2);});});
    fragments.forEach((fragment,i)=>planes[i].copy(localPlanes[i]).applyMatrix4(fragment.matrixWorld));
-   contactRing.visible=pose.contact;loadPath.visible=pose.contact;marker.visible=pose.fracture>0;
+   contactRing.visible=pose.contact&&(!scenario||scenario==='fall');loadPath.visible=pose.contact&&(!scenario||scenario==='fall');marker.visible=scenario?progress>=.25:pose.fracture>0;
    contactRing.position.set(pose.handContact.x,.008,pose.handContact.z+.05);
-   slipTrail.visible=pose.slipping;slipArrow.visible=pose.slipping;
+   slipTrail.visible=pose.slipping&&(!scenario||scenario==='fall');slipArrow.visible=slipTrail.visible;
    (slipGeometry.getAttribute('position') as T.BufferAttribute).setXYZ(1,pose.rightAnkle.x,.012,pose.rightAnkle.z+.10);slipGeometry.getAttribute('position').needsUpdate=true;
    const pathPositions=pathGeometry.getAttribute('position') as T.BufferAttribute;
    [pose.rightWrist,pose.rightElbow,pose.rightShoulder].forEach((p,i)=>pathPositions.setXYZ(i,p.x-.018,p.y,p.z+.025));pathPositions.needsUpdate=true;loadPath.computeLineDistances();
    const torso=bodyGroups.get('torso');if(torso)marker.position.copy(new T.Vector3(-.075,1.414,.02).sub(new T.Vector3(0,.92,0))).applyQuaternion(torso.quaternion).add(torso.position);
+   if(fractureAnchor)fractureAnchor.getWorldPosition(marker.position);
    if(lastReset!==resetRef.current){home();lastReset=resetRef.current;}
    const options=overlayOptions.current,selection=options.overlays?options.focused:null;
    anatomyMeshes.forEach(({mesh,original,id})=>{mesh.material=id===selection?selectedMaterial:original;});
@@ -105,7 +136,18 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
       const center=new T.Vector3().fromArray(part.bounds[0]).add(new T.Vector3().fromArray(part.bounds[1])).multiplyScalar(.5).sub(origin);
       const anchor=anatomyAnchors.get(educationalId)??{point:new T.Vector3(),segment,count:0};anchor.point.add(center);anchor.count++;anatomyAnchors.set(educationalId,anchor);
      }
-     if(part.name==='Right clavicle'){
+     if(fracture&&part.name===fracture.bone){
+      const layout=fractureLayout(geometry.getAttribute('position').array as Float32Array,fracture.pattern,fracture.location);
+      geometry.setAttribute('position',new T.BufferAttribute(layout.positions,3));
+      const center=new T.Vector3().fromArray(part.bounds[0]).add(new T.Vector3().fromArray(part.bounds[1])).multiplyScalar(.5),anchor=new T.Group();anchor.position.copy(center).sub(origin);group.add(anchor);
+      fractureAnchor=new T.Object3D();fractureAnchor.position.copy(layout.normal).multiplyScalar(layout.cuts[0]);anchor.add(fractureAnchor);
+      layout.fragments.forEach((fragment,index)=>{
+       const world=fragment.planes.map(plane=>plane.clone()),piece=new T.Group();anchor.add(piece);
+       piece.add(new T.Mesh(geometry,material([0xffcf8d,0xb9dbe0,0xff875e][index],{side:T.DoubleSide,clippingPlanes:world})));
+       const edges=fragment.edges.map(plane=>{const cut=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fractureContour(layout.positions,geometry.index!.array as Uint32Array,plane.normal,-plane.constant,fragment.planes),3));geometries.push(cut);const line=new T.LineSegments(cut,new T.LineBasicMaterial({color:0xff875e,depthTest:false}));materials.push(line.material);line.renderOrder=2;piece.add(line);return line;});
+       bodyFragments.push({group:piece,local:fragment.planes,world,edges,normal:layout.normal,lateral:layout.lateral,span:layout.span,index,count:layout.fragments.length});
+      });
+     }else if(part.name==='Right clavicle'&&!fracture){
       const center=new T.Vector3().fromArray(part.bounds[0]).add(new T.Vector3().fromArray(part.bounds[1])).multiplyScalar(.5);
       const anchor=new T.Group();anchor.position.copy(center).sub(origin);group.add(anchor);
       for(let i=0;i<2;i++){
@@ -118,11 +160,11 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
      }
     }
    }
-   if(!disposed)setStatus('ready');
+   if(!disposed){setStatus('ready');scenarioOptions.current.onReady();}
   }catch{if(!disposed)setStatus('error');}})();
   return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();anatomyOverlay.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
- },[attempt]);
- return <div className="fall-stage" ref={host} role="region" aria-label={label} data-phase={fallPose(progress).phase}>
+ },[attempt,scenario,fracture?.bone,fracture?.pattern,fracture?.location]);
+ return <div className="fall-stage" ref={host} role="region" aria-label={label} data-phase={(scenario?scenarioPose(progress,scenario):fallPose(progress)).phase}>
   {status==='loading'&&<p className="fall-loading" role="status">Loading anatomy / Анатоми ачаалж байна…</p>}
   {status==='error'&&<div className="fall-loading" role="alert"><p>Unable to load the scene / Загварыг ачаалж чадсангүй.</p><button onClick={()=>setAttempt(n=>n+1)}>Retry / Дахин оролдох</button></div>}
  </div>;

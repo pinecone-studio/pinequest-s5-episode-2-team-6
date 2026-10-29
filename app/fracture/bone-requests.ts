@@ -1,8 +1,8 @@
 import type {Part} from '../anatomy';
 const source='https://orthoinfo.aaos.org/en/diseases--conditions/';
 export const FRACTURE_SCENARIOS=[
- {id:'fall',match:/\b(?:fall|falling)\b|унах|уналт/,bone:'Right clavicle',pattern:'transverse',en:'Shoulder fall',mn:'Мөрөөрөө унах',
-  detail:'Landing on the shoulder can fracture the clavicle. This preset starts with a transverse midshaft break.',detailMn:'Мөрөөрөө унахад эгэм хугарч болно. Энэ жишээ гол хэсгийн хөндлөн хугарлаар эхэлнэ.',source:source+'clavicle-fracture-broken-collarbone/'},
+ {id:'fall',match:/\b(?:fall|falling)\b|унах|уналт/,bone:'Right clavicle',pattern:'transverse',en:'Fall onto an arm',mn:'Гараар тулж унах',
+  detail:'Bracing a fall with an outstretched arm can injure the clavicle. This preset starts with a transverse midshaft break.',detailMn:'Унахдаа сунгасан гараар тулахад эгэм гэмтэж болно. Энэ жишээ гол хэсгийн хөндлөн хугарлаар эхэлнэ.',source:source+'clavicle-fracture-broken-collarbone/'},
  {id:'crash',match:/\b(?:car|crash|collision)\b|автомашин|мөргөлдөөн/,bone:'Right femur',pattern:'segmental',en:'Car crash',mn:'Автомашины осол',
   detail:'Vehicle collisions can injure the femoral shaft. This preset starts with two breaks and a separate middle segment; a crash does not determine one fracture pattern.',detailMn:'Автомашины ослоор гуяны ясны гол хэсэг гэмтэж болно. Энэ жишээ хоёр хугаралтай, дунд хэсэг тусгаарлагдсан хэлбэрээр эхэлнэ; осол бүр ийм хугарал үүсгэхгүй.',source:source+'femur-shaft-fractures-broken-thighbone/'},
  {id:'impact',match:/\b(?:sports?|direct|leg) impact\b|спортын цохилт/,bone:'Right tibia',pattern:'oblique',en:'Sports impact',mn:'Спортын цохилт',

@@ -15,7 +15,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Study with the AI teacher (`/teacher`): lessons anchored to Gray's Anatomy for Students chapters, a learning profile that remembers what you asked, and per-chapter progress.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
 - Take the quiz on its own page (`/quiz`), and switch floating labels on.
-- Sit a timed exam on `/exam`; the papers are grouped by anatomy part — bones, muscles, arteries, veins, nerves, the heart — and each one links back to the structure in the 3D atlas.
+- Sit a timed exam on `/exam`; the bank has six 25-question papers — bones, muscles, arteries, veins, nerves and internal organs — and every question links back to its structure in the 3D atlas.
 - Use compact controls and detail panels on mobile.
 
 ## Run locally
@@ -194,11 +194,12 @@ For local development they live in `.env.local` (gitignored — copy them from `
 
 ### One-time database setup
 
-Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the three steps in order; each one is safe to run twice.
+Open Supabase Dashboard → your project → **SQL Editor** → **New query**, paste a file, press **Run**. Do the four steps in order; each one is safe to run twice.
 
 1. [`supabase/schema.sql`](supabase/schema.sql) — creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, `teacher_questions`, `xp_events`, `exams`, `exam_questions`, `exam_attempts`, enables row level security with the policies behind the admin panel, and adds the triggers that keep profiles in sync with `auth.users` and do all the scoring. The `exams` table carries `group_key`, `part_key`, `part_mn` and `source`; the file also `alter table … add column if not exists` them, so a database migrated before the grouping exists only needs this file re-run.
-2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 published papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper. Skip it if you would rather generate the bank from `/admin` instead.
-3. Promote yourself, then refresh `/admin` (step 3 needs the profile row from step 1):
+2. [`supabase/exam_bank.sql`](supabase/exam_bank.sql) — seeds 18 short papers (72 multiple-choice and 18 case questions) grouped by anatomy: **Яс**, **Булчин**, **Артерийн судас**, **Венийн судас**, **Мэдрэлийн систем**, **Зүрх**. Each block starts with `if not exists (select 1 from public.exams where title = …) then`, so re-running it never duplicates a paper.
+3. [`supabase/exam_categories.sql`](supabase/exam_categories.sql) — turns the six groups into one **25-question, 40-minute exam** each (50 points, 80% pass). It reuses the 15 questions from each group's three short papers, adds 10 new multiple-choice questions, and archives the short papers so students see one full paper per category. Run it after `exam_bank.sql`; it is idempotent too.
+4. Promote yourself, then refresh `/admin` (step 4 needs the profile row from step 1):
 
 ```sql
 update public.profiles set is_admin = true where email = 'you@example.com';
@@ -208,9 +209,9 @@ Pages that need the newer tables show a "run schema.sql" notice instead of faili
 
 ### Exam bank: groups, structures, AI drafts
 
-`lib/anatomy-groups.ts` is the catalogue. Every group is an atlas system id (`skeletal`, `muscular`, `arterial`, `venous`, `nervous`, `cardiac`) and lists the structures a paper can be written about. The keys are atlas concept names, so the link under a paper (`/exam`) and the `concept` column on its questions resolve to the same part in the 3D atlas, and Mongolian names come from `app/mongolian-names.ts` rather than a second translation table.
+`lib/anatomy-groups.ts` is the catalogue. The six exam groups are `skeletal`, `muscular`, `arterial`, `venous`, `nervous` and `organs` (the `organs` group covers the heart plus the abdominal and thoracic viscera); `cardiac` stays as a legacy key for papers written before the full exams existed. Each group lists the structures a paper can be written about. The keys are atlas concept names, so the link under a paper (`/exam`) and the `concept` column on its questions resolve to the same part in the 3D atlas, and Mongolian names come from `app/mongolian-names.ts` rather than a second translation table.
 
-- **/exam** lists published papers in those groups, with the group's atlas colour, a per-group count and the structure each paper covers. Papers with an empty `group_key` (anything written before the bank was grouped) fall into a last "Бусад шалгалт" section.
+- **/exam** lists published papers in those groups, with the group's atlas colour and a per-group count. `exam_categories.sql` leaves one 25-question paper in each of the six groups; papers with an empty `group_key` (the older team-written sets) fall into a last "Бусад шалгалт" section.
 - **/admin → Шалгалтын сан** has two drafting paths. "AI draft" writes one paper from a free-text topic for a single review. "Generate a whole group" picks a group and any of its structures and writes one draft paper per structure, sending the verified Latin name, function and nerve from `app/structure-facts.ts` with the request so the model writes about real anatomy. Correct answers are re-shuffled out of slot A, and every paper is stored with `status = 'draft'`, `source = 'ai'`, `group_key`, `part_key`, `part_mn` and `concept = part_key`. Nothing is readable by a student until an admin presses **Нийтлэх**.
 - Drafting costs one provider call per structure and the calls run one after another — about five to ten seconds each with the default `gemini-3.5-flash-lite`, so a whole group takes a couple of minutes. Grading and scores never come from the browser: see the next section.
 

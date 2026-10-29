@@ -23,7 +23,7 @@ import './exam.css';
 const copy = {
   en: {
     title: 'Exams',
-    lead: 'A timed paper with real exam questions. Papers are grouped by anatomy part, the score is calculated on the server, and passing earns XP.',
+    lead: 'A timed paper with real exam questions, grouped into bones, muscles, arteries, veins, nerves and internal organs. The score is calculated on the server, and passing earns XP.',
     back: 'Back to the atlas',
     loading: 'Loading…',
     empty: 'No published exam yet.',
@@ -77,7 +77,7 @@ const copy = {
   },
   mn: {
     title: 'Шалгалт',
-    lead: 'Хугацаатай жинхэнэ шалгалт. Бичгүүдийг яс, булчин, судас зэрэг анатомийн хэсгээр бүлэглэсэн. Оноог сервер тооцож, тэнцсэн бол XP олгоно.',
+    lead: 'Шалгалтуудыг яс, булчин, артерийн судас, венийн судас, мэдрэлийн систем, дотор эрхтэн гэсэн 6 хэсэгт хуваасан. Оноог сервер тооцож, тэнцсэн бол XP олгоно.',
     back: 'Атлас руу буцах',
     loading: 'Ачаалж байна…',
     empty: 'Одоогоор нээлттэй шалгалт байхгүй.',

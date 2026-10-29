@@ -19,6 +19,7 @@ import {useAuth} from '../../hooks/use-auth';
 import {useLang} from '../locale';
 import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
+import './admin.css';
 import {resolveStructureFact} from '../structure-facts';
 import {EXAM_GROUPS,groupLabel,partLabel,partTitle,type ExamGroupId} from '../../lib/anatomy-groups';
 import {fetchProfile,saveDraftPaper,type StudentProfile} from '../../lib/exam-store';
@@ -329,9 +330,9 @@ export default function AdminPage(){
 
   useEffect(()=>{if(ready&&isAdmin)load();},[ready,isAdmin,load]);
 
-  if(!ready)return <main className="flex min-h-screen items-center justify-center text-slate-500">…</main>;
+  if(!ready)return <main className="admin-page flex min-h-screen items-center justify-center text-slate-500">…</main>;
   if(!user)return <Navigate to="/login" state={{from:'/admin'}} replace/>;
-  if(!isAdmin)return <main className="mx-auto max-w-md px-4 py-16 text-center text-slate-600">{dict.noAccess}</main>;
+  if(!isAdmin)return <main className="admin-page mx-auto max-w-md px-4 py-16 text-center text-slate-600">{dict.noAccess}</main>;
 
   async function setAdmin(row:Profile,admin:boolean){
     const {error}=await supabase.from('profiles').update({is_admin:admin}).eq('id',row.id);
@@ -537,8 +538,8 @@ export default function AdminPage(){
   const holderOf=(id:string)=>profileById.get(id);
 
   return(
-    <PageScroll className="mx-auto min-h-screen max-w-5xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
-      <SiteNav tone="light"/>
+    <PageScroll className="admin-page mx-auto min-h-screen max-w-5xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8">
+      <SiteNav/>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-semibold">{dict.title}</h1>
         <Button onClick={()=>{load();refresh();}}>{lang==='en'?'Refresh':'Шинэчлэх'}</Button>

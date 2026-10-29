@@ -289,7 +289,7 @@ export default function ExamPage() {
   if (!user)
     return (
       <main className="exam-page mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8">
-        <SiteNav tone="glass" />
+        <SiteNav />
         <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>
         <h1 className="exam-title mb-2">{t.title}</h1>
         <p className="exam-sub mb-5">{t.lead}</p>
@@ -334,7 +334,7 @@ export default function ExamPage() {
   if (exam && result) {
     return (
       <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10">
-        <SiteNav tone="glass" />
+        <SiteNav />
         <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>
         <h1 className="exam-title mb-1">{t.resultTitle}</h1>
         <p className="mb-6 text-sm text-muted-foreground">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
@@ -399,7 +399,7 @@ export default function ExamPage() {
     }).length;
     return (
       <PageScroll ref={scroller} className="exam-page exam-running mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28">
-        <SiteNav tone="glass" />
+        <SiteNav />
         <header className="mb-4 flex items-center justify-between gap-4">
           <div>
             <p className="exam-kicker mb-1">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
@@ -463,7 +463,7 @@ export default function ExamPage() {
   if (exam && !questions.length && !loading) {
     return (
       <main className="exam-page mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8">
-        <SiteNav tone="glass" />
+        <SiteNav />
         <p className="mb-4">{t.closed}</p>
         <Button variant="outline" onClick={() => setParams({})}>{t.again}</Button>
       </main>
@@ -472,7 +472,7 @@ export default function ExamPage() {
 
   return (
     <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10">
-      <SiteNav tone="glass" />
+      <SiteNav />
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>

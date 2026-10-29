@@ -1,65 +1,63 @@
-/* Glass theme for the atlas, matching the quiz screen: a blue room behind a transparent canvas,
-   frosted blue panels, white type, pill controls and one lime accent. It sits on top of the plate theme
+/* Glass theme for the atlas, in the AI teacher's palette: a navy room behind a transparent canvas,
+   frosted navy panels, pale type, pill controls and one blue accent. It sits on top of the plate theme
    in globals.css and applies while <html> carries .atlas-glass, which the atlas sets for every backdrop.
    Sheets render in a portal outside .studio, which is why everything is scoped from <html>. */
 .atlas-glass{
- --g-lime:#dcf55a;--g-lime-2:#e8fb86;--g-lime-ink:#25310a;
- --g-ink:#fff;--g-ink-2:rgb(255 255 255/.9);--g-ink-3:rgb(255 255 255/.72);
- --g-line:rgb(255 255 255/.16);--g-line-2:rgb(255 255 255/.3);
- --g-chip:rgb(255 255 255/.13);--g-chip-2:rgb(255 255 255/.24);
- --g-edge:linear-gradient(140deg,rgb(255 255 255/.62),rgb(255 255 255/.1) 38%,rgb(255 255 255/.06) 62%,rgb(255 255 255/.32));
- --g-fill:linear-gradient(150deg,rgb(255 255 255/.26),rgb(255 255 255/.09));
- --g-fill-2:linear-gradient(150deg,rgb(255 255 255/.36),rgb(255 255 255/.16));
- /* Panels carry more blue than the controls so white text stays readable over the bright top of the room. */
- --g-panel:linear-gradient(160deg,rgb(70 116 190/.76),rgb(34 70 138/.8));
- --g-shadow:0 22px 44px -18px rgb(14 42 92/.55);
+ --g-accent:#2f66f5;--g-accent-2:#4a7bff;--g-accent-ink:#fff;--g-accent-text:#8fb7ff;
+ --g-ink:#e8eefc;--g-ink-2:#cdd9f5;--g-ink-3:#a7b6d8;
+ --g-line:rgb(150 180 255/.16);--g-line-2:rgb(150 180 255/.3);
+ --g-chip:rgb(150 180 255/.1);--g-chip-2:rgb(150 180 255/.2);
+ --g-edge:linear-gradient(140deg,rgb(150 180 255/.42),rgb(150 180 255/.14) 38%,rgb(150 180 255/.1) 62%,rgb(150 180 255/.26));
+ --g-fill:linear-gradient(150deg,rgb(24 36 64/.82),rgb(15 24 44/.74));
+ --g-fill-2:linear-gradient(150deg,rgb(38 58 102/.88),rgb(24 36 64/.82));
+ /* The teacher's card: navy deep enough that pale text reads over the brightest part of the model. */
+ --g-panel:linear-gradient(160deg,rgb(20 32 58/.84),rgb(13 21 38/.88));
+ --g-shadow:0 22px 44px -18px rgb(0 0 0/.6);
  --g-blur:blur(24px) saturate(150%);
  --g-sans:Inter,ui-sans-serif,system-ui,sans-serif;--g-display:'Inter Tight',Inter,ui-sans-serif,sans-serif;
- /* Plate and shadcn tokens, so anything not restyled below still reads light on blue. */
- --paper:#4f84c4;--slip:rgb(255 255 255/.14);--ink:#fff;--ink-2:var(--g-ink-2);--ink-3:var(--g-ink-3);--rule:var(--g-line);--rule-2:var(--g-line-2);
- --blood:var(--g-lime);--blood-2:var(--g-lime-2);--serif:var(--g-display);--mono:var(--g-sans);--print:var(--g-shadow);
- --background:#4f84c4;--foreground:#fff;--card:rgb(255 255 255/.14);--card-foreground:#fff;--popover:#3d70b2;--popover-foreground:#fff;
- --primary:var(--g-lime);--primary-foreground:var(--g-lime-ink);--secondary:var(--g-chip);--secondary-foreground:#fff;--muted:var(--g-chip-2);
- --muted-foreground:var(--g-ink-3);--accent:var(--g-chip-2);--accent-foreground:#fff;--border:var(--g-line-2);--input:var(--g-line-2);--ring:var(--g-lime);
- color:#fff;background:#4f84c4;font-family:var(--g-sans);
+ /* Plate and shadcn tokens, so anything not restyled below still reads light on navy. */
+ --paper:#0b1220;--slip:rgb(255 255 255/.14);--ink:#fff;--ink-2:var(--g-ink-2);--ink-3:var(--g-ink-3);--rule:var(--g-line);--rule-2:var(--g-line-2);
+ --blood:var(--g-accent);--blood-2:var(--g-accent-2);--serif:var(--g-display);--mono:var(--g-sans);--print:var(--g-shadow);
+ --background:#0b1220;--foreground:#e8eefc;--card:rgb(15 24 44/.72);--card-foreground:#e8eefc;--popover:#131d33;--popover-foreground:#fff;
+ --primary:var(--g-accent);--primary-foreground:var(--g-accent-ink);--secondary:var(--g-chip);--secondary-foreground:#fff;--muted:var(--g-chip-2);
+ --muted-foreground:var(--g-ink-3);--accent:var(--g-chip-2);--accent-foreground:#fff;--border:var(--g-line-2);--input:var(--g-line-2);--ring:var(--g-accent);
+ color:#e8eefc;background:#0b1220;font-family:var(--g-sans);
 }
 .atlas-glass button:not([data-slot]):hover{color:inherit}
-.atlas-glass :is(button,a):focus-visible{outline-color:var(--g-lime)}
+.atlas-glass :is(button,a):focus-visible{outline-color:var(--g-accent-text)}
 
-/* The room. It fills the whole page, so the strip behind the shared navigation matches. */
+/* The room: the teacher's navy with its two glows, and a soft light behind the figure so the model stands out.
+   It fills the whole page, so the strip behind the shared navigation matches. */
 .atlas-glass .atlas-page{background:
- radial-gradient(48% 40% at 50% 40%,rgb(214 234 255/.5),transparent 72%),
- radial-gradient(80% 55% at 0% 0%,rgb(158 200 246/.75),transparent 62%),
- radial-gradient(70% 55% at 100% 100%,rgb(24 60 134/.75),transparent 70%),
- linear-gradient(180deg,#7caade 0%,#548ac9 46%,#3a6db1 100%)}
-.atlas-glass .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 48%,rgb(14 40 92/.3) 100%);opacity:1;mix-blend-mode:normal}
+ radial-gradient(42% 46% at 50% 46%,rgb(47 102 245/.16),transparent 72%),
+ var(--ui-room)}
+.atlas-glass .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 52%,rgb(0 0 0/.35) 100%);opacity:1;mix-blend-mode:normal}
 .atlas-glass .stage-frame{display:none}
 
 /* Another backdrop from the Colors panel keeps this interface and only repaints the room (inline on .atlas-page,
-   and the canvas clears to it). The pieces that sat straight on the blue room take the panels' blue instead of
-   clear white glass, so their white type reads on light and dark colours alike. */
-.atlas-glass.atlas-custom{--g-fill:var(--g-panel);--g-fill-2:linear-gradient(160deg,rgb(84 130 204/.86),rgb(44 82 150/.9))}
+   and the canvas clears to it). The pieces that sat straight on the blue room take the panels' navy instead of
+   clear glass, so their white type reads on light and dark colours alike. */
+.atlas-glass.atlas-custom{--g-fill:var(--g-panel);--g-fill-2:linear-gradient(160deg,rgb(38 58 102/.9),rgb(24 36 64/.92))}
 .atlas-glass.atlas-custom .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 52%,rgb(0 0 0/.16) 100%)}
-.atlas-glass.atlas-custom .site-nav.is-glass{background:var(--g-panel) padding-box,var(--g-edge) border-box}
 .atlas-glass.atlas-custom .studio-footer button{padding:5px 11px;border-radius:999px;background:var(--g-panel);box-shadow:var(--g-shadow)}
 
 /* Glass surfaces. Every panel shares one material; the edge highlight is the second background. */
-.atlas-glass :is(.glass,.info-card){border:1px solid transparent;border-radius:26px;background:var(--g-panel) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.28),var(--g-shadow);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff}
+.atlas-glass :is(.glass,.info-card){border:1px solid transparent;border-radius:26px;background:var(--g-panel) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(150 180 255/.1),var(--g-shadow);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff}
 .atlas-glass .layers-panel.mobile-open{background:var(--g-panel) padding-box,var(--g-edge) border-box;border-radius:26px}
 
 /* Masthead */
 .atlas-glass .eyebrow{font-family:var(--g-sans);font-weight:600;letter-spacing:.16em;color:var(--g-ink-2)}
 
 /* Pill controls: masthead tools, toolbar and the Plaque lab button */
-.atlas-glass .top-actions button{border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 10px 24px -14px rgb(14 42 92/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
+.atlas-glass .top-actions button{border:1px solid transparent;border-radius:999px;background:var(--g-fill) padding-box,var(--g-edge) border-box;box-shadow:inset 0 1px 0 rgb(150 180 255/.1),0 10px 24px -14px rgb(0 0 0/.6);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:#fff;font-family:var(--g-sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;text-shadow:none}
 .atlas-glass .top-actions button+button{margin-left:6px}
 .atlas-glass .top-actions button:hover{background:var(--g-fill-2) padding-box,var(--g-edge) border-box;color:#fff}
-.atlas-glass .top-actions .ask-button{background:#fff;color:#1d4079;font-weight:600}
-.atlas-glass .top-actions .ask-button:hover{background:#eef5ff;color:#1d4079}
-.atlas-glass .top-actions button.active{background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 8px 22px rgb(220 245 90/.42)}
+.atlas-glass .top-actions .ask-button{background:var(--g-accent);color:var(--g-accent-ink);font-weight:600}
+.atlas-glass .top-actions .ask-button:hover{background:var(--g-accent-2);color:var(--g-accent-ink)}
+.atlas-glass .top-actions button.active{background:var(--g-accent);color:var(--g-accent-ink);box-shadow:0 8px 22px rgb(47 102 245/.42)}
 .atlas-glass .top-actions kbd{border-radius:5px;border-color:currentColor;font-family:var(--g-sans);opacity:.6}
 /* The masthead tools fold into one round button. Opened, they fan out to its left, the nearest one first; while
-   folded, a lime dot on it says one of them (the assistant, the ROM lab, search) is open. */
+   folded, a blue dot on it says one of them (the assistant, the ROM lab, search) is open. */
 .top-actions .tools-toggle{position:relative}
 .atlas-tools{position:absolute;top:0;right:100%;bottom:0;display:flex;align-items:center;padding-right:6px;visibility:hidden;pointer-events:none;transition:visibility 0s .3s}
 .atlas-tools>button{opacity:0;transform:translateX(28px) scale(.9);transition:opacity .2s,transform .32s cubic-bezier(.2,.7,.2,1),background .18s,color .18s}
@@ -68,24 +66,24 @@
 .top-actions .tools-toggle svg{animation:toolsTurn .3s cubic-bezier(.2,.7,.2,1)}
 @keyframes toolsTurn{from{opacity:0;transform:rotate(-90deg) scale(.7)}}
 .atlas-glass .top-actions .tools-toggle[aria-expanded=true]{background:var(--g-fill-2) padding-box,var(--g-edge) border-box}
-.atlas-glass .top-actions .tools-toggle.has-active::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--g-lime);box-shadow:0 0 0 2px rgb(29 64 121/.7)}
+.atlas-glass .top-actions .tools-toggle.has-active::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--g-accent);box-shadow:0 0 0 2px rgb(11 18 32/.8)}
 @media(prefers-reduced-motion:reduce){.atlas-tools>button{transition:none}.top-actions .tools-toggle svg{animation:none}}
 .atlas-glass .lang-switch{border:1px solid transparent;border-radius:999px;padding:0 3px;background:var(--g-fill) padding-box,var(--g-edge) border-box;-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
 .atlas-glass .lang-switch button{border-radius:999px;font-family:var(--g-sans);font-weight:600;color:var(--g-ink-2);text-shadow:none}
 .atlas-glass .lang-switch button:hover{background:var(--g-chip);color:#fff}
-.atlas-glass .lang-switch button.is-active{background:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass .lang-switch button.is-active{background:var(--g-accent);color:var(--g-accent-ink)}
 
 /* Systems index */
 .atlas-glass .panel-heading>span:first-child{font-family:var(--g-display);font-size:21px;font-weight:600;font-style:normal;letter-spacing:-.015em;color:#fff}
 .atlas-glass .panel-heading .small-number{border-radius:999px;border-color:var(--g-line-2);background:var(--g-chip);font-family:var(--g-sans);color:#fff}
 .atlas-glass .panel-heading .colors-trigger{border-radius:999px;border-color:var(--g-line-2);background:var(--g-chip);font-family:var(--g-sans);font-size:11px;letter-spacing:0;text-transform:none;color:#fff}
 .atlas-glass .panel-heading .colors-trigger:hover{background:var(--g-chip-2);color:#fff}
-.atlas-glass .panel-heading .colors-trigger[aria-pressed=true]{background:var(--g-lime);border-color:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass .panel-heading .colors-trigger[aria-pressed=true]{background:var(--g-accent);border-color:var(--g-accent-text);color:var(--g-accent-ink)}
 .atlas-glass :is(.layer-presets,.dock-tabs,.slice-axis){gap:2px;padding:3px;border:1px solid var(--g-line);border-radius:999px;background:var(--g-chip)}
 .atlas-glass :is(.layer-presets,.dock-tabs,.slice-axis) button{border:0;border-radius:999px;background:transparent;font-family:var(--g-sans);font-size:11.5px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--g-ink-2)}
 .atlas-glass :is(.layer-presets,.dock-tabs,.slice-axis) button+button{margin-left:0;border-left:0}
 .atlas-glass :is(.layer-presets,.dock-tabs,.slice-axis) button:hover{background:var(--g-chip);color:#fff}
-.atlas-glass :is(.layer-presets button[aria-pressed=true],.dock-tabs button.active,.slice-axis button.active){background:var(--g-lime);color:var(--g-lime-ink);box-shadow:0 4px 14px rgb(220 245 90/.35)}
+.atlas-glass :is(.layer-presets button[aria-pressed=true],.dock-tabs button.active,.slice-axis button.active){background:var(--g-accent);color:var(--g-accent-ink);box-shadow:0 4px 14px rgb(47 102 245/.35)}
 .atlas-glass .layer-presets button{flex:1}
 .atlas-glass .system-spectrum{height:6px;gap:2px;padding:0;border:0;border-radius:99px;overflow:hidden;background:var(--g-chip)}
 .atlas-glass .system-spectrum i{border-radius:99px}
@@ -96,8 +94,8 @@
 .atlas-glass .system-dot{border-radius:50%;box-shadow:0 0 0 2px rgb(255 255 255/.22)}
 .atlas-glass .system-leader{border-bottom-color:rgb(255 255 255/.22)}
 .atlas-glass .system-row [data-slot=switch]{width:18px;height:18px;border-radius:50%;border:1.5px solid rgb(255 255 255/.6)}
-.atlas-glass .system-row [data-slot=switch][data-checked]{background:var(--g-lime);border-color:var(--g-lime)}
-.atlas-glass .system-row [data-slot=switch][data-checked] [data-slot=switch-thumb]{border-color:var(--g-lime-ink)}
+.atlas-glass .system-row [data-slot=switch][data-checked]{background:var(--g-accent);border-color:var(--g-accent-text)}
+.atlas-glass .system-row [data-slot=switch][data-checked] [data-slot=switch-thumb]{border-color:var(--g-accent-ink)}
 .atlas-glass .panel-foot{border-top-color:var(--g-line);font-family:var(--g-sans);color:var(--g-ink-3)}
 .atlas-glass .panel-foot button{font-family:var(--g-sans);font-size:11px;letter-spacing:0;text-transform:none;color:#fff}
 
@@ -106,20 +104,20 @@
 .atlas-glass .dock-index{font-family:var(--g-sans);font-size:10.5px;font-style:normal;font-weight:600;opacity:.6}
 .atlas-glass .explode-label{font-family:var(--g-sans);font-size:11px;letter-spacing:.03em;text-transform:none;color:var(--g-ink-2)}
 .atlas-glass .explode-label output{font-family:var(--g-display);font-size:32px;font-weight:600;font-style:normal;letter-spacing:-.03em;color:#fff}
-.atlas-glass .explode-label output span{font-family:var(--g-display);font-size:16px;font-style:normal;color:var(--g-lime)}
+.atlas-glass .explode-label output span{font-family:var(--g-display);font-size:16px;font-style:normal;color:var(--g-accent-text)}
 .atlas-glass .peel-control .explode-label output{font-size:22px;font-style:normal}
 .atlas-glass .explode-control [data-slot=slider-track]{height:6px;border-radius:99px;background:rgb(255 255 255/.22)}
-.atlas-glass .explode-control [data-slot=slider-range]{border-radius:99px;background:var(--g-lime)}
-.atlas-glass .explode-control [data-slot=slider-thumb]{width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(10 40 90/.4),0 0 0 4px rgb(220 245 90/.35)}
+.atlas-glass .explode-control [data-slot=slider-range]{border-radius:99px;background:var(--g-accent)}
+.atlas-glass .explode-control [data-slot=slider-thumb]{width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(0 0 0/.4),0 0 0 4px rgb(47 102 245/.35)}
 .atlas-glass .explode-control [data-slot=slider-thumb]::before{display:none}
-.atlas-glass .explode-control [data-slot=slider-thumb]:is(:hover,:active,:focus-visible,:has(:focus-visible)){box-shadow:0 2px 8px rgb(10 40 90/.4),0 0 0 6px rgb(220 245 90/.5)}
+.atlas-glass .explode-control [data-slot=slider-thumb]:is(:hover,:active,:focus-visible,:has(:focus-visible)){box-shadow:0 2px 8px rgb(0 0 0/.4),0 0 0 6px rgb(47 102 245/.5)}
 .atlas-glass .dock-ruler{opacity:.4}
 .atlas-glass .slider-endpoints{font-family:var(--g-sans);font-size:10px;letter-spacing:.02em;text-transform:none;color:var(--g-ink-3)}
 .atlas-glass :is(.dock-reset,.dock-layers){font-family:var(--g-sans);font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--g-ink-2)}
 .atlas-glass .dock-reset{border-left-color:var(--g-line)}
 .atlas-glass .dock-layers{border-right-color:var(--g-line)}
 .atlas-glass .dock-reset svg{border-radius:50%;border-color:var(--g-line-2);background:var(--g-chip)}
-.atlas-glass .dock-reset:hover svg{background:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass .dock-reset:hover svg{background:var(--g-accent);color:var(--g-accent-ink)}
 
 /* Colophon and loading */
 .atlas-glass .studio-footer{font-family:var(--g-sans);font-size:10.5px;letter-spacing:.02em;text-transform:none;color:var(--g-ink-2)}
@@ -127,7 +125,7 @@
 .atlas-glass .loading strong{font-family:var(--g-display);font-size:20px;font-style:normal;font-weight:600;color:#fff}
 .atlas-glass .loading span{font-family:var(--g-sans);font-size:11px;letter-spacing:.02em;text-transform:none;color:var(--g-ink-3)}
 .atlas-glass .loading-track{height:4px;border-radius:99px;background:rgb(255 255 255/.2)}
-.atlas-glass .loading-track i{border-radius:99px;background:var(--g-lime)}
+.atlas-glass .loading-track i{border-radius:99px;background:var(--g-accent)}
 .atlas-glass .error button{border-radius:999px;border-color:var(--g-line-2);color:#fff}
 
 /* Details and about sheets */
@@ -137,7 +135,7 @@
 .atlas-glass .detail-accent{width:44px;height:4px;border-radius:99px}
 .atlas-glass :is(.detail-sheet,.about-sheet) .eyebrow{color:var(--g-ink-3)}
 .atlas-glass .structure-title{font-family:var(--g-display)!important;font-size:30px!important;font-weight:600!important;line-height:1.1!important;letter-spacing:-.025em;color:#fff}
-.atlas-glass .structure-latin{font-family:var(--g-sans);font-size:14px;font-style:italic;color:var(--g-lime)}
+.atlas-glass .structure-latin{font-family:var(--g-sans);font-size:14px;font-style:italic;color:var(--g-accent-text)}
 .atlas-glass :is(.structure-description,.about-sheet [data-slot=sheet-description],.about-copy){font-family:var(--g-sans);font-size:14.5px!important;line-height:1.6;color:var(--g-ink-2)!important}
 .atlas-glass :is(.structure-alt,.search-result-alt,.context-note){font-family:var(--g-sans);color:var(--g-ink-3)}
 .atlas-glass .info-card-line{color:var(--g-ink-2)}
@@ -145,21 +143,21 @@
 .atlas-glass .structure-meta{border-color:var(--g-line);font-family:var(--g-sans);letter-spacing:.06em;color:var(--g-ink-3)}
 .atlas-glass .structure-meta strong{font-family:var(--g-sans);color:#fff}
 .atlas-glass .bone-region-badge{border-radius:999px;border:1px solid var(--g-line-2);background:var(--g-chip);color:#fff;font-family:var(--g-sans);letter-spacing:.04em}
-.atlas-glass :is(.term-list h3,.standard-figures h3,.member-list h3,.about-copy h3,.colors-label){font-family:var(--g-sans);font-weight:600;color:var(--g-lime)}
+.atlas-glass :is(.term-list h3,.standard-figures h3,.member-list h3,.about-copy h3,.colors-label){font-family:var(--g-sans);font-weight:600;color:var(--g-accent-text)}
 .atlas-glass :is(.term-list li,.member-list button){border-color:var(--g-line)}
 .atlas-glass .term-latin{font-family:var(--g-sans);font-size:13px;color:#fff}
 .atlas-glass .term-english{color:var(--g-ink-3)}
 .atlas-glass .member-list button{color:#fff}
 .atlas-glass .standard-figure-open{border-radius:16px}
-.atlas-glass :is(.source-link,.about-copy a){font-family:var(--g-sans);color:var(--g-lime)}
+.atlas-glass :is(.source-link,.about-copy a){font-family:var(--g-sans);color:var(--g-accent-text)}
 .atlas-glass .about-copy strong{color:#fff}
 .atlas-glass .detail-actions{border-top-color:var(--g-line)}
-.atlas-glass :is(.primary-action,.learning-primary,.rom-primary:not(.rom-primary-stop),.ai-send:not(.ai-stop),.info-card-ask){border-radius:999px;border-color:transparent;background:var(--g-lime);color:var(--g-lime-ink)!important;font-family:var(--g-sans);font-weight:600;letter-spacing:0;text-transform:none;box-shadow:0 8px 22px -6px rgb(220 245 90/.5)}
-.atlas-glass :is(.primary-action,.learning-primary,.rom-primary:not(.rom-primary-stop),.info-card-ask):hover,.atlas-glass .primary-action.active{background:var(--g-lime-2);border-color:transparent}
+.atlas-glass :is(.primary-action,.learning-primary,.rom-primary:not(.rom-primary-stop),.ai-send:not(.ai-stop),.info-card-ask){border-radius:999px;border-color:transparent;background:var(--g-accent);color:var(--g-accent-ink)!important;font-family:var(--g-sans);font-weight:600;letter-spacing:0;text-transform:none;box-shadow:0 8px 22px -6px rgb(47 102 245/.5)}
+.atlas-glass :is(.primary-action,.learning-primary,.rom-primary:not(.rom-primary-stop),.info-card-ask):hover,.atlas-glass .primary-action.active{background:var(--g-accent-2);border-color:transparent}
 .atlas-glass .secondary-action{border-radius:999px;font-family:var(--g-sans);font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--g-ink-2)}
 .atlas-glass .secondary-action:hover{background:var(--g-chip);color:#fff}
 .atlas-glass .sheet-grip::before{background:rgb(255 255 255/.4)}
-.atlas-glass .sheet-grip:hover::before,.atlas-glass .sheet-grip:focus-visible::before{background:var(--g-lime)}
+.atlas-glass .sheet-grip:hover::before,.atlas-glass .sheet-grip:focus-visible::before{background:var(--g-accent)}
 
 /* Search and colors */
 .atlas-glass .search-panel [data-slot=input-group]{border-radius:999px;border-color:var(--g-line-2);background:var(--g-chip)}
@@ -171,27 +169,27 @@
 .atlas-glass .anatomy-search-results .small-number{font-family:var(--g-sans);color:var(--g-ink-3)}
 .atlas-glass .color-swatch,.atlas-glass .color-row input,.atlas-glass .color-row input::-webkit-color-swatch{border-radius:50%}
 .atlas-glass .color-swatch{border-color:var(--g-line-2)!important;box-shadow:inset 0 0 0 2px rgb(255 255 255/.5)}
-.atlas-glass .color-swatch[aria-pressed=true],.atlas-glass .color-swatch[data-active=true]{outline-color:var(--g-lime)}
+.atlas-glass .color-swatch[aria-pressed=true],.atlas-glass .color-swatch[data-active=true]{outline-color:var(--g-accent-text)}
 .atlas-glass .color-row{border-radius:12px;color:#fff}
 .atlas-glass .color-row:hover{background:var(--g-chip)}
 .atlas-glass .color-row code{color:var(--g-ink-3)}
 
 /* Assistant */
 .atlas-glass :is(.ai-title,.rom-title,.learning-title){font-family:var(--g-display);font-size:23px;font-weight:600;font-style:normal;letter-spacing:-.025em;color:#fff}
-.atlas-glass :is(.ai-kicker,.rom-kicker,.learning-kicker,.tour-counter,.rom-gauge-label){font-family:var(--g-sans);font-weight:600;color:var(--g-lime)}
+.atlas-glass :is(.ai-kicker,.rom-kicker,.learning-kicker,.tour-counter,.rom-gauge-label){font-family:var(--g-sans);font-weight:600;color:var(--g-accent-text)}
 .atlas-glass :is(.tour-step h3,.rom-muscles-head h3,.plaque-panel h3){font-family:var(--g-display);font-weight:600;color:#fff}
 .atlas-glass .rom-gauge-value{font-family:var(--g-display);font-weight:600;color:#fff}
 .atlas-glass :is(.ai-model-badge,.ai-selection){border-radius:999px;background:var(--g-chip);border:1px solid var(--g-line);color:var(--g-ink-2)}
 .atlas-glass .ai-message{border-radius:18px}
-.atlas-glass .ai-message-user{background:#fff;color:#1d4079;border-bottom-right-radius:6px}
+.atlas-glass .ai-message-user{background:var(--g-accent);color:var(--g-accent-ink);border-bottom-right-radius:6px}
 .atlas-glass .ai-message-assistant{background:var(--g-chip);border-color:var(--g-line);color:#fff;border-bottom-left-radius:6px}
 .atlas-glass .ai-message-error{border-color:rgb(255 150 130/.5);background:rgb(255 120 100/.16)}
 .atlas-glass :is(.ai-rich strong,.ai-rich-heading){color:#fff}
 .atlas-glass .ai-rich code{background:rgb(255 255 255/.16);color:#fff}
-.atlas-glass .ai-rich pre{background:rgb(10 30 70/.3)}
+.atlas-glass .ai-rich pre{background:rgb(0 0 0/.3)}
 .atlas-glass .ai-rich hr.ai-rule{border-top-color:var(--g-line-2)}
-.atlas-glass .ai-rich a{color:var(--g-lime)}
-.atlas-glass .ai-cursor{background:var(--g-lime)}
+.atlas-glass .ai-rich a{color:var(--g-accent-text)}
+.atlas-glass .ai-cursor{background:var(--g-accent)}
 .atlas-glass .ai-typing i{background:rgb(255 255 255/.75)}
 .atlas-glass .ai-error{border-top-color:rgb(255 150 130/.35)}
 .atlas-glass .ai-error strong{color:#ffd2c8}
@@ -203,7 +201,7 @@
 .atlas-glass .ai-config-hint code{background:rgb(255 255 255/.16)}
 .atlas-glass :is(.ai-prompt,.info-card-chip,.learning-secondary,.rom-secondary){border:1px solid var(--g-line-2);border-radius:999px;background:var(--g-chip);color:#fff;font-family:var(--g-sans);letter-spacing:0;text-transform:none}
 .atlas-glass :is(.ai-prompt,.info-card-chip,.learning-secondary,.rom-secondary):hover{background:var(--g-chip-2);color:#fff}
-.atlas-glass .ai-action-chip{border-radius:999px;border-color:rgb(220 245 90/.45);background:rgb(220 245 90/.16);color:var(--g-lime)}
+.atlas-glass .ai-action-chip{border-radius:999px;border-color:rgb(47 102 245/.45);background:rgb(47 102 245/.16);color:var(--g-accent-text)}
 .atlas-glass .ai-composer{border-radius:24px;border-color:var(--g-line-2);background:var(--g-chip)}
 .atlas-glass .ai-composer textarea{color:#fff}
 .atlas-glass .ai-composer textarea::placeholder{color:var(--g-ink-3)}
@@ -214,14 +212,14 @@
 /* Info card anchored to a structure */
 .atlas-glass .info-card{border-radius:22px}
 .atlas-glass .info-card-title strong{font-family:var(--g-display);font-size:18px;font-weight:600;color:#fff}
-.atlas-glass .info-card-latin{font-family:var(--g-sans);font-size:12.5px;font-style:italic;color:var(--g-lime)}
+.atlas-glass .info-card-latin{font-family:var(--g-sans);font-size:12.5px;font-style:italic;color:var(--g-accent-text)}
 .atlas-glass .info-card-system{font-family:var(--g-sans);color:var(--g-ink-3)}
 .atlas-glass .info-card-actions{border-top-color:var(--g-line)}
 .atlas-glass .info-card-ask{font-size:11.5px}
 
 /* Labels drawn in the 3D scene */
-.atlas-glass .floating-label{border:1px solid rgb(255 255 255/.4);border-radius:999px;background:rgb(52 96 170/.74);box-shadow:0 4px 14px rgb(14 42 92/.3);font-family:var(--g-sans);font-size:11px;font-weight:500;letter-spacing:0;color:#fff}
-.atlas-glass .part-hover{border:1px solid rgb(255 255 255/.35);border-radius:999px;padding:6px 13px;background:rgb(28 60 124/.86);box-shadow:0 8px 24px rgb(14 42 92/.4);color:#fff;font-family:var(--g-sans);font-size:13px;font-style:normal;font-weight:500}
+.atlas-glass .floating-label{border:1px solid rgb(150 180 255/.35);border-radius:999px;background:rgb(15 24 44/.84);box-shadow:0 4px 14px rgb(0 0 0/.3);font-family:var(--g-sans);font-size:11px;font-weight:500;letter-spacing:0;color:#fff}
+.atlas-glass .part-hover{border:1px solid rgb(150 180 255/.35);border-radius:999px;padding:6px 13px;background:rgb(15 24 44/.92);box-shadow:0 8px 24px rgb(0 0 0/.4);color:#fff;font-family:var(--g-sans);font-size:13px;font-style:normal;font-weight:500}
 
 /* First visit introduction */
 .atlas-glass .tour-step p{color:var(--g-ink-2)}
@@ -230,8 +228,8 @@
 /* ROM and plaque labs */
 .atlas-glass .rom-subtitle{color:var(--g-ink-2)}
 .atlas-glass .rom-status{border-radius:999px;background:var(--g-chip);color:#fff}
-.atlas-glass .rom-status-tracking{background:rgb(220 245 90/.18);color:var(--g-lime)}
-.atlas-glass .rom-status-tracking .rom-status-dot{background:var(--g-lime)}
+.atlas-glass .rom-status-tracking{background:rgb(47 102 245/.18);color:var(--g-accent-text)}
+.atlas-glass .rom-status-tracking .rom-status-dot{background:var(--g-accent)}
 .atlas-glass .rom-panel:has(.rom-video-wrap.is-flexing) .rom-status-tracking{background:rgb(255 130 100/.2);color:#ffc9bb}
 .atlas-glass .rom-status-lost{background:rgb(255 190 120/.18);color:#ffd9ad}
 .atlas-glass :is(.rom-steps,.rom-gauge-card,.rom-muscles-card){border-radius:18px;border:1px solid var(--g-line);background:var(--g-chip)}
@@ -239,7 +237,7 @@
 .atlas-glass .rom-steps em{border-color:var(--g-line-2);background:rgb(255 255 255/.18);color:#fff}
 .atlas-glass .rom-side-toggle{border-radius:999px;background:var(--g-chip)}
 .atlas-glass .rom-side-toggle button{border-radius:999px;color:var(--g-ink-2)}
-.atlas-glass :is(.rom-side-toggle button.active,.rom-side-toggle button[aria-pressed=true]){background:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass :is(.rom-side-toggle button.active,.rom-side-toggle button[aria-pressed=true]){background:var(--g-accent);color:var(--g-accent-ink)}
 .atlas-glass .rom-video-wrap{border-radius:20px;border-color:var(--g-line-2)}
 .atlas-glass :is(.rom-live-chip,.rom-flex-chip){border-radius:999px}
 .atlas-glass .rom-primary-stop{border-radius:999px;background:#ff8a73;border-color:#ff8a73;color:#3a0f06!important}
@@ -247,10 +245,10 @@
 .atlas-glass :is(.rom-gauge-value small,.rom-gauge-empty,.rom-range-labels,.rom-metric-row span,.rom-muscles-head span,.rom-muscle-meta span,.rom-muscles-idle,.rom-disclaimer){color:var(--g-ink-3)}
 .atlas-glass :is(.rom-metric-row strong,.rom-muscle-meta strong,.rom-muscle-card>em){color:#fff}
 .atlas-glass .rom-ring-track{stroke:rgb(255 255 255/.2)}
-.atlas-glass .rom-ring-value{stroke:var(--g-lime)}
-.atlas-glass :is(.rom-gauge-icon,.rom-disclaimer svg){color:var(--g-lime)}
+.atlas-glass .rom-ring-value{stroke:var(--g-accent)}
+.atlas-glass :is(.rom-gauge-icon,.rom-disclaimer svg){color:var(--g-accent-text)}
 .atlas-glass .rom-range-track{background:rgb(255 255 255/.18)}
-.atlas-glass .rom-range-fill{background:linear-gradient(90deg,#b8e33a,var(--g-lime))}
+.atlas-glass .rom-range-fill{background:linear-gradient(90deg,var(--g-accent),#40d5be)}
 .atlas-glass .rom-range-window{background:rgb(255 255 255/.2);box-shadow:inset 0 0 0 1px rgb(255 255 255/.35)}
 .atlas-glass .rom-muscles-card.is-active{border-color:rgb(255 150 130/.5);background:rgb(255 130 110/.12)}
 .atlas-glass .rom-muscles-card.phase-extension.is-active{border-color:rgb(150 190 255/.55);background:rgb(150 190 255/.14)}
@@ -261,7 +259,7 @@
 .atlas-glass .plaque-panel label{color:var(--g-ink-2)}
 .atlas-glass .plaque-panel svg text{fill:var(--g-ink-2)}
 .atlas-glass :is(.plaque-panel section p,.plaque-panel summary,.plaque-panel .perfusion-legend){color:var(--g-ink-3)}
-.atlas-glass .plaque-panel input[type=range]{accent-color:var(--g-lime)}
+.atlas-glass .plaque-panel input[type=range]{accent-color:var(--g-accent-text)}
 
 /* Panels rise in once instead of the plate's print reveal. */
 @keyframes glassIn{from{opacity:0;transform:translateY(10px)}}
@@ -283,16 +281,16 @@
 
 /* Details inside the labs and the about sheet */
 .atlas-glass :is(.rom-muscles-head h3,.plaque-panel h3){font-size:15px}
-.atlas-glass :is(.rom-video-wrap,.rom-canvas){background:#132a52}
-.atlas-glass .rom-video-placeholder{background:linear-gradient(160deg,#21427a,#132a52);color:var(--g-ink-2)}
+.atlas-glass :is(.rom-video-wrap,.rom-canvas){background:#0f182c}
+.atlas-glass .rom-video-placeholder{background:linear-gradient(160deg,#18243f,#0f182c);color:var(--g-ink-2)}
 .atlas-glass .about-copy a{font-size:13px;letter-spacing:0}
 .atlas-glass .plaque-panel input[type=range]{-webkit-appearance:none;appearance:none;height:28px;background:transparent;cursor:pointer}
 .atlas-glass .plaque-panel input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:rgb(255 255 255/.22)}
 .atlas-glass .plaque-panel input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:rgb(255 255 255/.22)}
-.atlas-glass .plaque-panel input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--g-lime)}
-.atlas-glass .plaque-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(10 40 90/.4),0 0 0 4px rgb(220 245 90/.4)}
-.atlas-glass .plaque-panel input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(10 40 90/.4),0 0 0 4px rgb(220 245 90/.4)}
-.atlas-glass .plaque-panel input[type=range]:focus-visible{outline:2px solid var(--g-lime);outline-offset:2px;border-radius:99px}
+.atlas-glass .plaque-panel input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--g-accent)}
+.atlas-glass .plaque-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(0 0 0/.4),0 0 0 4px rgb(47 102 245/.4)}
+.atlas-glass .plaque-panel input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgb(0 0 0/.4),0 0 0 4px rgb(47 102 245/.4)}
+.atlas-glass .plaque-panel input[type=range]:focus-visible{outline:2px solid var(--g-accent);outline-offset:2px;border-radius:99px}
 .atlas-glass .skeleton-coverage{margin:8px 14px;font-size:11px;line-height:1.5;color:inherit;opacity:.85}
 /* The structure card opens small. Dragging an edge, or the phone grab bar, changes its size.
    Labels keep their full height so a long Mongolian name is never clipped. */
@@ -320,7 +318,7 @@
    most; the tray behind the button fans out to its left as before. */
 .top-actions .search-button{display:flex}
 .atlas-glass .top-actions .search-button{margin-right:6px}
-.atlas-glass .top-actions .search-button.active{background:var(--g-lime);color:var(--g-lime-ink)}
+.atlas-glass .top-actions .search-button.active{background:var(--g-accent);color:var(--g-accent-ink)}
 @media(min-width:768px) and (min-height:601px){
  /* The card starts under the masthead buttons, so search and the assistant stay reachable while it is open. */
  body:not(:has(.studio.chat-open)) .detail-sheet{top:calc(88px + var(--site-nav-h))!important}
@@ -336,12 +334,12 @@
 .atlas-glass .system-note summary,.atlas-glass .skeleton-coverage summary,.atlas-glass .region-picker summary{cursor:pointer;font-family:var(--g-sans);font-size:12px;font-weight:500;color:var(--g-ink-3);list-style-position:inside}
 .atlas-glass .system-note summary:hover,.atlas-glass .skeleton-coverage summary:hover,.atlas-glass .region-picker summary:hover{color:#fff}
 .atlas-glass .system-note .structure-description{margin-top:6px;font-size:13.5px!important}
-.atlas-glass .study-note{display:flex;flex-direction:column;gap:6px;font-family:var(--g-sans);font-size:12px;font-weight:600;color:var(--g-lime)}
+.atlas-glass .study-note{display:flex;flex-direction:column;gap:6px;font-family:var(--g-sans);font-size:12px;font-weight:600;color:var(--g-accent-text)}
 .atlas-glass .study-note textarea{resize:vertical;min-height:64px;padding:10px 12px;border:1px solid var(--g-line-2);border-radius:14px;background:var(--g-chip);color:#fff;font:400 13px/1.5 var(--g-sans)}
 .atlas-glass .study-note textarea::placeholder{color:var(--g-ink-3)}
-.atlas-glass .study-note textarea:focus{outline:2px solid var(--g-lime);outline-offset:1px}
-.atlas-glass .detail-sheet .detail-save.active{color:var(--g-lime)}
-.atlas-glass .search-saved{display:inline;margin-right:6px;vertical-align:-2px;color:var(--g-lime)}
+.atlas-glass .study-note textarea:focus{outline:2px solid var(--g-accent);outline-offset:1px}
+.atlas-glass .detail-sheet .detail-save.active{color:var(--g-accent-text)}
+.atlas-glass .search-saved{display:inline;margin-right:6px;vertical-align:-2px;color:var(--g-accent-text)}
 .atlas-glass .search-result-alt[lang=la]{font-style:italic}
 
 /* Systems panel: the bone-count note and the regions fold into one line each. */
@@ -350,12 +348,12 @@
 .atlas-glass .region-picker summary{display:flex;align-items:center;gap:6px;padding:6px 0;color:#fff}
 .atlas-glass .region-list{display:flex;flex-wrap:wrap;gap:4px;padding-top:4px}
 .atlas-glass .region-list button{height:auto;min-height:30px;padding:5px 10px;border:1px solid var(--g-line-2);border-radius:999px;background:var(--g-chip);font-family:var(--g-sans);font-size:11.5px;color:#fff;white-space:normal;text-align:left}
-.atlas-glass .region-list button[aria-pressed=true]{background:var(--g-lime);border-color:transparent;color:var(--g-lime-ink)}
+.atlas-glass .region-list button[aria-pressed=true]{background:var(--g-accent);border-color:transparent;color:var(--g-accent-ink)}
 .atlas-glass .region-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--g-ink-3)}
 .atlas-glass .region-card{position:absolute;z-index:15;top:88px;right:16px;width:min(340px,calc(100% - 32px));padding:14px 16px 16px;border-radius:22px}
 .atlas-glass .region-card-head{display:flex;align-items:center;gap:10px}
 .atlas-glass .region-card-head strong{font-family:var(--g-display);font-size:16px;color:#fff}
-.atlas-glass .region-card-head i{flex:1;font-size:12.5px;color:var(--g-lime)}
+.atlas-glass .region-card-head i{flex:1;font-size:12.5px;color:var(--g-accent-text)}
 .atlas-glass .region-card-head .icon-button{min-width:32px;min-height:32px;border-radius:50%}
 .atlas-glass .region-card p{margin:4px 0 0;font-size:12.5px;line-height:1.5;color:var(--g-ink-2)}
 /* Phones: a strip above the dock, so the region stays in view above it. */
@@ -372,11 +370,11 @@
 .atlas-glass .spot-option{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;padding:9px 14px;border:1px solid var(--g-line-2)!important;border-radius:14px;background:var(--g-chip)!important;font-size:13.5px;text-align:left;color:#fff!important}
 .atlas-glass .spot-option:not(:disabled):hover{background:var(--g-chip-2)!important}
 .atlas-glass .spot-option:disabled{opacity:1;cursor:default}
-.atlas-glass .spot-option.is-right{background:rgb(220 245 90/.9)!important;border-color:transparent!important;color:var(--g-lime-ink)!important}
+.atlas-glass .spot-option.is-right{background:rgb(64 213 190/.9)!important;border-color:transparent!important;color:#062b25!important}
 .atlas-glass .spot-option.is-wrong{background:rgb(255 120 120/.35)!important;border-color:rgb(255 160 160/.7)!important}
 .atlas-glass .spot-feedback{font-size:13px;line-height:1.5;color:var(--g-ink-2)}
 .atlas-glass .spot-feedback strong{color:#fff}
-.atlas-glass .spot-latin{display:block;font-style:italic;color:var(--g-lime)}
+.atlas-glass .spot-latin{display:block;font-style:italic;color:var(--g-accent-text)}
 .atlas-glass .spot-actions{display:flex;justify-content:flex-end;gap:8px}
 .atlas-glass .spot-actions .primary-action{min-height:40px;padding:8px 18px}
 .atlas-glass .spot-panel .search-note{margin:0}

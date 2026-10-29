@@ -246,7 +246,7 @@ export default function Home(){
  },[atlas]);
  // The page sits under the shared navigation; a plain backdrop paints the strip behind it too, the glass room comes from CSS.
  return <div className="atlas-page" style={isGlass(appearance.background)?undefined:{background:appearance.background}}>
-  <SiteNav tone="glass" highlight={introTarget==='nav'}/>
+  <SiteNav highlight={introTarget==='nav'}/>
   <main className={`studio ${plaqueOpen?'vessel-lab':''} ${chatOpen?'chat-open':''}`}>
   {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={{...vesselState,perfusion:plaqueOpen?circuitFlow??undefined:undefined,plaque:plaqueOpen?wholePlaque??undefined:undefined,inspectorOpen:(details&&selectedParts.length>0)||romOpen||panel==='spot'||!!(activeRegion&&state.isolate)}} activations={activations} anchor={anchor} label={nameOf} onSelect={panel==='spot'?()=>{}:(id,point)=>{choosePart(id);if(plaqueOpen)setDetails(false);const part=parts.get(id);if(plaqueOpen&&placingPlaque&&part?.system==='arterial'&&point){setWholePlaque(createAtlasPlaque(part,wholePlaque?.narrowing??50,point));setPlacingPlaque(false);setDetails(false);}}} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>

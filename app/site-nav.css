@@ -4,7 +4,7 @@
 .site-nav{position:fixed;z-index:40;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(calc(100% - 24px),1080px);height:46px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:0 5px 0 16px;border-radius:999px;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:13px;line-height:1;letter-spacing:0;text-transform:none;-webkit-font-smoothing:antialiased;-webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%)}
 .site-nav a{color:inherit;text-decoration:none}
 .site-nav .site-brand{justify-self:start;display:flex;align-items:center;gap:9px;font-family:'Inter Tight',Inter,sans-serif;font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
-.site-mark{width:18px;height:18px;flex-shrink:0;border-radius:50%;background:conic-gradient(from 200deg,#2f5cff,#8a4dff,#ff3b55,#2f5cff);-webkit-mask:radial-gradient(circle,transparent 4.5px,#000 5px);mask:radial-gradient(circle,transparent 4.5px,#000 5px)}
+.site-mark{width:18px;height:18px;flex-shrink:0;border-radius:50%;background:conic-gradient(from 200deg,#2f66f5,#40d5be,#8fb7ff,#2f66f5);-webkit-mask:radial-gradient(circle,transparent 4.5px,#000 5px);mask:radial-gradient(circle,transparent 4.5px,#000 5px)}
 .site-links{display:flex;align-items:center;gap:2px;padding:3px;border-radius:999px}
 /* The links are words on wide screens; the icons take over on phones. */
 .site-nav .site-links svg{display:none}
@@ -15,22 +15,16 @@
 .site-nav .site-lang button{min-width:34px;height:30px;padding:0 8px;border:0;border-radius:999px;background:none;font:600 11px/1 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:.06em;color:inherit;opacity:.72;cursor:pointer;transition:background .2s,opacity .2s}
 .site-nav .site-lang button:hover,.site-nav .site-lang button.is-active{opacity:1}
 
-/* Light: frosted white over the paper pages */
-.site-nav.is-light{color:#15171c;background:rgb(255 255 255/.74);border:1px solid #15171c1c;box-shadow:0 10px 30px -14px rgb(21 23 28/.3)}
-.site-nav.is-light .site-links{background:#15171c0a}
-.site-nav.is-light :is(.site-links a,.site-login):hover,.site-nav.is-light .site-lang button:hover{background:#15171c12;color:#15171c}
-.site-nav.is-light :is(.site-links a,.site-login).is-active,.site-nav.is-light .site-lang button.is-active{background:#15171c;color:#fff}
-.site-nav.is-light .site-lang{border:1px solid #15171c24}
-.site-nav.is-light .site-login{border:1px solid #15171c33}
-.site-nav.is-light :is(a,button):focus-visible{outline:2px solid #2f5cff;outline-offset:2px}
-
-/* Glass: the same frosted pill as the atlas controls, with the lime accent */
-.site-nav.is-glass{color:#fff;border:1px solid transparent;background:linear-gradient(150deg,rgb(255 255 255/.26),rgb(255 255 255/.09)) padding-box,linear-gradient(140deg,rgb(255 255 255/.62),rgb(255 255 255/.1) 38%,rgb(255 255 255/.06) 62%,rgb(255 255 255/.32)) border-box;box-shadow:inset 0 1px 0 rgb(255 255 255/.3),0 14px 30px -16px rgb(14 42 92/.6)}
-.site-nav.is-glass .site-links,.site-nav.is-glass .site-lang{background:rgb(255 255 255/.12)}
-.site-nav.is-glass :is(.site-links a,.site-login):hover,.site-nav.is-glass .site-lang button:hover{background:rgb(255 255 255/.2);color:#fff}
-.site-nav.is-glass :is(.site-links a,.site-login).is-active,.site-nav.is-glass .site-lang button.is-active{background:#dcf55a;color:#25310a;box-shadow:0 6px 18px rgb(220 245 90/.4)}
-.site-nav.is-glass .site-login{border:1px solid rgb(255 255 255/.3)}
-.site-nav.is-glass :is(a,button):focus-visible{outline:2px solid #dcf55a;outline-offset:2px}
+/* Frosted navy, the AI teacher's card, on every page: pale blue words, a faint well behind the screens and the
+   teacher's blue for the page you are on. */
+.site-nav{color:var(--ui-ink-2);background:rgb(15 24 44/.78);border:1px solid var(--ui-line);box-shadow:inset 0 1px 0 rgb(150 180 255/.08),0 14px 30px -16px rgb(0 0 0/.7)}
+.site-nav .site-brand{color:var(--ui-ink)}
+.site-nav .site-links{background:rgb(150 180 255/.06)}
+.site-nav :is(.site-links a,.site-login):hover,.site-nav .site-lang button:hover{background:rgb(150 180 255/.12);color:var(--ui-ink)}
+.site-nav :is(.site-links a,.site-login).is-active,.site-nav .site-lang button.is-active{background:var(--ui-accent);color:#fff;box-shadow:0 6px 18px -4px rgb(47 102 245/.6)}
+.site-nav .site-lang{border:1px solid rgb(150 180 255/.22)}
+.site-nav .site-login{border:1px solid var(--ui-line-2)}
+.site-nav :is(a,button):focus-visible{outline:2px solid var(--ui-accent-text);outline-offset:2px}
 
 /* Narrower screens: sign-in shrinks to its icon, then the links tighten, so nothing runs past the bar. */
 @media(max-width:1080px){.site-nav .site-login span{display:none}.site-nav .site-login{width:36px;padding:0}}

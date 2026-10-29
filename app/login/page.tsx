@@ -8,6 +8,7 @@ import {useLang} from '../locale';
 import SiteNav from '../site-nav';
 import {supabase,supabaseConfigured} from '../../lib/supabase';
 import {explainAuthError} from '../auth-error';
+import '../auth.css';
 
 export default function LoginPage(){
   const {t,lang}=useLang();
@@ -68,13 +69,13 @@ export default function LoginPage(){
   }
 
   return(
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 pt-[calc(var(--site-nav-h)+16px)] pb-8">
-      <SiteNav tone="light"/>
-      <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-sm">
-        <p className="mb-2 text-xs font-medium tracking-[0.2em] text-slate-500">{t.auth.kicker}</p>
-        <h1 className="mb-1 text-3xl font-semibold text-slate-900">Anatomn</h1>
-        <p className="mb-6 text-sm text-slate-500">{t.auth.loginLead}</p>
-        {notice&&<p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>}
+    <main className="auth-page flex min-h-screen items-center justify-center px-4 pt-[calc(var(--site-nav-h)+16px)] pb-8">
+      <SiteNav/>
+      <div className="auth-card w-full max-w-sm rounded-3xl p-8">
+        <p className="auth-kicker mb-2 text-xs font-medium tracking-[0.2em]">{t.auth.kicker}</p>
+        <h1 className="mb-1 text-3xl font-semibold">Anatomn</h1>
+        <p className="auth-soft mb-6 text-sm">{t.auth.loginLead}</p>
+        {notice&&<p className="auth-notice mb-4 rounded-xl px-3 py-2 text-sm">{notice}</p>}
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">{t.auth.email}</Label>
@@ -84,11 +85,11 @@ export default function LoginPage(){
             <Label htmlFor="password">{t.auth.password}</Label>
             <Input id="password" type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"/>
           </div>
-          {error&&<p className="text-sm text-red-600">{error}</p>}
+          {error&&<p className="auth-error text-sm">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>{loading?t.auth.signingIn:t.auth.signIn}</Button>
         </form>
-        <p className="mt-6 text-center text-sm text-slate-500">
-          {t.auth.noAccount} <Link to="/signup" className="font-medium text-slate-900 underline">{t.auth.signUp}</Link>
+        <p className="auth-soft mt-6 text-center text-sm">
+          {t.auth.noAccount} <Link to="/signup" className="auth-link font-medium underline">{t.auth.signUp}</Link>
         </p>
       </div>
     </main>

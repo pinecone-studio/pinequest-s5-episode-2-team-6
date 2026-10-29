@@ -338,7 +338,7 @@ export default function AccountPage(){
   const waiting=(text:string)=>(
     <div className="dash">
       <div className="dash-bg" aria-hidden><i/><i/></div>
-      <SiteNav tone="glass"/>
+      <SiteNav/>
       <main className="dash-shell is-loading"><p className="dash-loading"><LoaderCircle size={18} className="dash-spin" aria-hidden/>{text}</p></main>
     </div>
   );
@@ -518,7 +518,7 @@ export default function AccountPage(){
   return(
     <div className="dash">
       <div className="dash-bg" aria-hidden><i/><i/></div>
-      <SiteNav tone="glass"/>
+      <SiteNav/>
       <main className="dash-shell" aria-busy={loading}>
         <div className="dash-notes dash-wide" aria-live="polite">
           {pageNotes.map(n=><NoteLine key={n.text} tone={n.tone} text={n.text}/>)}
@@ -536,7 +536,7 @@ export default function AccountPage(){
           </div>
           <ul className="dash-facts">
             {unlocked
-              ?<li className="is-lime"><Sparkles size={14} aria-hidden/>{premium&&expiresAt?dict.until(fmtDay(expiresAt)):dict.premiumAdmin}</li>
+              ?<li className="is-accent"><Sparkles size={14} aria-hidden/>{premium&&expiresAt?dict.until(fmtDay(expiresAt)):dict.premiumAdmin}</li>
               :<li>{dict.free}</li>}
             {user.email&&<li>{user.email}</li>}
           </ul>
@@ -667,7 +667,7 @@ export default function AccountPage(){
           <div className="dash-card-head">
             <h2 id="dash-premium">{dict.premium}</h2>
             {unlocked
-              ?<span className="dash-chip is-lime">{premium?dict.premium:dict.premiumAdmin}</span>
+              ?<span className="dash-chip is-accent">{premium?dict.premium:dict.premiumAdmin}</span>
               :<span className="dash-chip">{dict.free}</span>}
           </div>
           {premium&&expiresAt&&<p className="dash-lead">{dict.validNow}: <b>{fmtDay(expiresAt)}</b></p>}
@@ -763,7 +763,7 @@ export default function AccountPage(){
                         <td>{planName(payment.plan)}</td>
                         <td>{fmtMnt(payment.amount_mnt)}</td>
                         <td className={payment.discount_mnt>0?'':'is-faint'}>{payment.discount_mnt>0?`−${fmtMnt(payment.discount_mnt)}`:'—'}</td>
-                        <td><span className={`dash-chip ${payment.status==='completed'?'is-lime':payment.status==='rejected'?'is-coral':''}`}>{dict.status[payment.status]??payment.status}</span></td>
+                        <td><span className={`dash-chip ${payment.status==='completed'?'is-accent':payment.status==='rejected'?'is-coral':''}`}>{dict.status[payment.status]??payment.status}</span></td>
                         <td className="is-faint">{payment.reference||'—'}</td>
                       </tr>
                     ))}

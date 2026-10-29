@@ -1,0 +1,67 @@
+/* The admin console, in the same dark navy glass as the AI teacher page. */
+
+.admin-page {
+  /* Card, Badge, Button, Input and NativeSelect read these variables, so
+     restating the teacher palette here themes the shadcn surfaces without
+     repainting the light pages that share the same root tokens. */
+  --background: #0b1220;
+  --foreground: #e8eefc;
+  --card: rgba(15, 24, 44, 0.72);
+  --card-foreground: #e8eefc;
+  --popover: #131d33;
+  --popover-foreground: #e8eefc;
+  --primary: #2f66f5;
+  --primary-foreground: #fff;
+  --secondary: rgba(20, 32, 58, 0.55);
+  --secondary-foreground: #cdd9f5;
+  --muted: rgba(24, 36, 64, 0.6);
+  --muted-foreground: #a7b6d8;
+  --accent: rgba(34, 52, 92, 0.7);
+  --accent-foreground: #d7e2fb;
+  --destructive: #ff6e64;
+  --border: rgba(150, 180, 255, 0.18);
+  --input: rgba(150, 180, 255, 0.22);
+  --ring: #2f66f5;
+  color-scheme: dark;
+  color: #e8eefc;
+}
+
+/* The page is a centred column, so the room is painted once behind the whole
+   window; painting the column too would show its edges as a lighter box. */
+#root:has(.admin-page) {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(56, 132, 255, 0.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 110%, rgba(64, 220, 190, 0.12), transparent 55%),
+    #0b1220;
+}
+
+.admin-page [data-slot='card'] {
+  border-radius: 16px;
+  border: 1px solid rgba(150, 180, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.admin-page :is(input, select, textarea) {
+  background-color: rgba(20, 32, 58, 0.7);
+  color: #e8eefc;
+}
+
+.admin-page option {
+  background: #131d33;
+  color: #e8eefc;
+}
+
+/* The table and toggle markup uses Tailwind's light slate palette; these map
+   it onto the teacher's text and line colours. */
+.admin-page .text-slate-900 { color: #e8eefc; }
+.admin-page .text-slate-700 { color: #cdd9f5; }
+.admin-page :is(.text-slate-600, .text-slate-500) { color: #a7b6d8; }
+.admin-page .border-slate-100 { border-color: rgba(150, 180, 255, 0.1); }
+.admin-page .border-slate-200 { border-color: rgba(150, 180, 255, 0.22); }
+.admin-page .border-slate-900 { border-color: #2f66f5; }
+.admin-page .bg-slate-900 { background: #2f66f5; }
+.admin-page .bg-amber-50\/60 { background: rgba(255, 190, 90, 0.08); }
+.admin-page .text-emerald-700 { color: #7fe3cf; }
+.admin-page .text-amber-700 { color: #ffd08a; }
+.admin-page .text-red-600 { color: #ffb3ae; }

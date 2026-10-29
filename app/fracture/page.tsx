@@ -44,7 +44,7 @@ export default function FracturePage(){
  const preset=(mode:'intact'|'aligned'|'displaced')=>{setPlaying(false);setSettings(s=>({...INITIAL_FRACTURE,side:s.side,fractured:mode!=='intact',progress:mode==='intact'?0:1,...(mode==='aligned'?{displacement:0,shortening:0,angle:0}:{})}));};
  const slider=(key:'progress'|'displacement'|'shortening'|'angle',title:string,max:number,unit:string)=><label className="fracture-slider"><span>{title}<output>{Math.round(settings[key]*(key==='progress'?100:1))}{unit}</output></span><input type="range" min="0" max={max} step={key==='progress'?.01:1} value={settings[key]} onChange={e=>{setPlaying(false);setSettings(s=>({...s,fractured:true,[key]:Number(e.target.value)}));}}/></label>;
  return <main className="fracture-page">
-  <SiteNav tone="light"/>
+  <SiteNav/>
   <header className="fracture-heading"><p><Bone size={16}/> ANATOMN · {lang==='mn'?'ХУГАРЛЫН ЛАБ':'FRACTURE LAB'}</p><h1>{lang==='mn'?'Ясны хугарлын лаб':'Fracture lab'}</h1><p>{lang==='mn'?'Бүх араг ясны загвар дээр хугарлын хөдөлгөөнийг судлаарай.':'Explore fracture animations across the entire atlas skeleton. Name a bone, watch the break, and understand each stage.'}</p></header>
   <SimulationPrompt atlas={atlas} onRun={runSimulation} onBones={request=>{setPlaying(false);setBoneRequest(request);setMode('catalogue');setRequestId(value=>value+1);}}/>
   {catalogueError&&<p role="alert">{lang==='mn'?'Ясны жагсаалтыг ачаалж чадсангүй.':'Could not load the bone catalogue.'} <button onClick={()=>setCatalogueAttempt(value=>value+1)}>Retry / Дахин оролдох</button></p>}

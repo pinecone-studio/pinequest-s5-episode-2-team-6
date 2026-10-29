@@ -1,0 +1,73 @@
+/* Sign-in and sign-up, in the same dark navy glass as the AI teacher page. */
+
+.auth-page {
+  /* Input, Label and Button read these variables, so restating the teacher
+     palette here themes the shadcn controls on these two pages only. */
+  --background: #0b1220;
+  --foreground: #e8eefc;
+  --primary: #2f66f5;
+  --primary-foreground: #fff;
+  --muted-foreground: #6c7ea6;
+  --destructive: #ff6e64;
+  --border: rgba(150, 180, 255, 0.18);
+  --input: rgba(150, 180, 255, 0.22);
+  --ring: #2f66f5;
+  color-scheme: dark;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(56, 132, 255, 0.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 110%, rgba(64, 220, 190, 0.12), transparent 55%),
+    #0b1220;
+  color: #e8eefc;
+}
+
+.auth-page .auth-card {
+  background: rgba(15, 24, 44, 0.72);
+  border: 1px solid rgba(150, 180, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 22px 44px -18px rgba(0, 0, 0, 0.55);
+}
+
+.auth-page .auth-kicker {
+  color: #8fb7ff;
+}
+
+.auth-page .auth-soft {
+  color: #a7b6d8;
+}
+
+.auth-page .auth-link {
+  color: #9cc2ff;
+  text-underline-offset: 3px;
+}
+
+.auth-page .auth-error {
+  color: #ffb3ae;
+}
+
+.auth-page .auth-notice {
+  background: rgba(64, 213, 190, 0.14);
+  border: 1px solid rgba(64, 213, 190, 0.4);
+  color: #b7f3e8;
+}
+
+.auth-page [data-slot='label'] {
+  color: #cdd9f5;
+}
+
+.auth-page [data-slot='input'] {
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(20, 32, 58, 0.7);
+  color: #e8eefc;
+}
+
+.auth-page [data-slot='input']:focus-visible {
+  border-color: #2f66f5;
+}
+
+.auth-page [data-slot='button'] {
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 600;
+}

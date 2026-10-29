@@ -7,11 +7,10 @@ import './site-nav.css';
 
 // One navigation bar for every page: the brand (which is also the way home), the screens, the language and the
 // profile (sign-in until someone is signed in). It is fixed to the top; each page keeps --site-nav-h clear for it.
-// "glass" sits on the blue rooms (the atlas glass backdrop, the Plaque lab and the quiz), "light" on the paper
-// pages. The screens come in two groups: what to explore (the atlas and the two labs) and how to study (the AI
-// teacher, quizzes, exams). Wide screens show the names, phones the icons.
+// It wears the AI teacher's navy on every page. The screens come in two groups: what to explore (the atlas and the
+// two labs) and how to study (the AI teacher, quizzes, exams). Wide screens show the names, phones the icons.
 // `highlight` rings the bar while the atlas's phone guide is explaining it.
-export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 'light'; highlight?: boolean; onNavigate?: () => void}) {
+export default function SiteNav({highlight, onNavigate}: {highlight?: boolean; onNavigate?: () => void}) {
   const {lang, setLang, langs, t} = useLang();
   const {user} = useAuth();
   const account = user ? {to: '/profile', label: t.site.account, Icon: UserRound} : {to: '/login', label: t.site.signIn, Icon: LogIn};
@@ -28,7 +27,7 @@ export default function SiteNav({tone, highlight, onNavigate}: {tone: 'glass' | 
     ],
   ];
   return (
-    <header className={`site-nav is-${tone} ${highlight ? 'intro-target' : ''}`}>
+    <header className={`site-nav ${highlight ? 'intro-target' : ''}`}>
       <Link to="/" className="site-brand" aria-label={`Anatomn, ${t.site.home}`} title={t.site.home} onClick={onNavigate}>
         <span className="site-mark" aria-hidden />
         <span className="site-brand-name">Anatomn</span>

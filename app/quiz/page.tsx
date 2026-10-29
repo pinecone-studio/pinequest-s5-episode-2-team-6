@@ -236,7 +236,7 @@ export default function QuizPage(){
 
  return <div className="qz" ref={page}>
   <div className="qz-bg" aria-hidden><i/><i/></div>
-  <SiteNav tone="glass"/>
+  <SiteNav/>
   <main className={`qz-shell is-${stage}`}>
    {stage==='setup'&&<section className="qz-card qz-glass qz-intro" aria-busy={busy}>
     <span className="qz-icon" aria-hidden><ListChecks size={26}/></span>

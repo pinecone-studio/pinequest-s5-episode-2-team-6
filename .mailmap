@@ -1,0 +1,8 @@
+# One contributor, four recorded identities: the GitHub web editor signed the
+# merge commits as the account display name, five commits carry a typo'd email,
+# and three merges (#74-#76) were made on a machine configured with a
+# teammate's email. The last line matches name *and* email, so that teammate's
+# own commits stay attributed to them.
+thenemoooo <nyamsurennyamod8@gmail.com>
+thenemoooo <nyamsurennyamod8@gmail.com> <nyamsurennyamod9@gmail.com>
+thenemoooo <nyamsurennyamod8@gmail.com> Nyamod Nyamsuren <wless976@gmail.com>

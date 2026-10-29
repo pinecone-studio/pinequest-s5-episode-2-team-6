@@ -3,7 +3,8 @@ import {Button} from '@/components/ui/button';
 import {RotateCcw,X} from 'lucide-react';
 import type {Atlas} from './anatomy';
 import {useLang} from './locale';
-import {renalColor,renalFlow,renalTerritory,renalLessonPreview,type RenalPreview,type RenalSite} from './plaque-model';
+import {renalColor,renalTerritory,renalLessonPreview,type RenalPreview,type RenalSite} from './plaque-model';
+import {renalHemodynamics} from './plaque-hemodynamics';
 import './plaque.css';
 // The lab has its own route (/plaque) in the navigation bar; the atlas opens this panel while that route is
 // active and closing it goes back to /atlas.
@@ -13,7 +14,8 @@ export default function PlaquePanel({atlas,open,onPreview,onClose}:{atlas:Atlas|
  const narrowing=comparing?0:chosenNarrowing;
  const [supplyStage,setSupplyStage]=useState(2);
  const [site,setSite]=useState<RenalSite>('main'),sites:RenalSite[]=['main','superior','inferior','posterior'];
- const {flow,arterialLoss}=renalFlow(narrowing,length),percent=Math.round(flow*100),gap=40*(1-narrowing/100),a=160-length,b=160+length;
+ const [inlet,setInlet]=useState(100),hemo=renalHemodynamics(narrowing,length,site,inlet),baseline=renalHemodynamics(0,length,site,inlet);
+ const flow=hemo.selectedFlow/baseline.selectedFlow,arterialLoss=hemo.pressureDrop/(inlet-5),percent=Math.round(flow*100),gap=40*(1-narrowing/100),a=160-length,b=160+length;
  const territory=atlas?renalTerritory(atlas,side):[],sideName=t.sides[side],scopeName=`${sideName} · ${t.locations[sites.indexOf(site)]}`;
  const close=useRef<HTMLButtonElement>(null),closeLab=useRef(onClose);
  // The atlas passes a fresh callback each render; reading it from a ref keeps the effects below to open/close.
@@ -51,11 +53,16 @@ export default function PlaquePanel({atlas,open,onPreview,onClose}:{atlas:Atlas|
     </svg><p>{t.cutawayNote}</p>
    </section>
    <section className="rom-gauge-card"><h3>{t.circuit}</h3><div aria-live="polite"><span className="rom-gauge-label">{t.flow}</span><div className="rom-gauge-value">{percent}<small>%</small></div></div><div className="rom-range-track" aria-hidden="true"><div className="rom-range-fill" style={{width:`${percent}%`}}/></div><div className="rom-range-labels"><span>{t.noFlow}</span><span>{t.baseline}</span></div><div className="rom-metric-row"><div><span>{t.pressureLoss}</span><strong>{Math.round(arterialLoss*100)}%</strong></div><div><span>{t.narrowingShort}</span><strong>{narrowing}%</strong></div><div><span>{t.segmentShort}</span><strong>{length} {t.mm}</strong></div></div><p>{t.pressureNote}</p>
-    <details><summary>{t.assumptions}</summary><p>{t.assumptionsText}</p></details>
+    <label htmlFor="plaque-inlet">{t.inletPressure}<output>{inlet} mmHg</output></label><input id="plaque-inlet" type="range" min="60" max="180" value={inlet} disabled={comparing} onChange={event=>setInlet(Number(event.target.value))}/>
+    <div className="rom-metric-row plaque-hemo-metrics">{[`${hemo.totalFlow.toFixed(1)} mL/min`,`${hemo.selectedFlow.toFixed(1)} mL/min`,hemo.velocity===null?t.noLumen:`${hemo.velocity.toFixed(2)} m/s`,`${hemo.pressureDrop.toFixed(2)} mmHg`].map((value,index)=><div key={index}><span>{t.hemoLabels[index]}</span><strong>{value}</strong></div>)}</div>
+    <p>{t.branchReadout}</p><ul>{hemo.branchFlows.map((q,index)=><li key={index}>{t.locations[index+1]}: {q.toFixed(1)} mL/min · {hemo.distalPressures[index].toFixed(1)} mmHg</li>)}</ul>
+    <p>{t.pressurePath(hemo.upstream,hemo.downstream)}</p>
+    <details><summary>{t.assumptions}</summary><p>{t.assumptionsText}</p><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6107783/" target="_blank" rel="noreferrer">{t.assumptions} ↗</a></details>
    </section>
+   <section className="rom-muscles-card">{t.physiology.map(([heading,text])=><details key={heading}><summary>{heading}</summary><p>{text}</p></details>)}<a href="https://www.niddk.nih.gov/health-information/kidney-disease/renal-artery-stenosis" target="_blank" rel="noreferrer">NIDDK ↗</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4551215/" target="_blank" rel="noreferrer">{t.physiology[2][0]} ↗</a></section>
    <p className="perfusion-legend"><span style={{background:renalColor(0)}}/>{t.legendNone} <span style={{background:renalColor(.5)}}/>50% <span style={{background:renalColor(1)}}/>{t.legendFull}</p>
    <p className="rom-muscles-idle" role="status">{territory.length?t.supplyLabel(scopeName,percent):t.waiting}</p>
-   <Button variant="outline" className="rom-secondary" onClick={()=>{setComparing(false);setNarrowing(0);setLength(20);}}><RotateCcw size={15}/>{t.reset}</Button>
+   <Button variant="outline" className="rom-secondary" onClick={()=>{setComparing(false);setNarrowing(0);setLength(20);setInlet(100);}}><RotateCcw size={15}/>{t.reset}</Button>
    <p className="rom-disclaimer">{t.disclaimer} <a href="https://www.niddk.nih.gov/health-information/kidney-disease/renal-artery-stenosis" target="_blank" rel="noreferrer">{t.about}</a></p>
   </aside>;
 }

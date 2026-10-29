@@ -177,7 +177,7 @@ export async function gradeCases(config: LlmConfig, request: GradeRequest, signa
     .map(question => {
       const answer = (request.answers[String(question.id)] ?? '').trim();
       return [
-        `Асуулт id=${question.id} (${question.points} оног)`,
+        `Асуулт id=${question.id} (${question.points} оноо)`,
         `Бодлого: ${question.prompt}`,
         `Rubric: ${question.rubric || 'тодорхойруулаагүй'}`,
         `Хариулт: ${answer || '(хоосон)'}`,

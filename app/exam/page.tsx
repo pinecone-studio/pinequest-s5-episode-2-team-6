@@ -84,7 +84,7 @@ const copy = {
     resume: 'Үргэлжлүүлэх',
     questions: 'асуулт',
     minutes: 'мин',
-    points: 'оног',
+    points: 'оноо',
     best: 'Шилдэг',
     attempts: 'Оролдлого',
     notPassed: 'Амжаагүй байна',

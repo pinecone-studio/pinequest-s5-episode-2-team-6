@@ -803,7 +803,7 @@ button:focus-visible,a:focus-visible{outline-color:var(--blood)}
 /* Only buttons need a position for the ring; the dock and the navigation bar are positioned already. */
 button.intro-target{position:relative}
 .intro-target::after{content:'';position:absolute;inset:-6px;border:2px solid var(--blood);border-radius:inherit;pointer-events:none;animation:introRing 1.6s ease-out infinite}
-.intro-spot{position:absolute;left:50%;top:34%;z-index:3;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:grid;place-items:center;background:var(--blood);color:var(--g-lime-ink,var(--paper));pointer-events:none;animation:introSpot 1.6s ease-out infinite}
+.intro-spot{position:absolute;left:50%;top:34%;z-index:3;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;display:grid;place-items:center;background:var(--blood);color:var(--g-accent-ink,var(--paper));pointer-events:none;animation:introSpot 1.6s ease-out infinite}
 .intro-spot.is-drag svg{animation:introDrag 2.4s ease-in-out infinite}
 @keyframes introRing{from{opacity:1;transform:scale(.97)}to{opacity:0;transform:scale(1.15)}}
 @keyframes introSpot{from{box-shadow:0 0 0 0 color-mix(in srgb,var(--blood) 60%,transparent)}to{box-shadow:0 0 0 24px transparent}}

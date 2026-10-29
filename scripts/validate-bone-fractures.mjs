@@ -29,6 +29,15 @@ assert.ok(names('left wrist fracture').every(name=>name.startsWith('Left')));
 for(const input of ['spiral femur','compression T7','open tibia fracture','greenstick radius'])assert.equal(resolve(input).error,'pattern');
 assert.equal(resolve('femoral neck fracture').error,'location');
 assert.equal(resolve('hello').error,'bone');
+for(const [prompt,bone,pattern,scenario] of [['Simulate Shoulder fall','Right clavicle','transverse','fall'],['Simulate Car crash','Right femur','segmental','crash'],['Simulate Sports impact','Right tibia','oblique','impact'],['Автомашины осол','Right femur','segmental','crash']]){
+ assert.deepEqual(names(prompt),[bone]);
+ assert.equal(resolve(prompt).request.pattern,pattern);
+ assert.equal(resolve(prompt).request.scenario,scenario);
+}
+assert.equal(resolve('backward fall').error,'bone','Keep the existing full-body fall lesson');
+assert.equal(resolve('car crash open fracture').error,'pattern','Scenarios cannot bypass unsupported fracture patterns');
+assert.deepEqual(names('car crash left tibia'),['Left tibia'],'Explicit bone selection takes priority over scenario defaults');
+assert.equal(resolveBoneRequest('car crash',[]).error,'bone','An unavailable preset bone must not recurse forever');
 const chunks=new Map();let contours=0;
 for(const part of bones){
  assert.ok(resolve(`Animate a fracture of ${part.name}`).request?.boneIds.includes(part.id),`Prompt cannot select ${part.name} (${part.id})`);

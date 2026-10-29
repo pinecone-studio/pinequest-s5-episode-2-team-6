@@ -4,6 +4,7 @@ import type {Atlas} from '../anatomy';
 import {useLang} from '../locale';
 import BoneScene from './bone-scene';
 import {fractureStage} from './bone-geometry';
+import {FractureClassification,ScenarioDiagram} from './fracture-guide';
 import type {BoneRequest,FracturePattern} from './bone-requests';
 
 const patterns:FracturePattern[]=['transverse','oblique','segmental'];
@@ -15,6 +16,7 @@ export default function BoneLab({atlas,request}:{atlas:Atlas;request:BoneRequest
  const [progress,setProgress]=useState(0),[playing,setPlaying]=useState(false),[ready,setReady]=useState(false),[reset,setReset]=useState(0);
  const current=useRef(progress);current.current=progress;
  const part=bones.find(bone=>bone.id===id)??bones[0],stage=fractureStage(progress);
+ useEffect(()=>{if(request.scenario)document.querySelector('.fracture-scenario')?.scrollIntoView({behavior:'smooth',block:'start'});},[request.scenario]);
  useEffect(()=>{setProgress(0);setPlaying(false);setReady(false);},[id,pattern,location]);
  useEffect(()=>{
   if(!playing||!ready)return;
@@ -28,6 +30,8 @@ export default function BoneLab({atlas,request}:{atlas:Atlas;request:BoneRequest
  return <section className="bone-lab" aria-label={mn?'Бүх ясны хугарлын үзүүлэн':'Full skeleton fracture explorer'}>
   <div className="bone-selection-heading"><h2>{part.name}</h2><p>{bones.length} {mn?'яс сонгогдсон · нэг нэгээр нь үзнэ':'matched mesh parts · inspect one at a time'}</p></div>
   <label className="bone-select-label">{mn?'Үзүүлэх яс':'Bone to animate'}<select value={part.id} onChange={event=>setId(event.target.value)}>{bones.map(bone=><option key={bone.id} value={bone.id}>{bone.name}{bones.filter(other=>other.name===bone.name).length>1?` (${bone.id})`:''}</option>)}</select></label>
+  {request.scenario&&<ScenarioDiagram id={request.scenario} progress={progress}/>}
+  <FractureClassification pattern={pattern} aligned={aligned} onChange={setPattern}/>
   <div className="fracture-layout">
    <section className="fracture-viewer"><BoneScene atlas={atlas} part={part} pattern={pattern} location={location} aligned={aligned} progress={progress} reset={reset} onReady={()=>{setReady(true);setPlaying(true);}}/><div className="fracture-legend"><span><i/>{mn?'Хэсэг 1':'Fragment 1'}</span><span><i/>{mn?'Хэсэг 2':'Fragment 2'}</span>{pattern==='segmental'&&<span><i/>{mn?'Хэсэг 3':'Fragment 3'}</span>}</div><p className="fracture-gesture">{mn?'Чирж эргүүлнэ · гүйлгэж томруулна':'Drag to rotate · scroll or pinch to zoom'}</p></section>
    <section className="fracture-controls">

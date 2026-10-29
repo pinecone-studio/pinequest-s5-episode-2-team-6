@@ -4,6 +4,7 @@ import {useLang} from '../locale';
 import type {Atlas} from '../anatomy';
 import {resolveSimulationRequest,type SimulationRequest} from './simulation-request';
 import {resolveBoneRequest,normalizeBoneText,type BoneRequest} from './bone-requests';
+import {FRACTURE_SCENARIOS} from './bone-requests';
 
 export default function SimulationPrompt({atlas,onRun,onBones}:{atlas:Atlas|null;onRun:(request:SimulationRequest)=>void;onBones:(request:BoneRequest)=>void}){
  const {lang}=useLang(),mn=lang==='mn';
@@ -30,6 +31,7 @@ export default function SimulationPrompt({atlas,onRun,onBones}:{atlas:Atlas|null
   <p>{mn?'Ясны нэр, тал, зүсэлтийн хэлбэрийг бичээрэй. Хөдөлгөөн болон тайлбарыг хамт үзүүлнэ.':'Describe a bone, side, and cut pattern. Explore every skeletal mesh in the atlas, with animated fragments and a step-by-step explanation.'}</p>
   <form onSubmit={submit}><label htmlFor="simulation-request">{mn?'Хүсэлт':'Your simulation request'}</label><div className="simulation-input-row"><textarea id="simulation-request" rows={2} maxLength={600} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={examples[0]} required/><button type="submit" disabled={!prompt.trim()}><Play size={16}/>{mn?'Үзүүлэх':'Run simulation'}</button></div></form>
   <div className="simulation-examples">{examples.map(example=><button key={example} onClick={()=>{setPrompt(example);run(example);}}>{example}</button>)}</div>
+  <div className="simulation-examples" role="group" aria-label={mn?'Ослын жишээнүүд':'Scenario examples'}>{FRACTURE_SCENARIOS.map(scenario=><button key={scenario.id} disabled={!atlas} onClick={()=>{const value=`Simulate ${scenario.en}`;setPrompt(value);run(value);}}>{mn?scenario.mn:scenario.en}</button>)}</div>
   <p className="simulation-feedback" role="status">{feedback}</p>
   <details className="bone-catalogue"><summary><Search size={14}/>{mn?'Бүх яснаас сонгох':'Browse every bone'} {bones.length>0&&`· ${bones.length}`}</summary><label htmlFor="bone-search">{mn?'Ясны нэрээр хайх':'Filter bone names'}</label><input id="bone-search" type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Femur, rib, phalanx…"/><div className="bone-catalogue-results">{filtered.map(bone=><button key={bone.id} onClick={()=>{setPrompt(`Animate a fracture of ${bone.name}`);setFeedback(`${bone.name} · ${bone.id}`);onBones({boneIds:[bone.id],pattern:'transverse',aligned:false,location:.5});}}>{bone.name}<small>{bone.id}</small></button>)}{!filtered.length&&<p>{mn?'Яс олдсонгүй.':'No matching bones.'}</p>}</div></details>
   <small>{mn?'Ясны нэрийг шууд сонгоно. Үр дүн нь сургалтын жишээ; гэмтэл урьдчилан таамаглахгүй.':'Prompts select named bones and supported cut patterns. Falls and impacts do not determine fracture outcomes in this geometry demonstration.'}</small>

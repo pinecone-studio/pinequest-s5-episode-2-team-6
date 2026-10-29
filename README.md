@@ -175,7 +175,7 @@ The repository includes browser-ready geometry. Rebuilding it is optional: obtai
 
 The app has a backend on [Supabase](https://supabase.com) (project: `wckcbyobgpjwiolsdjjd`). The client is set up in [`lib/supabase.ts`](lib/supabase.ts) and the auth hook in [`hooks/use-auth.ts`](hooks/use-auth.ts). It provides:
 
-- **Auth** — the signup (`/signup`) and login (`/login`) pages call `supabase.auth.signUp` / `signInWithPassword`. Email confirmation and password reset come from Supabase Auth for free.
+- **Auth** — the signup (`/signup`) and login (`/login`) pages call `supabase.auth.signUp` / `signInWithPassword`, and `/login` offers **Google-ээр нэвтрэх** through `supabase.auth.signInWithOAuth`. Email confirmation and password reset come from Supabase Auth for free.
 - **Profiles** — the name typed at signup is stored in `public.profiles` by a database trigger (`supabase/schema.sql`).
 - **Usage stats** — `public.usage_events` with an aggregate `public.usage_totals` view can back the landing-page tally instead of localStorage.
 - **Quiz results** — `public.quiz_results` stores per-user quiz history.
@@ -199,6 +199,17 @@ For local development they live in `.env.local` (gitignored — copy them from `
 - With Authentication → Providers → Email → **Confirm email** enabled, a new account cannot sign in until its emailed link is opened: `signUp` returns no session and `/signup` routes to `/login` with the check-your-email note. GoTrue rejects reserved domains such as `example.com`, so a throwaway test address needs a real-looking domain.
 - Both pages trim and lower-case the address, ignore a second submit while a request is in flight, and translate the raw GoTrue message into plain Mongolian through `app/auth-error.ts` (`invalid login credentials`, `Email not confirmed`, `User already registered`, …). After a successful sign-in the redirect uses `replace: true`, so Back does not return to the form.
 - Signing out from `/profile` waits for `supabase.auth.signOut()` to finish: the page shows "Гарч байна…" instead of bouncing to `/login`, and a failed sign-out says so rather than pretending you left.
+
+### Google sign-in setup
+
+The button, the redirect and the waiting page are already in the app: `signInWithGoogle()` in [`hooks/use-auth.ts`](hooks/use-auth.ts) starts the PKCE flow, [`app/auth/callback/page.tsx`](app/auth/callback/page.tsx) receives Google on the way back and then continues to the page the student wanted. Google is a second-sided switch, though — the code cannot turn it on by itself. Until it is enabled, `/auth/v1/settings` lists only `email` and `/login` says the sign-in did not finish.
+
+1. **Google Cloud** → APIs & Services → Credentials → **Create OAuth client ID** (type *Web application*). Authorised redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`. Enable the *Sign in with Google API* from the OAuth consent screen.
+2. **Supabase Dashboard** → Authentication → **Sign In / Providers** → Google → paste the client ID and secret, then **Save**.
+3. **Supabase Dashboard** → Authentication → URL Configuration → set **Site URL** to the production origin and add every callback address actually used to **Redirect URLs**, e.g. `http://localhost:3016/auth/callback` and `https://<deployed-host>/auth/callback`. Vite falls back to 3017, 3018… so list the ports you use.
+4. Google's consent screen needs the deployed host under **Authorised domains** before strangers can sign in there.
+
+The PKCE code verifier lives in the same browser's localStorage, so the round trip only completes on the device that started it. The callback page waits four seconds for a session, and shows a way back to `/login` if none arrives.
 
 ### One-time database setup
 
@@ -260,7 +271,7 @@ const {data,error}=await supabase.from('quiz_results').insert({score:8,total:10}
 const {count}=await supabase.from('usage_events').select('*', {count:'exact',head:true});
 ```
 
-Hooks: `hooks/use-auth.ts` (session, `signOut`) and `hooks/use-subscription.ts` (`isAdmin`, `premium`, `expiresAt`). If the env vars are missing (`supabaseConfigured === false`), the login and signup pages still render and continue in demo mode so the rest of the atlas keeps working.
+Hooks: `hooks/use-auth.ts` (session, `signInWithGoogle`, `signOut`) and `hooks/use-subscription.ts` (`isAdmin`, `premium`, `expiresAt`). If the env vars are missing (`supabaseConfigured === false`), the login and signup pages still render and continue in demo mode so the rest of the atlas keeps working.
 
 ## Deploy
 

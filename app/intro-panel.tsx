@@ -1,16 +1,16 @@
 import {useEffect,useState,type ComponentType} from 'react';
-import {Activity,Box,Check,ChevronLeft,ChevronRight,Compass,Hand,House,Info,ListChecks,Menu,MousePointerClick,PersonStanding,Pointer,Search,SlidersHorizontal,Smartphone,Sparkles,X} from 'lucide-react';
+import {Activity,Bone,Box,Check,ChevronLeft,ChevronRight,Compass,Hand,House,Info,ListChecks,Menu,MousePointerClick,PersonStanding,Pointer,ScrollText,Search,SlidersHorizontal,Smartphone,Sparkles,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {useLang} from './locale';
 
-// First visit walkthrough. A desktop gets four short steps (turn, tap, search, ask); a phone gets its own
+// First visit walkthrough. Desktop covers navigation and both labs; a phone gets its own
 // guide, because there the controls are icons without labels: gestures, the bottom tools, what each icon at
 // the top opens, the menu, and adding the site to the home screen. Closing it is remembered on this device;
 // the footer's "How to use" button brings it back.
 const KEY = 'anatomn-intro-seen';
 
 // The control a step is about; the atlas rings it while the step is shown.
-export type IntroTarget = 'search' | 'ask' | 'dock' | 'top' | 'nav';
+export type IntroTarget = 'search' | 'ask' | 'dock' | 'top' | 'nav' | 'rom';
 type Icon = ComponentType<{size?: number}>;
 interface StepShape {
   icon: Icon;
@@ -25,14 +25,18 @@ const DESKTOP: StepShape[] = [
   {icon: MousePointerClick, spot: 'tap'},
   {icon: Search, target: 'search'},
   {icon: Sparkles, target: 'ask'},
+  {icon: PersonStanding, target: 'rom'},
+  {icon: Activity, target: 'nav'},
 ];
 const PHONE: StepShape[] = [
   {icon: Hand, spot: 'drag'},
   {icon: Pointer, spot: 'tap'},
   {icon: SlidersHorizontal, target: 'dock'},
   {icon: Sparkles, target: 'top', legend: [Sparkles, PersonStanding, Search, Info]},
-  {icon: Menu, target: 'nav', legend: [House, Box, Activity, ListChecks]},
+  {icon: Menu, target: 'nav', legend: [House, Box, Activity, Bone, ListChecks, ScrollText]},
   {icon: Smartphone},
+  {icon: PersonStanding, target: 'rom'},
+  {icon: Activity, target: 'nav'},
 ];
 export const introSteps = (phone: boolean) => (phone ? PHONE : DESKTOP);
 
@@ -107,7 +111,7 @@ export default function IntroPanel({step, phone, tucked, onStep, onClose}: Props
           <Icon size={24} />
         </div>
       )}
-      <section className={`learning-panel intro-panel glass ${tucked ? 'is-tucked' : ''}`} aria-label={t.intro.panel}>
+      <section className={`learning-panel intro-panel glass ${tucked ? 'is-tucked' : ''}`} data-target={shape.target} aria-label={t.intro.panel}>
         <header className="learning-head">
           <div>
             <p className="learning-kicker">

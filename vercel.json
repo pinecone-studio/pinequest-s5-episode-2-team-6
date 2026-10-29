@@ -8,11 +8,18 @@
     "api/chat.ts": {
       "maxDuration": 60,
       "supportsCancellation": true
+    },
+    "api/exam.ts": {
+      "maxDuration": 60,
+      "supportsCancellation": true
+    },
+    "api/auth.ts": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
     {
-      "source": "^/(?!api(?:/|$))(.*)$",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

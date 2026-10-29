@@ -12,7 +12,9 @@ const RULES=[
  // Laryngeal and nasal cartilages are airway structures.
  ['respiratory',/^(cricoid|thyroid|arytenoid|cuneiform|corniculate|major alar) cartilage$/],
  // Bones filed under respiratory or sensory organs.
- ['skeletal',/^(inferior nasal concha|lacrimal bone)$/],
+ ['skeletal',/^(inferior nasal concha|lacrimal bone|malleus|incus|stapes)$/],
+ // Costal cartilage supports the ribs but is not bone.
+ ['connective',/costal cartilage$/],
  ['connective',/^iliotibial tract$|^flexor retinaculum of wrist$/],
  ['digestive',/^gingiva of (upper|lower) jaw$/],
  // The liver's segments are its tissue, not veins; they belong with the caudate lobe under digestive.

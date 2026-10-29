@@ -1,0 +1,455 @@
+/* The /teacher page: the AI teacher chat, the Gray's chapter picker, the
+   per-chapter learning progress and the student's question history. */
+
+.teacher-page {
+  min-height: 100dvh;
+  padding-top: var(--site-nav-h, 56px);
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(56, 132, 255, 0.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 110%, rgba(64, 220, 190, 0.12), transparent 55%),
+    #0b1220;
+  color: #e8eefc;
+}
+
+.teacher-wrap {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 22px 20px 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .teacher-wrap {
+    grid-template-columns: 1fr;
+    padding: 16px 14px 32px;
+  }
+}
+
+.teacher-hero {
+  grid-column: 1 / -1;
+}
+
+.teacher-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fb7ff;
+  margin: 0 0 6px;
+}
+
+.teacher-title {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.teacher-sub {
+  margin: 8px 0 0;
+  max-width: 72ch;
+  color: #a7b6d8;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.teacher-sub a {
+  color: #9cc2ff;
+  text-underline-offset: 3px;
+}
+
+.teacher-chapters {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teacher-chip {
+  border: 1px solid rgba(150, 180, 255, 0.22);
+  background: rgba(20, 32, 58, 0.55);
+  color: #cdd9f5;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.teacher-chip:hover {
+  border-color: rgba(150, 180, 255, 0.45);
+}
+
+.teacher-chip.is-active {
+  background: #2f66f5;
+  border-color: #2f66f5;
+  color: #fff;
+  font-weight: 600;
+}
+
+.teacher-chip small {
+  opacity: 0.7;
+  margin-left: 5px;
+  font-size: 11px;
+}
+
+.teacher-chat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* A fixed height (not max-height) is what lets the message list shrink
+     and scroll while the input row stays pinned to the bottom. */
+  height: clamp(480px, calc(100dvh - var(--site-nav-h, 56px) - 210px), 920px);
+  background: rgba(15, 24, 44, 0.72);
+  border: 1px solid rgba(150, 180, 255, 0.18);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 900px) {
+  .teacher-chat {
+    height: max(420px, calc(100dvh - var(--site-nav-h, 56px) - 90px));
+  }
+}
+
+.teacher-messages {
+  flex: 1 1 auto;
+  /* Without min-height: 0 a flex child refuses to shrink below its content,
+     which pushed the input row out of the clipped panel after long answers. */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 18px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teacher-intro {
+  color: #a7b6d8;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 64ch;
+}
+
+.teacher-intro .ai-config-hint {
+  margin-top: 8px;
+  color: #f2b8b5;
+}
+
+.teacher-prompts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.teacher-prompt {
+  border: 1px solid rgba(150, 180, 255, 0.25);
+  background: rgba(28, 42, 74, 0.6);
+  color: #d7e2fb;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.teacher-prompt:hover:not(:disabled) {
+  border-color: rgba(150, 180, 255, 0.55);
+  background: rgba(34, 52, 92, 0.7);
+}
+
+.teacher-prompt:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.teacher-message {
+  max-width: min(720px, 92%);
+  line-height: 1.6;
+  font-size: 14.5px;
+}
+
+.teacher-message-user {
+  align-self: flex-end;
+  background: #2f66f5;
+  color: #fff;
+  border-radius: 14px 14px 4px 14px;
+  padding: 10px 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.teacher-message-assistant {
+  align-self: stretch;
+  max-width: none;
+  background: rgba(24, 36, 64, 0.6);
+  border: 1px solid rgba(150, 180, 255, 0.14);
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 16px;
+  overflow-wrap: anywhere;
+}
+
+.teacher-message-assistant h1,
+.teacher-message-assistant h2,
+.teacher-message-assistant h3 {
+  font-size: 15px;
+  margin: 14px 0 6px;
+  color: #cfe0ff;
+}
+
+.teacher-message-assistant p {
+  margin: 0 0 8px;
+}
+
+.teacher-message-assistant ul,
+.teacher-message-assistant ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.teacher-message-error {
+  border-color: rgba(255, 120, 110, 0.5);
+}
+
+.teacher-error {
+  margin-top: 8px;
+  color: #ffb3ae;
+  font-size: 13px;
+}
+
+.teacher-message-tools {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.teacher-tool-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(150, 180, 255, 0.22);
+  background: transparent;
+  color: #9db4e4;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.teacher-tool-button:hover {
+  border-color: rgba(150, 180, 255, 0.45);
+  color: #d7e2fb;
+}
+
+.teacher-form {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(150, 180, 255, 0.14);
+  background: rgba(11, 18, 32, 0.6);
+}
+
+.teacher-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid rgba(150, 180, 255, 0.22);
+  background: rgba(20, 32, 58, 0.7);
+  color: #e8eefc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  max-height: 120px;
+}
+
+.teacher-input:focus {
+  outline: none;
+  border-color: #2f66f5;
+}
+
+.teacher-input::placeholder {
+  color: #6c7ea6;
+}
+
+.teacher-send,
+.teacher-stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.teacher-send {
+  background: #2f66f5;
+  color: #fff;
+}
+
+.teacher-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.teacher-stop {
+  background: rgba(255, 110, 100, 0.16);
+  color: #ffb3ae;
+  border: 1px solid rgba(255, 110, 100, 0.4);
+}
+
+.teacher-clear {
+  margin-left: auto;
+  background: transparent;
+  color: #9db4e4;
+  border: 1px solid rgba(150, 180, 255, 0.22);
+}
+
+.teacher-clear:hover {
+  color: #d7e2fb;
+}
+
+.teacher-side {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.teacher-card {
+  background: rgba(15, 24, 44, 0.72);
+  border: 1px solid rgba(150, 180, 255, 0.18);
+  border-radius: 16px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.teacher-card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8fb7ff;
+}
+
+.teacher-progress-row {
+  display: grid;
+  gap: 9px;
+}
+
+.teacher-progress-item button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.teacher-progress-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #cdd9f5;
+}
+
+.teacher-progress-name span:last-child {
+  color: #7f92bb;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.teacher-progress-bar {
+  margin-top: 4px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(120, 145, 200, 0.18);
+  overflow: hidden;
+}
+
+.teacher-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f66f5, #40d5be);
+  transition: width 0.3s ease;
+}
+
+.teacher-progress-fill.l1 { width: 33%; }
+.teacher-progress-fill.l2 { width: 66%; }
+.teacher-progress-fill.l3 { width: 100%; }
+
+.teacher-progress-empty {
+  color: #7f92bb;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.teacher-history {
+  display: grid;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.teacher-history-item {
+  width: 100%;
+  text-align: left;
+  background: rgba(24, 36, 64, 0.5);
+  border: 1px solid rgba(150, 180, 255, 0.14);
+  border-radius: 10px;
+  color: #cdd9f5;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+  transition: border-color 0.15s ease;
+}
+
+.teacher-history-item:hover {
+  border-color: rgba(150, 180, 255, 0.4);
+}
+
+.teacher-history-tag {
+  font-size: 11px;
+  color: #7f92bb;
+}
+
+.teacher-history-tag strong {
+  color: #9cc2ff;
+  font-weight: 600;
+}
+
+.teacher-history-empty {
+  color: #7f92bb;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* The typing dots are shared with the atlas assistant panel. */

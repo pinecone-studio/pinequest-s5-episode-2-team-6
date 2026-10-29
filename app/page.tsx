@@ -2,7 +2,7 @@ import {flushSync} from 'react-dom';
 import {registerAtlasTools} from './agent-tools';
 import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {useLocation,useNavigate} from 'react-router-dom';
-import {Activity,ArrowUpRight,ChevronRight,CircleQuestionMark,Focus,Info,Layers3,Palette,RotateCcw,Search,Sparkles,X,PersonStanding} from 'lucide-react';
+import {Activity,ArrowUpRight,ChevronRight,CircleQuestionMark,Focus,Info,Layers3,LayoutGrid,Palette,RotateCcw,Search,Sparkles,X,PersonStanding} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
 import {Slider} from '@/components/ui/slider';
@@ -11,10 +11,11 @@ import {Sheet,SheetContent,SheetTitle,SheetDescription} from '@/components/ui/sh
 import {Combobox,ComboboxInput,ComboboxContent,ComboboxList,ComboboxItem,ComboboxEmpty} from '@/components/ui/combobox';
 import {useFetch} from '@/hooks/use-fetch';
 import AnatomyScene from './scene';
+import {ADULT_BONE_COUNT,adultBoneInventory} from './skeleton';
 import {DEFAULT_VISIBLE,SYSTEMS,explanation,hasExplanation,type Atlas,type Concept,type SceneState,type SliceState,type SystemId} from './anatomy';
 import {BONE_SEARCH_SUGGESTIONS,boneOverview,boneRegionLabel,resolveBoneAtlas} from './bone-atlas';
 import {resolveStructureAtlas,structureGroupLabel,structureOverview} from './structure-atlas';
-import {resolveStructureFact} from './structure-facts';
+import {resolveStructureFact,structureFunction} from './structure-facts';
 import {mergeTerms} from './anatomy-standard';
 import {StandardFigures,useStandardPage} from './standard-figures';
 import RomPanel from './rom/RomPanel';
@@ -22,9 +23,8 @@ import PlaquePanel from './plaque-panel';
 import type {RenalPreview} from './plaque-model';
 import AiPanel from './ai-panel';
 import SheetResizer from './sheet-resizer';
+import SheetHandle from './sheet-handle';
 import IntroPanel,{introSeen,introSteps,usePhoneLayout,type IntroTarget} from './intro-panel';
-import PaywallDialog from './paywall';
-import {useSubscription} from '../hooks/use-subscription';
 import {describeStructure,findConcepts,nervePieces,type AssistantAction} from './ai-assistant';
 import type {AssistantSelection} from './llm-types';
 import {AnchorChannel} from './anchor';
@@ -46,14 +46,8 @@ export default function Home(){
  const [narrow,setNarrow]=useState(false);
  useEffect(()=>{const mq=window.matchMedia("(max-width: 767px)");const on=()=>setNarrow(mq.matches);on();mq.addEventListener("change",on);return()=>mq.removeEventListener("change",on);},[]);
  const navigate=useNavigate();
- const subscription=useSubscription();
- // Admins can open the labs without buying a plan, so they can verify the flow.
- const premium=subscription.premium||subscription.isAdmin;
- const [paywall,setPaywall]=useState(false);
- // The Plaque lab lives at /plaque in the navigation bar: the same atlas with the lab panel open. Free accounts
- // get the paywall and land back on /atlas, but only once the subscription lookup has settled.
- const plaqueRoute=useLocation().pathname==='/plaque',plaqueOpen=plaqueRoute&&premium;
- useEffect(()=>{if(plaqueRoute&&subscription.ready&&!subscription.loading&&!premium){setPaywall(true);navigate('/atlas',{replace:true});}},[plaqueRoute,subscription.ready,subscription.loading,premium]);
+ // Both labs are available directly, including without an account.
+ const plaqueRoute=useLocation().pathname==='/plaque',plaqueOpen=plaqueRoute;
  const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
  const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
@@ -64,7 +58,9 @@ export default function Home(){
  const anchor=useMemo(()=>new AnchorChannel(),[]);
  const catalogue=useFetch<Atlas>('/models/atlas.json'),atlas=catalogue.data;
  const [state,setState]=useState(initial),[progress,setProgress]=useState(0),[error,setError]=useState(''),[panel,setPanel]=useState<'layers'|'search'|'colors'|null>(null),[details,setDetails]=useState(false),[about,setAbout]=useState(false),[query,setQuery]=useState(''),[chosen,setChosen]=useState<Concept|null>(null),[romOpen,setRomOpen]=useState(false),[activations,setActivations]=useState<Record<string,number>>({});
- const [chatOpen,setChatOpen]=useState(false),[dock,setDock]=useState<'explode'|'layers'|'slice'>('explode');
+ const [chatOpen,setChatOpen]=useState(false),[dock,setDock]=useState<'explode'|'layers'|'slice'>('explode'),[sheetFull,setSheetFull]=useState(false);
+ // On phones the details sheet opens low for every new structure, so the structure itself stays in view.
+ useEffect(()=>setSheetFull(false),[chosen?.id,details]);
  // The scene reports its own failures through `error`; a catalogue failure comes from the fetch and can be retried in place.
  const failure=error||(catalogue.error?'The anatomy catalogue could not be loaded.':'');
  // First visit introduction: the step shown, or null when closed. It waits for the model to finish loading
@@ -88,6 +84,8 @@ export default function Home(){
  const peeled=useMemo(()=>peeledSystems(state.peel??0),[state.peel]);
  const sliceState=state.slice??DEFAULT_SLICE;
  const counts=useMemo(()=>Object.fromEntries(SYSTEMS.map(s=>[s.id,atlas?.parts.filter(p=>p.system===s.id).length??0])),[atlas]);
+ const adultBones=useMemo(()=>atlas?adultBoneInventory(atlas.parts):[],[atlas]);
+ const representedBones=adultBones.filter(b=>b.elements.length>0).length;
  const activeSystems=SYSTEMS.filter(s=>counts[s.id]>0);
  const selectedParts=state.selected.map(id=>parts.get(id)).filter(p=>!!p),selected=selectedParts[0],system=SYSTEMS.find(s=>s.id===selected?.system);
  const boneEntry=selected?.system==='skeletal'&&chosen?(resolveBoneAtlas(chosen.name)??resolveBoneAtlas(selected.name)):null;
@@ -136,13 +134,19 @@ export default function Home(){
   if(active){setDetails(false);setPanel(null);setChosen(null);setState(s=>({...s,visible:ROM_VISIBLE,explode:0,rotate:false,view:s.view==='back'?'side':s.view,reset:s.reset+1}));}
   else {setActivations({});setState(s=>({...s,selected:[],isolate:false}));}
  },[]);
- const openRom=()=>{if(!premium){setPaywall(true);return;}setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
+ const openRom=()=>{setDetails(false);setPanel(null);setAbout(false);setChatOpen(false);setRomOpen(true);};
  const openIntro=()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(false);setIntro(0);};
  const introTucked=chatOpen||panel!==null||(details&&state.selected.length>0)||romOpen||about||!!perfusion;
  // Phones get their own guide; each step can name a control, which then wears a pulsing ring.
  const phone=usePhoneLayout();
  const introTarget=intro===null?null:introSteps(phone)[Math.min(intro,introSteps(phone).length-1)].target;
  const ring=(...targets:IntroTarget[])=>introTarget&&targets.includes(introTarget)?'intro-target':'';
+ // The masthead tools fold into one button and fan out to its left. The intro opens the tray on the steps that
+ // point at them; a click elsewhere (but not on the intro itself) or Escape folds it again.
+ const [tools,setTools]=useState(false),toolsRef=useRef<HTMLElement>(null);
+ const toolsActive=chatOpen||romOpen||panel==='search';
+ useEffect(()=>{if(introTarget==='ask'||introTarget==='search'||introTarget==='top'||introTarget==='rom')setTools(true);},[introTarget]);
+ useEffect(()=>{if(!tools)return;const away=(e:PointerEvent)=>{const el=e.target as Element;if(!toolsRef.current?.contains(el)&&!el.closest?.('.intro-panel'))setTools(false);};const esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setTools(false);};document.addEventListener('pointerdown',away);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('pointerdown',away);document.removeEventListener('keydown',esc);};},[tools]);
  const toggleChat=()=>{setDetails(false);setPanel(null);setRomOpen(false);setAbout(false);setChatOpen(open=>!open);};
  // The assistant reads the same reference notes the interface shows and can drive the model.
  const brief=useMemo(()=>{
@@ -150,7 +154,7 @@ export default function Home(){
   const found=describeStructure(atlas,chosen.name);
   // Only a curated fact fills the function line; without one describeStructure repeats the overview's first sentence,
   // which the panel already shows above it.
-  return {name:chosen.name,latin:found.latin,system:selected?systemName(selected.system):found.system,function:resolveStructureFact(chosen.name)?.function??'',nerve:found.nerve};
+  const fact=resolveStructureFact(chosen.name);return {name:chosen.name,latin:found.latin,system:selected?systemName(selected.system):found.system,function:fact?structureFunction(fact,lang):'',nerve:found.nerve};
  },[atlas,chosen,lang,selected]);
  const assistantSelection=useMemo<AssistantSelection|null>(()=>{
   if(!atlas||!chosen||!selected)return null;
@@ -161,7 +165,7 @@ export default function Home(){
   if(action.kind==='view'){setState(s=>({...s,view:action.view,reset:s.reset+1,rotate:false}));return;}
   if(action.kind==='labels'){setState(s=>({...s,labels:action.on}));return;}
   // The quiz is its own page; the assistant sends the visitor there.
-  if(action.kind==='quiz'){navigate('/quiz');return;}
+  if(action.kind==='quiz'){navigate(action.topic?`/quiz?topic=${action.topic}`:'/quiz');return;}
   const ids=action.ids??[];
   if(!ids.length||!atlas)return;
   const first=atlas.parts.find(p=>p.id===ids[0]);
@@ -174,12 +178,6 @@ export default function Home(){
   const match=findConcepts(atlas,name,1)[0];
   if(!match)return;
   setChosen(match);setState(s=>({...s,selected:match.elements,isolate:false,rotate:false}));setDetails(true);setPanel(null);
- };
- const highlightConcept=()=>{
-  const concept=chosen?atlas?.concepts.find(c=>c.id===chosen.id):null;
-  const ids=concept?.elements??state.selected;
-  if(!ids.length)return;
-  setState(s=>({...s,selected:ids,isolate:false}));
  };
  const showNerve=()=>{
   if(!atlas||!brief?.nerve)return;
@@ -206,10 +204,9 @@ export default function Home(){
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
   <PlaquePanel atlas={atlas} open={plaqueOpen} onPreview={previewPlaque} onClose={()=>navigate('/atlas')}/>
-  <PaywallDialog open={paywall} onClose={()=>setPaywall(false)}/>
   {/* No visible title over the model; the heading stays for screen readers. */}
   <h1 className="sr-only">Anatomn</h1>
-  <nav className="top-actions" aria-label="Explorer panels"><Button variant="ghost" className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={toggleChat} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" className={`${romOpen?'active':''} ${ring('top')}`} onClick={()=>romOpen?setRomOpen(false):openRom()} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>openPanel('search')} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></nav>
+  <nav ref={toolsRef} className={`top-actions ${tools?'is-open':''}`} aria-label="Explorer panels"><div className="atlas-tools" id="atlas-tools"><Button variant="ghost" style={{'--i':3} as CSSProperties} className={`ask-button ${chatOpen?'active':''} ${ring('ask','top')}`} onClick={()=>{setTools(false);toggleChat();}} aria-pressed={chatOpen} aria-label={t.askAiLabel}><Sparkles size={16}/><span>{t.askAi}</span><kbd>A</kbd></Button><Button variant="ghost" style={{'--i':2} as CSSProperties} className={`${romOpen?'active':''} ${ring('rom','top')}`} onClick={()=>{setTools(false);romOpen?setRomOpen(false):openRom();}} aria-label={t.romLabel}><PersonStanding size={18}/><span>{t.rom}</span></Button><Button variant="ghost" style={{'--i':1} as CSSProperties} className={`${panel==='search'?'active':''} ${ring('search','top')}`} onClick={()=>{setTools(false);openPanel('search');}} aria-label={t.findLabel}><Search size={18}/><span>{t.find}</span><kbd>/</kbd></Button><Button variant="ghost" style={{'--i':0} as CSSProperties} className={`icon-button ${ring('top')}`} aria-label={t.aboutLabel} onClick={()=>{setTools(false);setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);setAbout(true);}}><Info size={18}/></Button></div><Button variant="ghost" className={`icon-button tools-toggle ${toolsActive&&!tools?'has-active':''}`} onClick={()=>setTools(open=>!open)} aria-expanded={tools} aria-controls="atlas-tools" aria-label={tools?t.hideTools:t.showTools}>{tools?<X size={18}/>:<LayoutGrid size={18}/>}</Button></nav>
   <AiPanel open={chatOpen} atlas={atlas} selection={assistantSelection} onAction={applyAction} onClose={()=>setChatOpen(false)}/>
   {intro!==null&&<IntroPanel step={intro} phone={phone} tucked={introTucked} onStep={setIntro} onClose={()=>setIntro(null)}/>}
   <RomPanel parts={romParts} open={romOpen} onClose={()=>setRomOpen(false)} onActivation={onActivation} onRomFocus={onRomFocus}/>
@@ -217,7 +214,8 @@ export default function Home(){
    <div className="panel-heading"><span>{t.systemsWord}</span><Button variant="ghost" className="colors-trigger" aria-label={t.customizeColors} aria-pressed={panel==='colors'} onClick={()=>openPanel('colors')}><Palette size={14}/>{t.colors}</Button><Button variant="ghost" className="mobile-only icon-button" onClick={()=>setPanel(null)} aria-label={t.closeSystems}><X size={18}/></Button><Badge variant="secondary" className="desktop-only small-number">{activeSystems.length}</Badge></div>
    <div className="layer-presets"><Button variant="ghost" aria-pressed={activeSystems.every(x=>state.visible.includes(x.id))} onClick={()=>setState(s=>({...s,selected:[],isolate:false,visible:activeSystems.map(x=>x.id)}))}>{t.all}</Button><Button variant="ghost" aria-pressed={state.visible.length===1&&state.visible[0]==='skeletal'} onClick={()=>setState(s=>({...s,selected:[],isolate:false,visible:['skeletal']}))}>{t.skeleton}</Button><Button variant="ghost" aria-pressed={state.visible.length===6&&['cardiac','respiratory','digestive','urinary','endocrine','reproductive'].every(id=>state.visible.includes(id as SystemId))} onClick={()=>setState(s=>({...s,selected:[],isolate:false,visible:['cardiac','respiratory','digestive','urinary','endocrine','reproductive']}))}>{t.organs}</Button></div>
    <div className="system-spectrum" aria-hidden>{activeSystems.map(s=><i key={s.id} className={state.visible.includes(s.id)?'on':''} style={{flexGrow:counts[s.id],background:appearance.colors[s.id]}}/>)}</div>
-   <div className="system-list">{activeSystems.map((s,i)=><div className={`system-row ${state.visible.includes(s.id)?'enabled':''}`} key={s.id} style={{'--sys':appearance.colors[s.id]} as CSSProperties}><Button variant="ghost" className="system-name" title={t.showOnly(systemName(s.id))} onClick={()=>setState(v=>({...v,visible:[s.id],isolate:false,selected:[]}))}><span className="system-index" aria-hidden>{String(i+1).padStart(2,'0')}</span><span className="system-dot"/><span className="system-label">{systemName(s.id)}</span><span className="system-leader" aria-hidden/><span className="system-count">{counts[s.id]}</span></Button><Switch checked={state.visible.includes(s.id)} onCheckedChange={()=>toggle(s.id)} aria-label={t.showSystem(systemName(s.id))} /></div>)}</div>
+   {atlas&&<p className="skeleton-coverage" role="note">{lang==='mn'?`Насанд хүрсэн хүний араг яс: ${ADULT_BONE_COUNT} яс. Атласт ${representedBones} ясны дүрслэл байна; ахар сүүлний тусдаа дүрслэл байхгүй. Өвчүүг нэг, хэлэн доорх ясыг нэг гэж тоолно. Нэмэлт тавхайн сесам яснуудыг 206-д оруулахгүй. Бусад тоо нь 3D хэсгийн тоо.`:`Adult skeleton: ${ADULT_BONE_COUNT} bones; ${representedBones} represented. No separate coccyx mesh is available. Sternum and hyoid each count as one; additional foot sesamoids are excluded from 206. Other counts refer to 3D meshes.`}</p>}
+   <div className="system-list">{activeSystems.map((s,i)=><div className={`system-row ${state.visible.includes(s.id)?'enabled':''}`} key={s.id} style={{'--sys':appearance.colors[s.id]} as CSSProperties}><Button variant="ghost" className="system-name" title={t.showOnly(systemName(s.id))} onClick={()=>setState(v=>({...v,visible:[s.id],isolate:false,selected:[]}))}><span className="system-index" aria-hidden>{String(i+1).padStart(2,'0')}</span><span className="system-dot"/><span className="system-label">{systemName(s.id)}</span><span className="system-leader" aria-hidden/><span className="system-count">{s.id==='skeletal'?`${representedBones}/${ADULT_BONE_COUNT}`:counts[s.id]}</span></Button><Switch checked={state.visible.includes(s.id)} onCheckedChange={()=>toggle(s.id)} aria-label={t.showSystem(systemName(s.id))} /></div>)}</div>
    <div className="panel-foot"><span>{t.piecesVisible(visibleCount.toLocaleString())}</span><Button variant="ghost" onClick={()=>setState(s=>({...s,visible:[],selected:[],isolate:false}))}>{t.hideAll}</Button></div>
   </section>
   {panel==='search'&&<section className="search-panel glass" aria-label={t.findLabel}><div className="panel-heading"><span>{t.find}</span><Button variant="ghost" className="icon-button" onClick={()=>setPanel(null)} aria-label={t.closeSearch}><X size={18}/></Button></div><Combobox<Concept> items={results} value={null} onValueChange={value=>{if(value)choose(value);}} inputValue={query} onInputValueChange={setQuery} itemToStringLabel={c=>nameOf(c.name)} filter={null} open onOpenChange={open=>{if(!open)setPanel(null);}}><ComboboxInput autoFocus placeholder={t.searchPlaceholder} aria-label={t.searchInput} showTrigger={false}/><ComboboxContent className="anatomy-search-results"><ComboboxEmpty>{t.noMatch}</ComboboxEmpty><ComboboxList>{(c:Concept)=><ComboboxItem key={c.id} value={c}><span className="search-result-name">{nameOf(c.name)}{nameOf(c.name)!==c.name&&<small className="search-result-alt">{c.name}</small>}</span><span className="small-number">{c.elements.length} {c.elements.length===1?t.piece:t.pieces}</span></ComboboxItem>}</ComboboxList></ComboboxContent></Combobox><p className="search-note">{query?t.searchRefine:t.searchNote}</p></section>}
@@ -226,7 +224,7 @@ export default function Home(){
   <footer className="studio-footer"><div className="footer-links"><Button variant="ghost" onClick={openIntro}><CircleQuestionMark size={12}/> {t.intro.reopen}</Button><Button variant="ghost" onClick={()=>{setDetails(false);setPanel(null);setAbout(true);}}>{t.credits} <ArrowUpRight size={12}/></Button></div></footer>
   {progress<100&&!failure&&<div className="loading glass" role="status"><Activity size={24} className="loading-pulse" aria-hidden/><div><strong>{t.preparing}</strong><span>{t.loading(progress,atlas?.parts.length.toLocaleString()??'2,234')}</span><div className="loading-track"><i style={{width:`${progress}%`}}/></div></div></div>}
   {failure&&<div className="loading glass error" role="alert"><p>{runtimeError(failure,lang)}</p><Button variant="ghost" onClick={catalogue.error?catalogue.reload:()=>location.reload()}>{t.reload}</Button></div>}
-  <Sheet open={details&&selectedParts.length>0} modal={false} disablePointerDismissal onOpenChange={setDetails}><SheetContent initialFocus={detailTitle} className={`detail-sheet glass ${state.isolate?'is-isolated':''}`} showCloseButton={true}><div className="detail-header"><div className="detail-accent" style={{background:system&&appearance.colors[system.id]}}/><div className="eyebrow">{system?systemName(system.id):t.anatomyWord}{reference&&reference.label!==(system&&systemName(system.id))&&<> · {reference.label}</>}</div><SheetTitle ref={detailTitle} tabIndex={-1} className="structure-title">{chosen&&nameOf(chosen.name)}</SheetTitle>{reference&&<p className="structure-latin">{reference.latin}</p>}{chosen&&nameOf(chosen.name)!==chosen.name&&<p className="structure-alt">{chosen.name}</p>}</div><div className="detail-scroll" key={`${chosen?.id}-${state.isolate}`}><SheetDescription className="structure-description">{reference?reference.overview:chosen&&selected?(hasExplanation(chosen.name)?explanation(chosen.name,selected.system,lang):systemDescription(selected.system,lang)):''}</SheetDescription>{brief?.function&&<p className="info-card-line"><b>{t.card.function}:</b> {brief.function}</p>}{brief?.nerve&&<p className="info-card-line"><b>{t.card.nerve}:</b> {nameOf(brief.nerve)}</p>}{reference?<Badge variant="secondary" className="bone-region-badge">{reference.label}</Badge>:chosen&&!hasExplanation(chosen.name)&&<span className="context-note">{t.systemOverview}</span>}<div className="structure-meta"><span>{t.atlasRef}<strong>{chosen?.id}</strong></span><span>{t.selectedPieces}<strong>{state.selected.length.toLocaleString()}</strong></span></div>{reference&&standardPage&&<StandardFigures key={reference.link} page={standardPage} link={reference.link}/>}{reference&&<div className="term-list"><h3>{t.terminology}</h3><ul>{referenceTerms.map(t=><li key={t.latin}><span className="term-latin">{t.latin}</span><span className="term-english">{t.english}</span></li>)}</ul></div>}{selectedParts.length>1&&<div className="member-list"><h3>{t.included}</h3>{selectedParts.slice(0,50).map(p=><Button variant="ghost" key={p.id} onClick={()=>choosePart(p.id)}><span>{nameOf(p.name)}</span><ChevronRight size={14}/></Button>)}{selectedParts.length>50&&<p>{t.andMore(selectedParts.length-50)}</p>}</div>}{reference&&<a className="source-link anatomy-standard-link" href={reference.link} target="_blank" rel="noreferrer">{t.openStandard} <ArrowUpRight size={14}/></a>}<a className="source-link" href="https://lifesciencedb.jp/bp3d/" target="_blank" rel="noreferrer">{t.viewSource} <ArrowUpRight size={14}/></a></div><div className="detail-actions"><Button variant="ghost" className="secondary-action" onClick={highlightConcept}>{t.card.highlight}</Button>{brief?.nerve&&<Button variant="ghost" className="secondary-action" onClick={showNerve}>{t.card.showNerve}</Button>}<Button variant="ghost" className="secondary-action" onClick={()=>{setPanel(null);setRomOpen(false);setChatOpen(true);}}><Sparkles size={14}/>{t.card.ask}</Button><Button className={`primary-action ${state.isolate?'active':''}`} onClick={()=>setState(s=>({...s,isolate:!s.isolate,explode:0}))}><Focus size={18}/>{state.isolate?t.showSurrounding:t.isolate}<ChevronRight size={16}/></Button><Button variant="ghost" className="secondary-action" onClick={()=>{setState(s=>({...s,selected:[],isolate:false}));setDetails(false);}}>{t.clearSelection}</Button></div><SheetResizer/></SheetContent></Sheet>
+  <Sheet open={details&&selectedParts.length>0} modal={false} disablePointerDismissal onOpenChange={setDetails}><SheetContent initialFocus={detailTitle} className={`detail-sheet glass ${state.isolate?'is-isolated':''} ${sheetFull?'is-full':''}`} showCloseButton={true}><SheetHandle full={sheetFull} onChange={setSheetFull} onClose={()=>setDetails(false)}/><div className="detail-header"><div className="detail-accent" style={{background:system&&appearance.colors[system.id]}}/><div className="eyebrow">{system?systemName(system.id):t.anatomyWord}{reference&&reference.label!==(system&&systemName(system.id))&&<> · {reference.label}</>}</div><SheetTitle ref={detailTitle} tabIndex={-1} className="structure-title">{chosen&&nameOf(chosen.name)}</SheetTitle>{reference&&<p className="structure-latin">{reference.latin}</p>}{chosen&&nameOf(chosen.name)!==chosen.name&&<p className="structure-alt">{chosen.name}</p>}</div><div className="detail-scroll" key={`${chosen?.id}-${state.isolate}`} onScroll={e=>{if(!sheetFull&&e.currentTarget.scrollTop>8)setSheetFull(true);}}><SheetDescription className="structure-description">{reference?reference.overview:chosen&&selected?(hasExplanation(chosen.name)?explanation(chosen.name,selected.system,lang):systemDescription(selected.system,lang)):''}</SheetDescription>{brief?.function&&<p className="info-card-line"><b>{t.card.function}:</b> {brief.function}</p>}{brief?.nerve&&<p className="info-card-line"><b>{t.card.nerve}:</b> {nameOf(brief.nerve)}</p>}{reference?<Badge variant="secondary" className="bone-region-badge">{reference.label}</Badge>:chosen&&!hasExplanation(chosen.name)&&<span className="context-note">{t.systemOverview}</span>}<div className="structure-meta"><span>{t.atlasRef}<strong>{chosen?.id}</strong></span><span>{t.selectedPieces}<strong>{state.selected.length.toLocaleString()}</strong></span></div>{reference&&standardPage&&<StandardFigures key={reference.link} page={standardPage} link={reference.link}/>}{reference&&<div className="term-list"><h3>{t.terminology}</h3><ul>{referenceTerms.map(t=><li key={t.latin}><span className="term-latin">{t.latin}</span><span className="term-english">{t.english}</span></li>)}</ul></div>}{selectedParts.length>1&&<div className="member-list"><h3>{t.included}</h3>{selectedParts.slice(0,50).map(p=><Button variant="ghost" key={p.id} onClick={()=>choosePart(p.id)}><span>{nameOf(p.name)}</span><ChevronRight size={14}/></Button>)}{selectedParts.length>50&&<p>{t.andMore(selectedParts.length-50)}</p>}</div>}{reference&&<a className="source-link anatomy-standard-link" href={reference.link} target="_blank" rel="noreferrer">{t.openStandard} <ArrowUpRight size={14}/></a>}<a className="source-link" href="https://lifesciencedb.jp/bp3d/" target="_blank" rel="noreferrer">{t.viewSource} <ArrowUpRight size={14}/></a></div><div className="detail-actions">{brief?.nerve&&<Button variant="ghost" className="secondary-action detail-nerve" onClick={showNerve}>{t.card.showNerve}</Button>}<Button variant="ghost" className="secondary-action detail-ask" onClick={()=>{setPanel(null);setRomOpen(false);setSheetFull(false);setChatOpen(true);}}><Sparkles size={14}/>{t.card.ask}</Button><Button className={`primary-action detail-isolate ${state.isolate?'active':''}`} onClick={()=>setState(s=>({...s,isolate:!s.isolate,explode:0}))}><Focus size={18}/>{state.isolate?t.showSurrounding:t.isolate}<ChevronRight size={16}/></Button><Button variant="ghost" className="secondary-action detail-clear" onClick={()=>{setState(s=>({...s,selected:[],isolate:false}));setDetails(false);}}>{t.clearSelection}</Button></div><SheetResizer/></SheetContent></Sheet>
   <Sheet open={about} onOpenChange={setAbout}><SheetContent className="about-sheet glass"><div className="eyebrow">{t.aboutKicker}</div><SheetTitle className="structure-title">{t.aboutTitle}</SheetTitle><SheetDescription>{t.aboutLead}</SheetDescription><div className="about-copy"><p><strong>{t.aboutBody}</strong><br/>{t.aboutP1}</p><p>{t.aboutP2}</p><p>{t.aboutP3}</p><h3>{t.aboutSource}</h3><p>BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International.</p><a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html" target="_blank" rel="noreferrer">{t.aboutLicense} <ArrowUpRight size={14}/></a><a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" target="_blank" rel="noreferrer">{t.aboutGeometry} <ArrowUpRight size={14}/></a><a href="https://academic.oup.com/nar/article/37/suppl_1/D782/1000752" target="_blank" rel="noreferrer">{t.aboutPaper} <ArrowUpRight size={14}/></a><p>{t.aboutZ}</p><a href="https://github.com/LluisV/Z-Anatomy" target="_blank" rel="noreferrer">{t.aboutZSource} <ArrowUpRight size={14}/></a><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{t.aboutCcSa} <ArrowUpRight size={14}/></a><h3>{t.aboutBone}</h3><p>{t.aboutBoneP}</p><a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noreferrer">{t.aboutCcNc} <ArrowUpRight size={14}/></a><a href="https://www.anatomystandard.com/" target="_blank" rel="noreferrer">Anatomy Standard <ArrowUpRight size={14}/></a></div></SheetContent></Sheet>
   </main>
  </div>;

@@ -29,10 +29,29 @@ export interface ChatTurn {
   content: string;
 }
 
+/** Per-chapter activity the teacher uses to pick its teaching depth. */
+export interface TeacherTopicLevel {
+  chapterId: string;
+  questions: number;
+  level: number;
+}
+
+/** Compact learning profile sent with each teacher turn. */
+export interface TeacherStudentContext {
+  topics: TeacherTopicLevel[];
+  recentQuestions?: string[];
+}
+
 export interface AssistantChatRequest {
   messages: ChatTurn[];
   selection?: AssistantSelection | null;
   references?: AssistantReference[];
+  /** 'teacher' selects the AI-teacher prompt; the default is the atlas assistant. */
+  mode?: 'assistant' | 'teacher';
+  /** Teacher mode: which Gray's chapter the question is anchored to. */
+  textbook?: {chapterId?: string};
+  /** Teacher mode: the saved learning profile of this student. */
+  student?: TeacherStudentContext;
 }
 
 export interface AssistantHealth {

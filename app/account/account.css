@@ -1,0 +1,188 @@
+/* The student's own page. It wears the quiz's blue room and frosted glass so the account reads as part of the
+   same app: lime for the one thing to do next, coral for what went wrong. Scoped under .dash because globals.css
+   styles bare h1/button/a for the atlas and locks html/body scrolling, so the page scrolls inside itself.
+   Button rules repeat with :hover because globals.css repaints hovered buttons. */
+.dash{
+ --dash-lime:#dcf55a;--dash-lime-ink:#25310a;--dash-coral:#ff9a86;--dash-coral-ink:#3a0d05;
+ --dash-muted:rgb(255 255 255/.8);--dash-faint:rgb(255 255 255/.6);
+ --dash-edge:linear-gradient(140deg,rgb(255 255 255/.62),rgb(255 255 255/.08) 38%,rgb(255 255 255/.06) 62%,rgb(255 255 255/.34));
+ --dash-fill:linear-gradient(150deg,rgb(255 255 255/.24),rgb(255 255 255/.07));
+ --dash-shadow:0 22px 44px -18px rgb(14 42 92/.5);
+ --dash-pad:16px;
+ position:fixed;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;isolation:isolate;
+ color:#fff;background:#4f84c4;font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+}
+.dash h1,.dash h2,.dash h3{display:block;margin:0;font-family:'Inter Tight',Inter,sans-serif;font-weight:600;letter-spacing:-.015em;line-height:1.2;color:inherit}
+.dash p{margin:0}
+.dash a{text-decoration:none}
+.dash :is(button,a):focus-visible{outline:2px solid var(--dash-lime);outline-offset:3px}
+
+.dash-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:
+ radial-gradient(55% 40% at 50% 18%,rgb(214 234 255/.55),transparent 72%),
+ radial-gradient(80% 55% at 0% 0%,rgb(158 200 246/.75),transparent 62%),
+ radial-gradient(70% 55% at 100% 100%,rgb(24 60 134/.75),transparent 70%),
+ linear-gradient(180deg,#7caade 0%,#548ac9 46%,#3a6db1 100%)}
+.dash-bg i{position:absolute;border-radius:50%;filter:blur(60px)}
+.dash-bg i:nth-child(1){width:70vmax;height:42vmax;left:-28vmax;top:42%;background:rgb(32 72 150/.45);transform:rotate(-24deg)}
+.dash-bg i:nth-child(2){width:46vmax;height:46vmax;right:-20vmax;top:-12vmax;background:rgb(255 255 255/.22)}
+
+.dash .dash-glass,.dash button.dash-glass:hover{
+ border:1px solid transparent;background:var(--dash-fill) padding-box,var(--dash-edge) border-box;
+ box-shadow:inset 0 1px 0 rgb(255 255 255/.32),var(--dash-shadow);
+ -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);
+}
+
+/* Layout: one column on a phone, the quiz's card width doubled into two columns on a wide screen. */
+.dash-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:min(100%,1080px);margin:0 auto;padding:calc(var(--site-nav-h) + env(safe-area-inset-top) + 14px) var(--dash-pad) calc(32px + env(safe-area-inset-bottom))}
+.dash-shell.is-loading{min-height:100%;place-items:center}
+.dash-card{display:flex;flex-direction:column;gap:14px;min-width:0;border-radius:28px;padding:20px}
+.dash-wide{grid-column:1/-1}
+.dash .dash-kicker{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:.14em;line-height:1.4;text-transform:uppercase;color:var(--dash-muted)}
+.dash-card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.dash h2{font-size:18px}
+.dash h3{font-size:15px}
+.dash-card-hint{font-size:12.5px;color:var(--dash-faint)}
+.dash .dash-head-link{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:#fff}
+.dash-empty{font-size:14px;line-height:1.5;color:var(--dash-muted)}
+.dash-loading{display:inline-flex;align-items:center;gap:10px;font-size:14px;color:var(--dash-muted)}
+
+/* Buttons */
+.dash .dash-primary,.dash button.dash-primary:hover{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:999px;font-size:15px;font-weight:600;white-space:nowrap;background:var(--dash-lime);color:var(--dash-lime-ink);box-shadow:0 10px 26px rgb(220 245 90/.38);transition:filter .2s,background .2s}
+.dash button.dash-primary:hover{filter:brightness(1.05)}
+.dash button.dash-primary:disabled{opacity:1;filter:none;background:rgb(255 255 255/.16);color:var(--dash-faint);box-shadow:inset 0 0 0 1px rgb(255 255 255/.22);cursor:default}
+.dash .dash-secondary,.dash button.dash-secondary:hover{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 20px;border-radius:999px;font-size:14.5px;font-weight:600;white-space:nowrap;color:#fff}
+.dash :is(a,button).dash-secondary:hover:not(:disabled){background:linear-gradient(150deg,rgb(255 255 255/.36),rgb(255 255 255/.14)) padding-box,var(--dash-edge) border-box}
+.dash button.dash-secondary:disabled{opacity:.55;cursor:default}
+.dash-spin{animation:dashSpin 1s linear infinite}
+@keyframes dashSpin{to{transform:rotate(1turn)}}
+
+/* Inputs: frosted wells with the lime focus ring the quiz uses. */
+.dash .dash-input{width:100%;height:46px;padding:0 14px;border-radius:14px;border:1px solid rgb(255 255 255/.28);background:rgb(255 255 255/.12);color:#fff;font-size:15px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s}
+.dash .dash-input::placeholder{color:var(--dash-faint)}
+.dash .dash-input:hover{background:rgb(255 255 255/.16)}
+.dash .dash-input:focus-visible{border-color:var(--dash-lime);background:rgb(255 255 255/.18);box-shadow:0 0 0 1px var(--dash-lime)}
+.dash .dash-input:disabled{opacity:.6;cursor:not-allowed}
+.dash-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dash-field>span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dash-muted)}
+
+/* Notes: page-wide ones under the bar, and one live line beside each action. */
+.dash-notes,.dash-status{display:flex;flex-direction:column;gap:8px}
+.dash-notes:empty,.dash-status:empty{display:none}
+.dash-note{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:16px;background:rgb(255 255 255/.14);border:1px solid rgb(255 255 255/.24);font-size:13.5px;line-height:1.45;color:#fff;overflow-wrap:anywhere}
+.dash-note svg{flex-shrink:0;margin-top:1px}
+.dash-note.is-ok{background:rgb(220 245 90/.2);border-color:rgb(220 245 90/.6)}
+.dash-note.is-error{background:var(--dash-coral);border-color:var(--dash-coral);color:var(--dash-coral-ink)}
+
+/* Overview */
+.dash-student{display:flex;align-items:center;gap:14px;min-width:0}
+.dash-avatar{display:grid;place-items:center;flex:none;width:64px;height:64px;border-radius:22px;background:var(--dash-lime);color:var(--dash-lime-ink);font-family:'Inter Tight',Inter,sans-serif;font-size:23px;font-weight:600;box-shadow:0 10px 26px rgb(220 245 90/.4)}
+.dash-who{display:flex;flex-direction:column;gap:3px;min-width:0}
+.dash h1{font-size:26px;overflow-wrap:anywhere}
+.dash-meta{font-size:13.5px;line-height:1.45;color:var(--dash-muted)}
+.dash-facts{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.dash-facts li{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid rgb(255 255 255/.24);background:rgb(255 255 255/.14);font-size:13px;font-weight:500}
+.dash-facts li.is-lime{border-color:var(--dash-lime);background:var(--dash-lime);color:var(--dash-lime-ink)}
+.dash-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0;padding:0;list-style:none}
+.dash-tile{display:flex;align-items:center;gap:11px;min-width:0;padding:12px;border-radius:18px;background:rgb(255 255 255/.12);border:1px solid rgb(255 255 255/.2)}
+.dash-tile-icon{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:12px;background:rgb(255 255 255/.18)}
+.dash-tile.is-accent .dash-tile-icon{background:var(--dash-lime);color:var(--dash-lime-ink)}
+.dash-tile b{display:block;font-family:'Inter Tight',Inter,sans-serif;font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.dash-tile small{display:block;font-size:12px;line-height:1.3;color:var(--dash-faint)}
+.dash-actions{display:flex;flex-wrap:wrap;gap:10px}
+.dash-hint{font-size:12.5px;line-height:1.45;color:var(--dash-faint)}
+
+/* Progress rings: exam average outside in lime, this week's active days inside in white. */
+.dash-progress{display:flex;flex-wrap:wrap;align-items:center;gap:20px;flex:1}
+.dash-ring{position:relative;flex:none;width:148px;height:148px}
+.dash-ring svg{display:block;transform:rotate(-90deg)}
+.dash-ring circle{fill:none;stroke-width:12;stroke-linecap:round;transition:stroke-dasharray .6s cubic-bezier(.2,.7,.2,1)}
+.dash-ring .is-track{stroke:rgb(255 255 255/.18)}
+.dash-ring .is-outer{stroke:var(--dash-lime)}
+.dash-ring .is-inner{stroke:#fff}
+.dash-ring .is-thin{stroke-width:10}
+.dash-ring-center{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:3px;text-align:center}
+.dash-ring-center strong{font-family:'Inter Tight',Inter,sans-serif;font-size:32px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.dash-ring-center span{max-width:84px;font-size:10.5px;line-height:1.25;color:var(--dash-faint)}
+.dash-legend{display:flex;flex-direction:column;gap:12px;flex:1;min-width:150px}
+.dash-legend div{padding-left:12px;border-left:3px solid var(--dash-lime)}
+.dash-legend div.is-white{border-color:#fff}
+.dash-legend strong{display:block;font-family:'Inter Tight',Inter,sans-serif;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.dash-legend span{font-size:12.5px;color:var(--dash-muted)}
+
+/* Weekly XP */
+.dash-chart{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:6px}
+.dash-bar-col{display:grid;flex:1;align-content:end;justify-items:center;gap:6px;min-width:0;height:100%}
+.dash-bar{width:100%;max-width:36px;min-height:4px;border-radius:10px 10px 6px 6px;background:var(--dash-lime);box-shadow:0 8px 20px -8px rgb(220 245 90/.6)}
+.dash-bar.is-empty{background:rgb(255 255 255/.18);box-shadow:none}
+.dash-bar-value{min-height:14px;font-size:11px;font-weight:600;color:var(--dash-muted)}
+.dash-bar-label{font-size:11.5px;color:var(--dash-faint)}
+.dash-bar-col.is-today .dash-bar-label{font-weight:600;color:#fff}
+
+/* What to study next, and exam results */
+.dash-list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.dash-topic,.dash-result{display:flex;align-items:center;gap:12px;min-width:0;padding:11px 12px 11px 14px;border-radius:18px;background:rgb(255 255 255/.1);border:1px solid rgb(255 255 255/.2)}
+.dash-topic>div,.dash-result>div{display:flex;flex:1;flex-direction:column;gap:6px;min-width:0}
+.dash-topic-name,.dash-result-title{font-size:14px;font-weight:500;line-height:1.35;overflow-wrap:anywhere}
+.dash-meter{position:relative;height:6px;border-radius:99px;background:rgb(255 255 255/.18);overflow:hidden}
+.dash-meter i{--pct:0;position:absolute;inset:0;border-radius:inherit;background:var(--dash-lime);transform-origin:left;transform:scaleX(var(--pct))}
+.dash-topic-n,.dash-result-score{flex:none;font-weight:600;font-variant-numeric:tabular-nums}
+.dash-topic-n{font-size:13px}
+.dash-result-score{font-family:'Inter Tight',Inter,sans-serif;font-size:20px}
+.dash-result-meta{font-size:12px;color:var(--dash-faint)}
+.dash .dash-round{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;background:rgb(255 255 255/.16);color:#fff;transition:background .2s}
+.dash .dash-round:hover{background:rgb(255 255 255/.28)}
+.dash-mark{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px}
+.dash-result.is-pass .dash-mark{background:var(--dash-lime);color:var(--dash-lime-ink)}
+.dash-result.is-fail .dash-mark{background:var(--dash-coral);color:var(--dash-coral-ink)}
+
+/* School details */
+.dash-form{display:grid;gap:12px}
+.dash-form-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+
+/* Premium */
+.dash-lead{font-size:14px;line-height:1.55;color:var(--dash-muted)}
+.dash-lead b{color:#fff}
+.dash-bank{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 14px;border-radius:16px;background:rgb(255 255 255/.1);border:1px dashed rgb(255 255 255/.34);font-size:13.5px}
+.dash-bank span{color:var(--dash-faint)}
+.dash-bank b{font-weight:600;color:#fff}
+.dash-plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.dash-plan,.dash-pay{display:flex;flex-direction:column;gap:10px;min-width:0;padding:16px;border-radius:22px;background:rgb(255 255 255/.1);border:1px solid rgb(255 255 255/.22)}
+.dash-plan-name{font-size:14px;font-weight:600;color:var(--dash-muted)}
+.dash-plan-price{font-family:'Inter Tight',Inter,sans-serif;font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.dash-plan-was{margin-left:8px;font-size:15px;font-weight:500;letter-spacing:0;color:var(--dash-faint);text-decoration:line-through}
+.dash-spend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:38px;font-size:13px;color:var(--dash-muted)}
+.dash .dash-spend .dash-input{width:96px;height:38px;border-radius:12px;font-size:14px}
+.dash-saving{font-size:13px;font-weight:600;color:var(--dash-lime)}
+.dash .dash-plan .dash-primary{width:100%;margin-top:auto}
+.dash-steps{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:20px;list-style:decimal;font-size:13.5px;line-height:1.5;color:var(--dash-muted)}
+.dash-pay-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px}
+.dash-chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:rgb(255 255 255/.16);font-size:11.5px;font-weight:600;white-space:nowrap}
+.dash-chip.is-lime{background:var(--dash-lime);color:var(--dash-lime-ink)}
+.dash-chip.is-coral{background:var(--dash-coral);color:var(--dash-coral-ink)}
+.dash-ref{display:flex;flex-direction:column;gap:8px}
+.dash-table{overflow-x:auto;border-radius:18px;border:1px solid rgb(255 255 255/.2);background:rgb(255 255 255/.08)}
+.dash-table table{width:100%;border-collapse:collapse;font-size:13.5px}
+.dash-table th{padding:10px 12px;font-size:11px;font-weight:600;letter-spacing:.08em;text-align:left;text-transform:uppercase;white-space:nowrap;color:var(--dash-faint)}
+.dash-table td{padding:10px 12px;border-top:1px solid rgb(255 255 255/.14);white-space:nowrap}
+.dash-table td.is-faint{color:var(--dash-faint)}
+
+.dash-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+
+@keyframes dashRise{from{opacity:0;transform:translateY(8px)}}
+.dash-card{animation:dashRise .32s cubic-bezier(.2,.7,.2,1) both}
+
+@media(min-width:560px){
+ .dash-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dash-ref{flex-direction:row;align-items:flex-end}
+ .dash-ref .dash-field{flex:1}
+}
+@media(max-width:559px){.dash-foot>*{flex:1 1 auto}.dash-actions>*{flex:1 1 auto}}
+@media(min-width:768px){
+ .dash-card{padding:24px 26px}
+ .dash h1{font-size:30px}
+}
+@media(min-width:900px){
+ .dash-shell{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding-top:calc(var(--site-nav-h) + env(safe-area-inset-top) + 28px)}
+}
+@media(max-width:360px){.dash{--dash-pad:12px}.dash-card{padding:18px 16px}.dash-ring{width:132px;height:132px}.dash-ring svg{width:132px;height:132px}.dash-tile{padding:10px;gap:9px}.dash-tile b{font-size:19px}}
+@media(prefers-reduced-motion:reduce){.dash *{animation:none!important;transition:none!important}}

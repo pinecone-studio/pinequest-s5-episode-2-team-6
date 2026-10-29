@@ -14,7 +14,7 @@
  * hands out more points than a question is worth cannot inflate a grade.
  */
 
-import {checkRateLimit, resolveLlmConfig, type LlmConfig, type LlmEnv} from './chat';
+import {checkRateLimit, resolveLlmConfig, type LlmConfig, type LlmEnv} from './chat.js';
 
 export interface CaseQuestion {
   id: number;

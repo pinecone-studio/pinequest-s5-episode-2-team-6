@@ -3,11 +3,15 @@
  * The browser never sees the provider key. `/api/chat` accepts a short chat
  * transcript plus the selected atlas context, calls Gemini or any
  * OpenAI-compatible chat-completions endpoint, and relays the answer as
- * server-sent events so the panel can render it as it arrives. */
+ * server-sent events so the panel can render it as it arrives.
+ *
+ * Relative imports here carry a `.js` suffix even though the sources are
+ * `.ts`: on Vercel these modules are transpiled to ESM and Node resolves the
+ * specifier verbatim, so an extensionless import fails at function start-up. */
 
-import type {AssistantChatRequest, AssistantHealth, AssistantReference, AssistantSelection, ChatTurn, TeacherStudentContext} from '../app/llm-types';
-import {buildTeacherSystemPrompt} from './teacher';
-import {CHAPTERS, chapterById} from '../app/teacher/textbook';
+import type {AssistantChatRequest, AssistantHealth, AssistantReference, AssistantSelection, ChatTurn, TeacherStudentContext} from '../app/llm-types.js';
+import {buildTeacherSystemPrompt} from './teacher.js';
+import {CHAPTERS, chapterById} from '../app/teacher/textbook.js';
 
 export type LlmEnv = Record<string, string | undefined>;
 

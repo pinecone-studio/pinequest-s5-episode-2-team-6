@@ -15,6 +15,7 @@ const ExamPage=lazy(()=>import('../app/exam/page'));
 const AccountPage=lazy(()=>import('../app/account/page'));
 const AdminPage=lazy(()=>import('../app/admin/page'));
 const FracturePage=lazy(()=>import('../app/fracture/page'));
+const TeacherPage=lazy(()=>import('../app/teacher/page'));
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<LoginPage/>}/>
         <Route path="/signup" element={<SignupPage/>}/>
         <Route path="/quiz" element={<QuizPage/>}/>
+        <Route path="/teacher" element={<TeacherPage/>}/>
         <Route path="/exam" element={<ExamPage/>}/>
         <Route path="/account" element={<AccountPage/>}/>
         <Route path="/admin" element={<AdminPage/>}/>

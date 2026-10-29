@@ -8,7 +8,7 @@ import {localName} from '../app/mongolian-names';
 import type {Lang} from '../app/landing/copy';
 
 /** The systems a paper can belong to. The rest of the atlas has no exam bank yet. */
-export type ExamGroupId = Extract<SystemId, 'skeletal' | 'muscular' | 'arterial' | 'venous' | 'nervous' | 'cardiac'>;
+export type ExamGroupId = Extract<SystemId, 'skeletal' | 'muscular' | 'arterial' | 'venous' | 'nervous' | 'cardiac'> | 'organs';
 
 export interface ExamGroup {
   id: ExamGroupId;
@@ -44,6 +44,11 @@ export const EXAM_GROUPS: ExamGroup[] = [
     parts: ['brain', 'spinal cord', 'optic nerve', 'trochlear nerve', 'median nerve', 'ulnar nerve', 'radial nerve', 'musculocutaneous nerve', 'axillary nerve', 'sciatic nerve', 'tibial nerve', 'common fibular nerve', 'femoral nerve', 'obturator nerve'],
   },
   {
+    id: 'organs',
+    mn: 'Дотор эрхтэн',
+    parts: ['heart', 'lung', 'trachea', 'esophagus', 'stomach', 'liver', 'pancreas', 'spleen', 'kidney', 'urinary bladder', 'small intestine', 'large intestine'],
+  },
+  {
     id: 'cardiac',
     mn: 'Зүрх',
     parts: ['heart', 'right atrium', 'left atrium', 'right ventricle', 'left ventricle'],
@@ -59,10 +64,12 @@ export function groupLabel(id: string, lang: Lang): string {
   const group = groupOf(id);
   if (!group) return id;
   if (lang === 'mn') return group.mn;
+  if (group.id === 'organs') return 'Internal organs';
   return SYSTEMS.find(system => system.id === group.id)?.name ?? group.id;
 }
 
 export function groupColor(id: string): string {
+  if (id === 'organs') return '#b8916b';
   return SYSTEMS.find(system => system.id === id)?.color ?? '#94a3b8';
 }
 

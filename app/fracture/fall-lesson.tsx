@@ -12,11 +12,11 @@ const copy={
  mn:{title:'Явган зам дээр арагш халтирч унах',lead:'Алхах → хөл урагш гулсах → арагш унах → баруун гараар ардаа тулах → баруун эгэм хугарах.',play:'Уналтыг тоглуулах',pause:'Түр зогсоох',replay:'Дахин тоглуулах',reset:'Шинээр эхлэх',view:'Харагдац сэргээх',timeline:'Уналтын явц',speed:'Тоглуулах хурд',phases:{walk:'Алхаж байна',slip:'Баруун өсгий халтирлаа',brace:'Баруун гараа сунгана',contact:'Баруун гар газарт тулна',fracture:'Баруун эгэм хугарна'},descriptions:{walk:'Дүрс явган замаар халтиргаатай хэсэг рүү алхана.',slip:'Баруун өсгий халтиргаатай хэсэг дээр урагш гулсана. Хөл аарцгаас урагшилж, биеийн дээд хэсэг арагш хазайна.',brace:'Арагш уналтаа тулахын тулд баруун гараа ардаа сунгаж, нөгөө гараа хажуу тийш хөдөлгөн тэнцвэрээ хадгалахыг оролдоно.',contact:'Баруун алга биеийн ард явган замд тулна. Алтан тасархай шугам нь гарнаас мөр рүү дамжих ачааллын замыг бүдүүвчлэн харуулна.',fracture:'Гараар тулсны дараа баруун эгэмний голд урьдчилан өгсөн хугарал үүснэ. Томруулсан дүрслэлээс ажигла.'},closeup:'Баруун эгэм · зэрэгцсэн томруулалт',legend:'Цэнхэр: өсгийн гулсалт · алтан: ачааллын зам · улбар шар: хугарал',gesture:'Чирж эргүүлнэ · хоёр хуруугаар ойртуулна',limits:'Атласын араг ясыг ашигласан сургалтын хөдөлгөөнт жишээ. Сунгасан гараар унахад эгэм хугарч болох ч гараар тулсан бүрд хугарахгүй. Үр дүнг урьдчилан өгсөн; цохилтын хүч, эдийн эвдрэл, гэмтэх магадлалыг тооцоогүй.',source:'Механизмын эх сурвалж: AAOS',ready:'Уналтыг тоглуулах товчийг дар эсвэл үе шатыг сонгож ажигла. Гулсуурыг буцааж хөдөлгөн өмнөх үеийг харж болно.'},
 };
 
-export default function FallLesson(){
+export default function FallLesson({autoPlay=false}:{autoPlay?:boolean}){
  const {lang}=useLang(),t=copy[lang];
  const ed=EDUCATION[lang];
- const [progress,setProgress]=useState(0),[playing,setPlaying]=useState(false),[speed,setSpeed]=useState(.5),[reset,setReset]=useState(0);
- const [guided,setGuided]=useState(true),[overlays,setOverlays]=useState(true),[focused,setFocused]=useState<AnatomyId|null>('clavicle');
+ const [progress,setProgress]=useState(0),[playing,setPlaying]=useState(autoPlay),[speed,setSpeed]=useState(.5),[reset,setReset]=useState(0);
+ const [guided,setGuided]=useState(!autoPlay),[overlays,setOverlays]=useState(true),[focused,setFocused]=useState<AnatomyId|null>('clavicle');
  const [activePrediction,setActivePrediction]=useState<PredictionId|null>(null),[answers,setAnswers]=useState<Partial<Record<PredictionId,number>>>({});
  const completed=useRef<PredictionId[]>([]),predictionRef=useRef<HTMLElement>(null);
  const current=useRef(progress);current.current=progress;
@@ -57,6 +57,7 @@ export default function FallLesson(){
    </section>
    <aside className="fall-inspector">
     <h2>{t.closeup}</h2>
+    <div className="simulation-bone-status" role="status"><strong>{lang==='mn'?'Хугарч буй яс':'Bone that breaks'}: {ed.structures.clavicle.name}</strong><p>{lang==='mn'?(pose.fracture>0?'Гол хэсгийн хугарал харагдаж байна.':'Одоогоор бүтэн — гараар тулсны дараа хугарал гарна.'):(pose.fracture>0?'Midshaft fracture now visible.':'Intact at this stage — fracture appears after hand contact.')}</p><small>{lang==='mn'?'Энэ жишээнд бусад ясыг хугараагүйгээр үзүүлнэ.':'The other bones remain unfractured in this demonstration.'}</small></div>
     <FractureScene settings={{...INITIAL_FRACTURE,side:'Right',progress:pose.fracture}} reset={reset} label={t.closeup}/>
     <div className="fall-explanation" aria-live="polite"><h3>{t.phases[pose.phase]}</h3><dl className="fall-stage-explanation"><dt>{ed.observe}</dt><dd>{lesson.observe}</dd><dt>{ed.anatomy}</dt><dd>{lesson.anatomy}</dd><dt>{ed.takeaway}</dt><dd>{lesson.takeaway}</dd></dl></div>
    </aside>

@@ -1,5 +1,4 @@
 .perfusion-legend{display:flex;align-items:center;justify-content:space-between;gap:8px}.perfusion-legend span{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-.studio.plaque-open .layers-panel,.studio.plaque-open .view-controls,.studio.plaque-open .bottom-dock,.studio.plaque-open .top-actions,.studio.plaque-open .identity-tools{visibility:hidden}
 .plaque-panel section{flex-shrink:0}.plaque-panel h3{font-size:13px;font-weight:700;color:#243444}.plaque-panel label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#445463}.plaque-panel input[type=range]{width:100%;accent-color:#2f9d8a;min-height:32px}
 .plaque-panel svg{width:100%;display:block}.plaque-panel svg text{font-size:11px;fill:#445463}.plaque-panel section p,.plaque-panel summary{font-size:12px;line-height:1.45;color:#6b7885}.plaque-panel a{text-decoration:underline}.plaque-panel summary{cursor:pointer}.plaque-panel .perfusion-legend{font-size:11px;color:#7b8793}
 @media(max-width:767px){.rom-panel.plaque-panel{top:auto;bottom:12px;max-height:48dvh}}
@@ -13,8 +12,8 @@
 .plaque-panel .plaque-compare[aria-pressed=true]{background:#315f4c;color:#fff}
 .plaque-panel input:disabled{opacity:.45;cursor:default}
 .atlas-circuit{margin:16px 0}.atlas-circuit-control{margin:12px 0}.atlas-circuit>button{white-space:normal;height:auto;min-height:44px}.atlas-circuit li{font-size:12px;line-height:1.6}
-.plaque-effects-text{white-space:pre-wrap;font-size:12px;line-height:1.7;overflow-wrap:anywhere}.plaque-effects button{min-height:44px;text-decoration:underline}.plaque-effects li{font-size:12px}
-.atlas-plaque-panel{z-index:24}.atlas-plaque-panel input[type=search]{width:100%;padding:10px;border:1px solid #6a7889;border-radius:8px;background:#203245;color:white}.atlas-plaque-panel p{font-size:12px;line-height:1.6}.atlas-plaque-panel>section{margin:12px 0}.atlas-plaque-return{position:absolute;z-index:26;right:24px;bottom:18px}
+.vessel-lab .layers-panel,.vessel-lab .bottom-dock,.vessel-lab .top-actions,.vessel-lab .view-controls,.vessel-lab .studio-footer{display:none}
+.atlas-plaque-panel{z-index:24}.atlas-plaque-panel input[type=search]{width:100%;padding:10px;border:1px solid #6a7889;border-radius:8px;background:#203245;color:white}.atlas-plaque-panel p{font-size:12px;line-height:1.6}.atlas-plaque-panel>section{margin:12px 0}
 .plaque-panel .plaque-hemo-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.plaque-panel .plaque-hemo-metrics strong{font-size:13px}
 .plaque-panel select{width:100%;padding:10px;margin:8px 0;border:1px solid currentColor;border-radius:8px;background:#203245;color:#fff;font:inherit;font-size:12px;min-height:44px}
 .plaque-supply-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:10px 0}.plaque-panel .plaque-supply-steps button{min-height:44px;padding:4px;font-size:11px;white-space:normal}.plaque-panel .plaque-supply-steps button[aria-pressed=true]{background:#315f4c;color:#fff}

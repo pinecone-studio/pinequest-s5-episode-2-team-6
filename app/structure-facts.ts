@@ -139,7 +139,7 @@ export const STRUCTURE_FACTS: StructureFact[] = [
   {
     id: 'biceps-brachii',
     name: 'Biceps brachii',
-    latin: 'Musculus biceps brachii',
+    latin: 'M. biceps brachii',
     function: 'Flexes the elbow and supinates the forearm.',
     nerve: 'musculocutaneous nerve',
     matchers: ['biceps brachii'],
@@ -163,7 +163,7 @@ export const STRUCTURE_FACTS: StructureFact[] = [
   {
     id: 'triceps-brachii',
     name: 'Triceps brachii',
-    latin: 'Musculus triceps brachii',
+    latin: 'M. triceps brachii',
     function: 'Extends the elbow and assists shoulder extension.',
     nerve: 'radial nerve',
     matchers: ['triceps brachii'],
@@ -677,7 +677,7 @@ export const STRUCTURE_FACTS: StructureFact[] = [
   {
     id: 'biceps-femoris',
     name: 'Biceps femoris',
-    latin: 'Musculus biceps femoris',
+    latin: 'M. biceps femoris',
     function: 'Flexes the knee and extends the hip.',
     nerve: 'sciatic nerve',
     matchers: ['biceps femoris'],
@@ -1067,10 +1067,13 @@ function nameMatches(normalized: string, matcher: string): boolean {
   return new RegExp(`(?:^|\\s)${escapeRegExp(token)}(?:\\s|$)`).test(normalized);
 }
 
+// Vessels and nerves named after what they reach ("deltoid branch of thoraco-acromial artery") are not that muscle.
+const VESSEL_OR_NERVE = /\b(arter(y|ies)|veins?|venous|nerves?|nervel|branch(es)?|plexus|nodes?|lymphatic|ganglion|ramus|vessels?)\b/;
+
 /** Match an atlas structure name to its function and innervation note. */
 export function resolveStructureFact(name: string): StructureFact | null {
   const n = normalizeName(name);
-  if (!n) return null;
+  if (!n || VESSEL_OR_NERVE.test(n)) return null;
 
   const ranked = STRUCTURE_FACTS.flatMap(entry =>
     entry.matchers.map(m => ({

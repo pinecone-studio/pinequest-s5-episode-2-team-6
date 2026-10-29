@@ -315,3 +315,71 @@
  .atlas-glass .detail-sheet{height:var(--detail-height,auto)!important;max-height:min(520px,calc(100dvh - var(--site-nav-h) - 96px))!important}
  .atlas-glass .detail-sheet[data-height]{max-height:calc(100dvh - var(--site-nav-h) - 24px)!important}
 }
+
+/* Study tools. Search stays on the masthead beside the tools button, since it is the control students reach for
+   most; the tray behind the button fans out to its left as before. */
+.top-actions .search-button{display:flex}
+.atlas-glass .top-actions .search-button{margin-right:6px}
+.atlas-glass .top-actions .search-button.active{background:var(--g-lime);color:var(--g-lime-ink)}
+@media(min-width:768px) and (min-height:601px){
+ /* The card starts under the masthead buttons, so search and the assistant stay reachable while it is open. */
+ body:not(:has(.studio.chat-open)) .detail-sheet{top:calc(88px + var(--site-nav-h))!important}
+ .atlas-glass body:not(:has(.studio.chat-open)) .detail-sheet{max-height:min(560px,calc(100dvh - var(--site-nav-h) - 172px))!important}
+ .atlas-glass body:not(:has(.studio.chat-open)) .detail-sheet[data-height]{max-height:calc(100dvh - var(--site-nav-h) - 100px)!important}
+}
+
+/* Card: the facts block, Latin beside a nerve, the folded system paragraph, notes. */
+.atlas-glass .card-facts{display:flex;flex-direction:column;gap:2px}
+.atlas-glass .card-facts:empty{display:none}
+.atlas-glass .card-facts .info-card-line{font-size:13px;line-height:1.5}
+.atlas-glass .card-facts [lang=la],.atlas-glass .info-latin{font-style:italic;color:var(--g-ink-2)}
+.atlas-glass .system-note summary,.atlas-glass .skeleton-coverage summary,.atlas-glass .region-picker summary{cursor:pointer;font-family:var(--g-sans);font-size:12px;font-weight:500;color:var(--g-ink-3);list-style-position:inside}
+.atlas-glass .system-note summary:hover,.atlas-glass .skeleton-coverage summary:hover,.atlas-glass .region-picker summary:hover{color:#fff}
+.atlas-glass .system-note .structure-description{margin-top:6px;font-size:13.5px!important}
+.atlas-glass .study-note{display:flex;flex-direction:column;gap:6px;font-family:var(--g-sans);font-size:12px;font-weight:600;color:var(--g-lime)}
+.atlas-glass .study-note textarea{resize:vertical;min-height:64px;padding:10px 12px;border:1px solid var(--g-line-2);border-radius:14px;background:var(--g-chip);color:#fff;font:400 13px/1.5 var(--g-sans)}
+.atlas-glass .study-note textarea::placeholder{color:var(--g-ink-3)}
+.atlas-glass .study-note textarea:focus{outline:2px solid var(--g-lime);outline-offset:1px}
+.atlas-glass .detail-sheet .detail-save.active{color:var(--g-lime)}
+.atlas-glass .search-saved{display:inline;margin-right:6px;vertical-align:-2px;color:var(--g-lime)}
+.atlas-glass .search-result-alt[lang=la]{font-style:italic}
+
+/* Systems panel: the bone-count note and the regions fold into one line each. */
+.atlas-glass .skeleton-coverage p{margin:6px 0 0}
+.atlas-glass .region-picker{margin:4px 2px 2px;padding-bottom:8px;border-bottom:1px solid var(--g-line)}
+.atlas-glass .region-picker summary{display:flex;align-items:center;gap:6px;padding:6px 0;color:#fff}
+.atlas-glass .region-list{display:flex;flex-wrap:wrap;gap:4px;padding-top:4px}
+.atlas-glass .region-list button{height:auto;min-height:30px;padding:5px 10px;border:1px solid var(--g-line-2);border-radius:999px;background:var(--g-chip);font-family:var(--g-sans);font-size:11.5px;color:#fff;white-space:normal;text-align:left}
+.atlas-glass .region-list button[aria-pressed=true]{background:var(--g-lime);border-color:transparent;color:var(--g-lime-ink)}
+.atlas-glass .region-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--g-ink-3)}
+.atlas-glass .region-card{position:absolute;z-index:15;top:88px;right:16px;width:min(340px,calc(100% - 32px));padding:14px 16px 16px;border-radius:22px}
+.atlas-glass .region-card-head{display:flex;align-items:center;gap:10px}
+.atlas-glass .region-card-head strong{font-family:var(--g-display);font-size:16px;color:#fff}
+.atlas-glass .region-card-head i{flex:1;font-size:12.5px;color:var(--g-lime)}
+.atlas-glass .region-card-head .icon-button{min-width:32px;min-height:32px;border-radius:50%}
+.atlas-glass .region-card p{margin:4px 0 0;font-size:12.5px;line-height:1.5;color:var(--g-ink-2)}
+/* Phones: a strip above the dock, so the region stays in view above it. */
+@media(max-width:767px){.atlas-glass .region-card{top:auto;bottom:calc(150px + env(safe-area-inset-bottom));left:12px;right:12px;width:auto}.atlas-glass .region-card p{font-size:12px}}
+
+/* Spot test: it takes the search panel's place on the right. */
+.atlas-glass .spot-panel{display:flex;flex-direction:column;gap:10px;max-height:calc(100dvh - var(--site-nav-h) - 200px);overflow-y:auto}
+.atlas-glass .spot-panel .panel-heading{gap:8px}
+.atlas-glass .spot-panel .panel-heading>span:first-child{flex:1;font-family:var(--g-display);font-weight:600}
+.atlas-glass .spot-topics{display:flex;flex-wrap:wrap;margin:0;border-radius:18px}
+.atlas-glass .spot-topics button{flex:1 0 30%;min-height:30px}
+.atlas-glass .spot-question{margin:4px 0 0;font-size:14px;font-weight:600;color:#fff}
+.atlas-glass .spot-options{display:flex;flex-direction:column;gap:6px}
+.atlas-glass .spot-option{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;padding:9px 14px;border:1px solid var(--g-line-2)!important;border-radius:14px;background:var(--g-chip)!important;font-size:13.5px;text-align:left;color:#fff!important}
+.atlas-glass .spot-option:not(:disabled):hover{background:var(--g-chip-2)!important}
+.atlas-glass .spot-option:disabled{opacity:1;cursor:default}
+.atlas-glass .spot-option.is-right{background:rgb(220 245 90/.9)!important;border-color:transparent!important;color:var(--g-lime-ink)!important}
+.atlas-glass .spot-option.is-wrong{background:rgb(255 120 120/.35)!important;border-color:rgb(255 160 160/.7)!important}
+.atlas-glass .spot-feedback{font-size:13px;line-height:1.5;color:var(--g-ink-2)}
+.atlas-glass .spot-feedback strong{color:#fff}
+.atlas-glass .spot-latin{display:block;font-style:italic;color:var(--g-lime)}
+.atlas-glass .spot-actions{display:flex;justify-content:flex-end;gap:8px}
+.atlas-glass .spot-actions .primary-action{min-height:40px;padding:8px 18px}
+.atlas-glass .spot-panel .search-note{margin:0}
+.atlas-glass .region-picker summary::-webkit-details-marker{display:none}
+.atlas-glass .region-picker summary::after{content:'+';margin-left:auto;font-size:15px;line-height:1;opacity:.75}
+.atlas-glass .region-picker[open] summary::after{content:'−'}

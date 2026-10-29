@@ -201,3 +201,9 @@
 }
 @media(max-width:360px){.qz{--qz-pad:12px}.qz-topic>span{padding:9px 10px;column-gap:8px}.qz-topic>span svg{width:32px;height:32px;padding:7px}.qz-chip>span{padding:0 11px}.qz-stats dd{font-size:19px}.qz-intro h1{font-size:26px}.qz-question h1{font-size:19px}.qz-score{padding:0 10px}}
 @media(prefers-reduced-motion:reduce){.qz *{animation:none!important;transition:none!important}}
+
+/* Side cards under the setup: the review deck and the way into the 3D spot test. */
+.qz-side{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.qz-side h2{display:flex;align-items:center;gap:8px;margin:0;font-size:17px}
+.qz-side p{margin:0;font-size:14px;line-height:1.55;opacity:.9}
+.qz-side .qz-primary,.qz-side .qz-secondary{width:100%}

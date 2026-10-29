@@ -33,7 +33,7 @@ export const CHAPTERS: TextbookChapter[] = [
     id: 'body',
     chapter: 1,
     en: 'The Body',
-    mn: 'Биеийн ерөнхий нэвтэрхий толь',
+    mn: 'Биеийн ерөнхий ойлголт',
     blurb: 'Анатомийн хэл, чиглэлийн нэр томьёо, зураглалын аргууд (рентген, CT, MRI, хэт авиан) болон биеийн үндсэн хуваарилалт.',
     topics: ['Terminology', 'Imaging', 'Body systems', 'Skin and fascia'],
     keywords: [
@@ -88,7 +88,7 @@ export const CHAPTERS: TextbookChapter[] = [
     id: 'abdomen',
     chapter: 4,
     en: 'The Abdomen',
-    mn: 'Гэдэсний хөндий',
+    mn: 'Хэвлийн хөндий',
     blurb: 'Гэдэсний хана, перитонеаль хөндий, хоол боловсруулах зам, элгэ, ходоод, дэлүү, бөөр ба бусад дотоод эрхтэн.',
     topics: ['Abdominal wall', 'Peritoneal cavity', 'GI tract', 'Liver', 'Kidneys'],
     keywords: [

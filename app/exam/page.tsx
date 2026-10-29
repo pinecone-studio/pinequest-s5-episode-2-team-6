@@ -6,7 +6,7 @@
 // against the stored rubric, and passing pays out XP once per paper.
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {Link,useSearchParams} from 'react-router-dom';
-import {Award,Check,CircleCheck,Clock,ListChecks,RotateCcw,Trophy} from 'lucide-react';
+import {Award,Check,CircleCheck,Clock,GraduationCap,ListChecks,RotateCcw} from 'lucide-react';
 import {Badge} from '@/components/ui/badge';
 import {Button,buttonVariants} from '@/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
@@ -25,6 +25,7 @@ const copy = {
     title: 'Exams',
     lead: 'A timed paper with real exam questions, grouped into bones, muscles, arteries, veins, nerves and internal organs. The score is calculated on the server, and passing earns XP.',
     back: 'Back to the atlas',
+    kicker: 'Anatomy papers',
     loading: 'Loading…',
     empty: 'No published exam yet.',
     start: 'Start exam',
@@ -85,6 +86,7 @@ const copy = {
     title: 'Шалгалт',
     lead: 'Шалгалтуудыг яс, булчин, артерийн судас, венийн судас, мэдрэлийн систем, дотор эрхтэн гэсэн 6 хэсэгт хуваасан. Оноог сервер тооцож, тэнцсэн бол XP олгоно.',
     back: 'Атлас руу буцах',
+    kicker: 'Анатомийн шалгалт',
     loading: 'Ачаалж байна…',
     empty: 'Одоогоор нээлттэй шалгалт байхгүй.',
     start: 'Шалгалт өгөх',
@@ -283,20 +285,21 @@ export default function ExamPage() {
     }
   }, [secondsLeft]);
 
-  if (!ready) return <main className="flex min-h-screen items-center justify-center text-slate-500">{t.loading}</main>;
+  if (!ready) return <main className="exam-page exam-faint flex min-h-screen items-center justify-center">{t.loading}</main>;
   if (!user)
     return (
-      <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
-        <SiteNav tone="light" />
-        <h1 className="mb-2 text-3xl font-semibold">{t.title}</h1>
-        <p className="mb-5 text-slate-600">{t.lead}</p>
+      <main className="exam-page mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8">
+        <SiteNav tone="glass" />
+        <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>
+        <h1 className="exam-title mb-2">{t.title}</h1>
+        <p className="exam-sub mb-5">{t.lead}</p>
         <p className="mb-3 font-medium">{t.guestLead}</p>
         <ul className="mb-6 grid gap-2 sm:grid-cols-2">
           {EXAM_GROUPS.map(group => (
-            <li key={group.id} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+            <li key={group.id} className="exam-group-row">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{background: groupColor(group.id)}} aria-hidden />
               <span className="flex-1">{groupLabel(group.id, lang)}</span>
-              <span className="text-sm text-slate-500">{t.guestTopics(group.parts.length)}</span>
+              <span className="exam-faint text-sm">{t.guestTopics(group.parts.length)}</span>
             </li>
           ))}
         </ul>
@@ -305,10 +308,10 @@ export default function ExamPage() {
           <Link to="/signup" className={buttonVariants({variant: 'outline'})}>{t.signUp}</Link>
         </div>
         <h2 className="mb-1 text-lg font-semibold">{t.guestPractice}</h2>
-        <p className="mb-3 text-slate-600">{t.guestPracticeLead}</p>
+        <p className="mb-3 text-sm text-muted-foreground">{t.guestPracticeLead}</p>
         <div className="flex flex-wrap gap-4">
-          <Link to="/quiz" className="font-medium text-blue-700 underline">{t.guestQuiz}</Link>
-          <Link to="/atlas?open=spot" className="font-medium text-blue-700 underline">{t.guestSpot}</Link>
+          <Link to="/quiz" className="exam-link font-medium underline">{t.guestQuiz}</Link>
+          <Link to="/atlas?open=spot" className="exam-link font-medium underline">{t.guestSpot}</Link>
         </div>
       </main>
     );
@@ -330,25 +333,26 @@ export default function ExamPage() {
 
   if (exam && result) {
     return (
-      <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
-        <SiteNav tone="light" />
-        <h1 className="mb-1 text-3xl font-semibold">{t.resultTitle}</h1>
-        <p className="mb-6 text-sm text-slate-500">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
+      <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10">
+        <SiteNav tone="glass" />
+        <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>
+        <h1 className="exam-title mb-1">{t.resultTitle}</h1>
+        <p className="mb-6 text-sm text-muted-foreground">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
         <Card className={`mb-6 ${result.passed ? 'exam-pass' : 'exam-fail'}`}>
           <CardContent className="flex flex-wrap items-center gap-6 p-6">
             <div>
-              <p className="text-5xl font-bold">{result.scorePct}%</p>
-              <p className="text-sm text-slate-500">{t.score}</p>
+              <p className={`text-5xl font-bold ${result.passed ? 'exam-good' : 'exam-bad'}`}>{result.scorePct}%</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t.score}</p>
             </div>
             <div className="flex-1 space-y-1 text-sm">
               <p><Badge variant={result.passed ? 'default' : 'destructive'}>{result.passed ? t.passed : t.failed}</Badge></p>
-              <p className="text-slate-600">{t.mcq}: {result.mcq} / {totalPoints - result.caseMax}</p>
-              <p className="text-slate-600">{t.case}: {result.caseScore} / {result.caseMax}</p>
-              <p className="text-slate-600">{t.xpEarned}: <b>+{result.xp}</b>{result.xp === 0 && <span className="text-slate-400"> · {t.alreadyAwarded}</span>}</p>
+              <p className="text-muted-foreground">{t.mcq}: {result.mcq} / {totalPoints - result.caseMax}</p>
+              <p className="text-muted-foreground">{t.case}: {result.caseScore} / {result.caseMax}</p>
+              <p className="text-muted-foreground">{t.xpEarned}: <b className="exam-good">+{result.xp}</b>{result.xp === 0 && <span className="exam-faint"> · {t.alreadyAwarded}</span>}</p>
             </div>
           </CardContent>
         </Card>
-        {result.feedback && <Card className="mb-6"><CardHeader><CardTitle className="text-lg">{t.markingNotes}</CardTitle></CardHeader><CardContent><p className="whitespace-pre-wrap text-sm text-slate-700">{result.feedback}</p></CardContent></Card>}
+        {result.feedback && <Card className="mb-6"><CardHeader><CardTitle className="text-lg">{t.markingNotes}</CardTitle></CardHeader><CardContent><p className="whitespace-pre-wrap text-sm text-muted-foreground">{result.feedback}</p></CardContent></Card>}
         <h2 className="mb-3 text-xl font-semibold">{t.review}</h2>
         <div className="space-y-4">
           {questions.map((question, position) => {
@@ -359,20 +363,20 @@ export default function ExamPage() {
               <Card key={question.id}>
                 <CardContent className="p-4">
                   <p className="mb-2 flex items-start gap-2 text-sm font-medium">
-                    {isMcq ? <Check size={16} className={right ? 'text-emerald-600' : 'text-slate-300'} /> : <ListChecks size={16} className="text-slate-400" />}
+                    {isMcq ? <Check size={16} className={right ? 'exam-good' : 'exam-faint'} /> : <ListChecks size={16} className="exam-faint" />}
                     <span>{position + 1}. {lang === 'mn' ? question.prompt : question.prompt_en || question.prompt}</span>
                   </p>
                   {isMcq && (
                     <ul className="mb-2 space-y-1 text-sm">
                       {question.options.map((option, choiceIndex) => (
-                        <li key={option} className={choiceIndex === question.answer ? 'font-medium text-emerald-700' : choiceIndex === given.choice && choiceIndex !== question.answer ? 'text-red-600 line-through' : 'text-slate-500'}>
+                        <li key={option} className={choiceIndex === question.answer ? 'exam-good font-medium' : choiceIndex === given.choice && choiceIndex !== question.answer ? 'exam-bad line-through' : 'text-muted-foreground'}>
                           {LETTERS[choiceIndex]}. {option}
                         </li>
                       ))}
                     </ul>
                   )}
-                  {!isMcq && <p className="mb-2 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{given.text?.trim() || t.emptyAnswer}</p>}
-                  {question.concept && <Link to={`/atlas?focus=${encodeURIComponent(question.concept)}`} className="text-sm font-medium text-blue-700 underline">{t.openInAtlas}</Link>}
+                  {!isMcq && <p className="exam-answer mb-2 whitespace-pre-wrap p-3 text-sm">{given.text?.trim() || t.emptyAnswer}</p>}
+                  {question.concept && <Link to={`/atlas?focus=${encodeURIComponent(question.concept)}`} className="exam-link text-sm font-medium underline">{t.openInAtlas}</Link>}
                 </CardContent>
               </Card>
             );
@@ -394,12 +398,12 @@ export default function ExamPage() {
       return q.kind === 'mcq' ? given?.choice !== undefined : Boolean(given?.text?.trim());
     }).length;
     return (
-      <PageScroll ref={scroller} className="exam-page exam-running mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28 text-slate-900">
-        <SiteNav tone="light" />
+      <PageScroll ref={scroller} className="exam-page exam-running mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+16px)] pb-28">
+        <SiteNav tone="glass" />
         <header className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
-            <p className="text-lg font-semibold">{t.question} {index + 1} <span className="text-slate-400">/ {questions.length}</span></p>
+            <p className="exam-kicker mb-1">{lang === 'mn' ? exam.title : exam.title_en || exam.title}</p>
+            <p className="text-lg font-semibold">{t.question} {index + 1} <span className="exam-faint">/ {questions.length}</span></p>
           </div>
           <div className={`exam-clock ${secondsLeft < 60 ? 'is-low' : ''}`} role="timer" aria-live="off">
             <Clock size={14} aria-hidden />
@@ -424,27 +428,27 @@ export default function ExamPage() {
               </div>
             ) : (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-600" htmlFor="case-answer">{t.answerText}</label>
+                <label className="mb-1 block text-sm font-medium" htmlFor="case-answer">{t.answerText}</label>
                 <Textarea id="case-answer" rows={6} value={answers[key]?.text ?? ''} placeholder={t.answerPlaceholder} onChange={e => setAnswers(a => ({...a, [key]: {...a[key], text: e.target.value}}))} />
-                <p className="mt-1 text-xs text-slate-500">{question.points} {t.points}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{question.points} {t.points}</p>
               </div>
             )}
           </CardContent>
         </Card>
         <div className="flex items-center justify-between gap-2">
           <Button variant="outline" disabled={index === 0} onClick={() => setIndex(i => Math.max(0, i - 1))}>{'←'}</Button>
-          <p className="text-sm text-slate-500">{answered} / {questions.length}</p>
+          <p className="text-sm text-muted-foreground">{answered} / {questions.length}</p>
           {index < questions.length - 1
             ? <Button onClick={() => setIndex(i => Math.min(questions.length - 1, i + 1))}>{'→'}</Button>
             : <Button disabled={handing} onClick={() => setConfirming(true)}>{handing ? t.submitting : t.submit}</Button>}
         </div>
-        {notice && <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{notice}</p>}
-        {handing && <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><CircleCheck size={16} />{t.grading}</p>}
+        {notice && <p className="exam-note exam-note-warn mt-4 rounded-xl px-4 py-3 text-sm">{notice}</p>}
+        {handing && <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><CircleCheck size={16} />{t.grading}</p>}
         {confirming && (
           <div className="exam-modal" role="dialog" aria-modal="true" aria-label={t.submit}>
             <div className="exam-modal-box">
               <p className="mb-1 font-semibold">{t.submit}</p>
-              <p className="mb-4 text-sm text-slate-600">{t.confirmLead}</p>
+              <p className="mb-4 text-sm text-muted-foreground">{t.confirmLead}</p>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setConfirming(false)}>{t.cancel}</Button>
                 <Button onClick={() => void handIn()}>{t.confirmSubmit}</Button>
@@ -458,8 +462,8 @@ export default function ExamPage() {
 
   if (exam && !questions.length && !loading) {
     return (
-      <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
-        <SiteNav tone="light" />
+      <main className="exam-page mx-auto min-h-screen max-w-2xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8">
+        <SiteNav tone="glass" />
         <p className="mb-4">{t.closed}</p>
         <Button variant="outline" onClick={() => setParams({})}>{t.again}</Button>
       </main>
@@ -467,33 +471,34 @@ export default function ExamPage() {
   }
 
   return (
-    <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10 text-slate-900">
-      <SiteNav tone="light" />
+    <PageScroll ref={scroller} className="exam-page mx-auto min-h-screen max-w-3xl px-4 pt-[calc(var(--site-nav-h)+24px)] pb-10">
+      <SiteNav tone="glass" />
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold">{t.title}</h1>
-          <p className="mt-1 text-sm text-slate-600">{t.lead}</p>
+          <p className="exam-kicker"><GraduationCap size={14} />{t.kicker}</p>
+          <h1 className="exam-title">{t.title}</h1>
+          <p className="exam-sub">{t.lead}</p>
         </div>
-        <Link to="/atlas" className="shrink-0 text-sm text-slate-500 underline">{t.back}</Link>
+        <Link to="/atlas" className="exam-link shrink-0 text-sm underline">{t.back}</Link>
       </div>
-      {state === 'missing' && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{t.missingSchema}</p>}
-      {notice && <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</p>}
-      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-        <span className="text-sm text-slate-600">{checkinNote || t.checkin}</span>
+      {state === 'missing' && <p className="exam-note exam-note-warn mb-4 rounded-xl px-4 py-3 text-sm">{t.missingSchema}</p>}
+      {notice && <p className="exam-note exam-good mb-4 rounded-xl px-4 py-3 text-sm">{notice}</p>}
+      <div className="exam-note mb-6 flex items-center justify-between gap-3 rounded-2xl px-4 py-3">
+        {checkinNote && <span className="text-sm text-muted-foreground">{checkinNote}</span>}
         <Button size="sm" variant="outline" onClick={() => void checkIn()}><Award size={14} />{t.checkin}</Button>
       </div>
       {loading ? (
-        <p className="text-sm text-slate-500">{t.loading}</p>
+        <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : exams.length === 0 ? (
-        <p className="text-sm text-slate-500">{t.empty}</p>
+        <p className="text-sm text-muted-foreground">{t.empty}</p>
       ) : (
         <div className="space-y-8">
           {sections.filter(section => Boolean(section.groupKey)).map(section => (
             <section key={section.groupKey} aria-label={groupLabel(section.groupKey, lang)}>
-              <div className="mb-3 flex items-center gap-2">
+              <div className="exam-group-head">
                 <span className="h-3 w-3 shrink-0 rounded-full" style={{background: groupColor(section.groupKey)}} aria-hidden />
-                <h2 className="text-lg font-semibold">{groupLabel(section.groupKey, lang)}</h2>
-                <span className="ml-auto text-sm text-slate-500">{t.papersInGroup(section.papers.length)}</span>
+                <h2 className="exam-group-title">{groupLabel(section.groupKey, lang)}</h2>
+                <span className="exam-faint ml-auto text-sm">{t.papersInGroup(section.papers.length)}</span>
               </div>
               <div className="space-y-4">
                 {section.papers.map(row => {
@@ -504,19 +509,19 @@ export default function ExamPage() {
                     <Card key={row.id} className="exam-card">
                       <CardContent className="flex flex-wrap items-center justify-between gap-5 p-5">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="text-slate-400" />{lang === 'mn' ? row.title : row.title_en || row.title}</div>
-                          <p className="mt-1 text-sm text-slate-500">
+                          <div className="flex items-center gap-2 font-semibold"><ListChecks size={16} className="exam-faint" />{lang === 'mn' ? row.title : row.title_en || row.title}</div>
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {row.question_count ?? 0} {t.questions} · {row.total_points ?? 0} {t.points} · {row.time_limit_min} {t.minutes} · {t.passMark} {row.pass_pct}%
                           </p>
-                          {part && <Link to={`/atlas?focus=${encodeURIComponent(row.part_key)}`} className="mt-1 inline-flex items-center gap-1 text-sm text-blue-700 underline">{part}<span className="text-slate-400">· {t.openPart}</span></Link>}
+                          {part && <Link to={`/atlas?focus=${encodeURIComponent(row.part_key)}`} className="exam-link mt-1 inline-flex items-center gap-1 text-sm underline">{part}<span className="exam-faint">· {t.openPart}</span></Link>}
                         </div>
                         <div className="text-right">
                           {score === undefined ? (
-                            <p className="text-sm text-slate-400">{t.notPassed}</p>
+                            <p className="exam-faint text-sm">{t.notPassed}</p>
                           ) : passedNow ? (
-                            <p className="text-xl font-bold text-emerald-600">{score}%</p>
+                            <p className="exam-good text-xl font-bold">{score}%</p>
                           ) : (
-                            <p className="text-xl font-bold text-slate-900">{score}%</p>
+                            <p className="exam-bad text-xl font-bold">{score}%</p>
                           )}
                         </div>
                         <Button className="shrink-0" onClick={() => setParams({exam: String(row.id)})}>{score === undefined ? t.start : t.resume}</Button>
@@ -529,8 +534,7 @@ export default function ExamPage() {
           ))}
         </div>
       )}
-      <p className="mt-8 flex items-center gap-2 text-sm text-slate-400"><Trophy size={14} />{t.lead}</p>
-      <Link to="/quiz" className="mt-1 inline-flex items-center gap-1 text-sm underline"><ListChecks size={12} />{lang === 'mn' ? 'Бататгал (Quiz)' : 'Practice quiz'}</Link>
+      <Link to="/quiz" className="exam-link mt-8 inline-flex items-center gap-1 text-sm underline"><ListChecks size={12} />{lang === 'mn' ? 'Бататгал (Quiz)' : 'Practice quiz'}</Link>
     </PageScroll>
   );
 }

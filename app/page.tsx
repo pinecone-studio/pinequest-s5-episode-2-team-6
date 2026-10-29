@@ -200,7 +200,7 @@ export default function Home(){
  return <div className="atlas-page" style={isGlass(appearance.background)?undefined:{background:appearance.background}}>
   <SiteNav tone="glass" highlight={introTarget==='nav'}/>
   <main className={`studio ${perfusion?'plaque-open':''} ${chatOpen?'chat-open':''}`}>
-  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:perfusion.ids,isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
+  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:[...perfusion.ids,...perfusion.contextIds??[]],isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,inspectorOpen:(details&&selectedParts.length>0)||romOpen}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
   <PlaquePanel atlas={atlas} open={plaqueOpen} onPreview={previewPlaque} onClose={()=>navigate('/atlas')}/>

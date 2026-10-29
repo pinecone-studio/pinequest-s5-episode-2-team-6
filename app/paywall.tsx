@@ -44,7 +44,7 @@ export default function PaywallDialog({open,onClose}:{open:boolean;onClose:()=>v
           <DialogDescription>{dict.lead}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{dict.perks()}</div>
+          <div className="rounded-xl bg-secondary p-3 text-sm text-secondary-foreground">{dict.perks()}</div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>{dict.later}</Button>
             <Link to="/profile" className={buttonVariants()} onClick={onClose}>{dict.cta}</Link>

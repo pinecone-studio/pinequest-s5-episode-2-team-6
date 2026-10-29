@@ -916,3 +916,21 @@ button.intro-target{position:relative}
  .detail-sheet,.detail-sheet.is-isolated{top:calc(8px + var(--site-nav-h))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;right:max(12px,env(safe-area-inset-right))!important;left:auto!important;width:min(320px,46vw)!important;max-width:calc(100vw - 24px)!important;max-height:none!important;height:auto!important}
  body:has(.detail-sheet) .ai-panel{left:max(12px,env(safe-area-inset-left))!important;right:auto!important;width:min(340px,calc(100vw - 360px))!important;top:8px!important;max-height:calc(100dvh - var(--site-nav-h) - 24px)!important}
 }
+
+/* One palette for every screen, taken from the AI teacher page: a dark navy room with a blue glow at the top right
+   and a teal one at the bottom left, frosted navy cards, pale blue type and one blue accent. The shadcn tokens follow
+   it too, so dialogs and menus that render in a portal outside a page read the same. */
+:root{
+ --ui-bg:#0b1220;
+ --ui-room:radial-gradient(1100px 500px at 85% -10%,rgb(56 132 255/.16),transparent 60%),radial-gradient(900px 480px at -10% 110%,rgb(64 220 190/.12),transparent 55%),#0b1220;
+ --ui-card:rgb(15 24 44/.72);--ui-card-2:rgb(24 36 64/.6);--ui-field:rgb(20 32 58/.7);--ui-hover:rgb(34 52 92/.7);
+ --ui-line:rgb(150 180 255/.18);--ui-line-2:rgb(150 180 255/.3);
+ --ui-ink:#e8eefc;--ui-ink-2:#cdd9f5;--ui-ink-3:#a7b6d8;--ui-ink-4:#7f92bb;
+ --ui-accent:#2f66f5;--ui-accent-2:#4a7bff;--ui-accent-ink:#fff;--ui-accent-text:#8fb7ff;--ui-link:#9cc2ff;
+ --ui-teal:#40d5be;--ui-danger:#ff6e64;--ui-danger-text:#ffb3ae;
+ --ui-shadow:0 22px 44px -18px rgb(0 0 0/.55);
+ --background:#0b1220;--foreground:#e8eefc;--card:var(--ui-card);--card-foreground:#e8eefc;--popover:#131d33;--popover-foreground:#e8eefc;
+ --primary:#2f66f5;--primary-foreground:#fff;--secondary:rgb(20 32 58/.55);--secondary-foreground:#cdd9f5;--muted:rgb(24 36 64/.6);--muted-foreground:#a7b6d8;
+ --accent:rgb(34 52 92/.7);--accent-foreground:#d7e2fb;--destructive:#ff6e64;--border:var(--ui-line);--input:rgb(150 180 255/.22);--ring:#2f66f5;
+ color:#e8eefc;background:#0b1220;color-scheme:dark;
+}

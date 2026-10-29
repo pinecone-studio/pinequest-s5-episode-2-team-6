@@ -247,7 +247,7 @@ export default function Home(){
  },[atlas]);
  // The page sits under the shared navigation; a plain backdrop paints the strip behind it too, the glass room comes from CSS.
  return <div className="atlas-page" style={isGlass(appearance.background)?undefined:{background:appearance.background}}>
-  <SiteNav tone="glass" highlight={introTarget==='nav'}/>
+  <SiteNav highlight={introTarget==='nav'}/>
   <main className={`studio ${perfusion?'plaque-open':''} ${chatOpen?'chat-open':''}`}>
   {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:[...perfusion.ids,...perfusion.contextIds??[]],isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,plaque:plaqueOpen&&plaqueMode==='body'?wholePlaque??undefined:undefined,inspectorOpen:(details&&selectedParts.length>0)||romOpen||panel==='spot'||!!(activeRegion&&state.isolate)}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion||panel==='spot'?()=>{}:(id,point)=>{choosePart(id);const part=parts.get(id);if(plaqueOpen&&plaqueMode==='body'&&placingPlaque&&part?.system==='arterial'&&point){setWholePlaque(createAtlasPlaque(part,wholePlaque?.narrowing??50,point));setPlacingPlaque(false);setDetails(false);}}} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>

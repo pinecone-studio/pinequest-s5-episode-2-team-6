@@ -57,14 +57,14 @@ export default function LandingPage(){
   return(
     <div className="lp" ref={root}>
       <div className="lp-bg" aria-hidden>
-        <i className="lp-blob" style={{'--c':'#ff8a73',left:'8%',top:'18%'} as CSSProperties}/>
-        <i className="lp-blob" style={{'--c':'#7d9bff',left:'58%',top:'6%'} as CSSProperties}/>
-        <i className="lp-blob" style={{'--c':'#c9a2ff',left:'64%',top:'58%'} as CSSProperties}/>
-        <i className="lp-blob" style={{'--c':'#ff9fb4',left:'18%',top:'64%'} as CSSProperties}/>
+        <i className="lp-blob" style={{'--c':'#2f66f5',left:'8%',top:'18%'} as CSSProperties}/>
+        <i className="lp-blob" style={{'--c':'#8fb7ff',left:'58%',top:'6%'} as CSSProperties}/>
+        <i className="lp-blob" style={{'--c':'#40d5be',left:'64%',top:'58%'} as CSSProperties}/>
+        <i className="lp-blob" style={{'--c':'#3884ff',left:'18%',top:'64%'} as CSSProperties}/>
       </div>
       <Suspense fallback={null}><Figure scroller={root} onReady={()=>setFigureReady(true)}/></Suspense>
 
-      <SiteNav tone="light" onNavigate={engage}/>
+      <SiteNav onNavigate={engage}/>
 
       <main>
         <section className="lp-hero" data-pose="hero" data-index>

@@ -1,7 +1,16 @@
 import type {Part} from '../anatomy';
+const source='https://orthoinfo.aaos.org/en/diseases--conditions/';
+export const FRACTURE_SCENARIOS=[
+ {id:'fall',match:/\b(?:fall|falling)\b|унах|уналт/,bone:'Right clavicle',pattern:'transverse',en:'Fall onto an arm',mn:'Гараар тулж унах',
+  detail:'Bracing a fall with an outstretched arm can injure the clavicle. This preset starts with a transverse midshaft break.',detailMn:'Унахдаа сунгасан гараар тулахад эгэм гэмтэж болно. Энэ жишээ гол хэсгийн хөндлөн хугарлаар эхэлнэ.',source:source+'clavicle-fracture-broken-collarbone/'},
+ {id:'crash',match:/\b(?:car|crash|collision)\b|автомашин|мөргөлдөөн/,bone:'Right femur',pattern:'segmental',en:'Car crash',mn:'Автомашины осол',
+  detail:'Vehicle collisions can injure the femoral shaft. This preset starts with two breaks and a separate middle segment; a crash does not determine one fracture pattern.',detailMn:'Автомашины ослоор гуяны ясны гол хэсэг гэмтэж болно. Энэ жишээ хоёр хугаралтай, дунд хэсэг тусгаарлагдсан хэлбэрээр эхэлнэ; осол бүр ийм хугарал үүсгэхгүй.',source:source+'femur-shaft-fractures-broken-thighbone/'},
+ {id:'impact',match:/\b(?:sports?|direct|leg) impact\b|спортын цохилт/,bone:'Right tibia',pattern:'oblique',en:'Sports impact',mn:'Спортын цохилт',
+  detail:'A sports collision can injure the tibia. This preset starts with an angled shaft break; actual patterns vary.',detailMn:'Спортын мөргөлдөөнөөр шаант яс гэмтэж болно. Энэ жишээ гол хэсгийн ташуу хугарлаар эхэлнэ; бодит хугарлын хэлбэр өөр байж болно.',source:source+'tibia-shinbone-shaft-fractures/'},
+] as const;
 
-export type FracturePattern='transverse'|'oblique'|'segmental';
-export interface BoneRequest {boneIds:string[];pattern:FracturePattern;aligned:boolean;location:number}
+export type FracturePattern='transverse'|'oblique'|'segmental'|'wedge'|'longitudinal';
+export interface BoneRequest {boneIds:string[];pattern:FracturePattern;aligned:boolean;location:number;scenario?:'fall'|'crash'|'impact'}
 export type BoneResolution={request:BoneRequest;error?:never}|{error:'bone'|'pattern'|'location';request?:never};
 const ordinals=['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','eleventh','twelfth'];
 const aliases:Record<string,string>={
@@ -49,6 +58,12 @@ export function resolveBoneRequest(input:string,parts:Part[]):BoneResolution{
   if(matched)return true;
   return !!region&&region.test(name)&&sideMatches(text);
  });
- if(!matches.length)return {error:'bone'};
- return {request:{boneIds:matches.map(part=>part.id),pattern:/\b(segmental|three fragments|3 fragments)\b|гурван хэсэг/.test(raw)?'segmental':/\b(oblique|angled|diagonal)\b|ташуу/.test(raw)?'oblique':'transverse',aligned:/\b(nondisplaced|non[ -]displaced|aligned|undisplaced)\b|зөрөөгүй/.test(raw),location:/\b(upper third|top third)\b/.test(raw)?.68:/\b(lower third|bottom third)\b/.test(raw)?.32:.5}};
+ if(!matches.length){
+  const scenario=!/\b(backward|slip|slipping)\b|арагш|хальтир/.test(raw)&&FRACTURE_SCENARIOS.find(item=>item.match.test(raw));
+  if(!scenario)return {error:'bone'};
+  const result=resolveBoneRequest(`${scenario.bone} ${scenario.pattern}`,parts);
+  return result.request?{request:{...result.request,scenario:scenario.id}}:result;
+ }
+ if(/\b(wedge|butterfly)\b|шаантаг/.test(raw)&&matches.some(part=>!/^\w+ (femur|tibia|fibula|humerus|radius|ulna|clavicle)$/.test(part.name)))return {error:'location'};
+ return {request:{boneIds:matches.map(part=>part.id),pattern:/\b(wedge|butterfly)\b|шаантаг/.test(raw)?'wedge':/\b(longitudinal|lengthwise)\b|тууш/.test(raw)?'longitudinal':/\b(segmental|three fragments|3 fragments)\b|гурван хэсэг/.test(raw)?'segmental':/\b(oblique|angled|diagonal)\b|ташуу/.test(raw)?'oblique':'transverse',aligned:/\b(nondisplaced|non[ -]displaced|aligned|undisplaced)\b|зөрөөгүй/.test(raw),location:/\b(upper third|top third)\b/.test(raw)?.68:/\b(lower third|bottom third)\b/.test(raw)?.32:.5}};
 }

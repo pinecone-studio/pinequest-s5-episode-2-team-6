@@ -70,6 +70,26 @@ export function fallPose(progress:number){
 }
 
 export type FallPose=ReturnType<typeof fallPose>;
+export type ScenarioId='fall'|'crash'|'impact';
+/** Prescribed body poses share the close-up's contact (.25) and separation (.42) times. */
+export function scenarioPose(progress:number,scenario:ScenarioId):FallPose{
+ const base=fallPose(progress),t=base.t,react=smooth(.25,.55,t),contact=t>=.25,fracture=smooth(.42,1,t);
+ const phase:FallPhase=t<.12?'walk':t<.20?'slip':t<.25?'brace':t<.42?'contact':'fracture';
+ if(scenario==='fall')return {...fallPose(t<.25?t/.25*HAND_CONTACT:HAND_CONTACT+(t-.25)/.75*(1-HAND_CONTACT)),t,phase,contact,fracture};
+ const seated=scenario==='crash',travel=seated?-1.4*(1-Math.min(1,t/.25)):0;
+ const root=new Vector3(seated?0:.08*react,seated?.64:.92-.045*react,travel+(seated?.045*react:0));
+ const q=new Quaternion().setFromEuler(new Euler(seated?.22*react:0,0,seated?0:-.10*react));
+ const body=(p:readonly number[])=>vec(p).sub(vec(REST.pelvis)).applyQuaternion(q).add(root);
+ const rightShoulder=body(REST.rightShoulder),leftShoulder=body(REST.leftShoulder);
+ const rightWrist=seated?new Vector3(-.21,.98,travel+.36):body(REST.rightWrist).add(new Vector3(-.14*react,.12*react,0));
+ const leftWrist=seated?new Vector3(.21,.98,travel+.36):body(REST.leftWrist).add(new Vector3(.14*react,.12*react,0));
+ const rightElbow=hinge(rightShoulder,rightWrist,.29,.24,new Vector3(-1,0,.2)),leftElbow=hinge(leftShoulder,leftWrist,.29,.24,new Vector3(1,0,.2));
+ const rightHip=body(REST.rightHip),leftHip=body(REST.leftHip);
+ const rightAnkle=new Vector3(-.10,seated?.14:.095,travel+(seated?.45:0)),leftAnkle=new Vector3(.10,seated?.14:.095,travel+(seated?.45:0));
+ const rightKnee=hinge(rightHip,rightAnkle,.45,.37,new Vector3(0,0,1)),leftKnee=hinge(leftHip,leftAnkle,.45,.37,new Vector3(0,0,1));
+ return {...base,t,phase,root,q,neck:body(REST.neck),head:body(REST.head),rightShoulder,leftShoulder,rightElbow,leftElbow,rightWrist,leftWrist,rightHip,leftHip,rightKnee,leftKnee,rightAnkle,leftAnkle,
+  contact,fracture,handContact:seated?rightKnee.clone():rightKnee.clone().lerp(rightAnkle,.5),slipping:false,slide:0,handPlant:0,rightFootPitch:0};
+}
 export type Segment='torso'|'head'|'pelvis'|'rightUpperArm'|'leftUpperArm'|'rightForearm'|'leftForearm'|'rightHand'|'leftHand'|'rightThigh'|'leftThigh'|'rightShin'|'leftShin'|'rightFoot'|'leftFoot';
 export function boneSegment(name:string):Segment{
  const n=name.toLowerCase(),side=n.includes('right')?'right':'left';

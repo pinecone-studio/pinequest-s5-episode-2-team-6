@@ -2,7 +2,14 @@
    per-chapter learning progress and the student's question history. */
 
 .teacher-page {
-  min-height: 100dvh;
+  /* globals.css locks html/body/#root scrolling for the fixed-viewport atlas,
+     so this page needs to be its own scroll container. */
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4d78 transparent;
   padding-top: var(--site-nav-h, 56px);
   background:
     radial-gradient(1100px 500px at 85% -10%, rgba(56, 132, 255, 0.16), transparent 60%),
@@ -104,7 +111,9 @@
   flex-direction: column;
   /* A fixed height (not max-height) is what lets the message list shrink
      and scroll while the input row stays pinned to the bottom. */
-  height: clamp(480px, calc(100dvh - var(--site-nav-h, 56px) - 210px), 920px);
+  /* Leave room for the page header and chips so the composer is visible
+     without scrolling on a fresh load, while long answers scroll inside. */
+  height: clamp(380px, calc(100dvh - var(--site-nav-h, 56px) - 320px), 920px);
   background: rgba(15, 24, 44, 0.72);
   border: 1px solid rgba(150, 180, 255, 0.18);
   border-radius: 16px;

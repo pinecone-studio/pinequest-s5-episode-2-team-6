@@ -102,6 +102,7 @@ export default function TeacherPage() {
     setDraft('');
     setBusy(true);
     stickRef.current = true;
+    textareaRef.current?.focus();
     const userMessage: ChatMessage = {id: nextId(), role: 'user', text: question};
     const assistantId = nextId();
     setMessages(current => [...current, userMessage, {id: assistantId, role: 'assistant', text: '', pending: true}]);

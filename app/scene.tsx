@@ -12,7 +12,7 @@ import {LANDMARKS} from './landmarks';
 import {peeledSystems} from './layers';
 import {perfusionTint} from './plaque-model';
 import type {AnchorChannel} from './anchor';
-interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;label?:(name:string)=>string;onSelect:(id:string)=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
+interface Props {atlas:Atlas;state:SceneState;appearance:Appearance;activations?:Record<string,number>;anchor?:AnchorChannel;label?:(name:string)=>string;onSelect:(id:string,point?:[number,number,number])=>void;onProgress:(n:number)=>void;onError:(s:string)=>void}
 export default function AnatomyScene({atlas,state,appearance,activations,anchor,label,onSelect,onProgress,onError}:Props){
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{}),nameOf=useRef(label);
  latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};nameOf.current=label;
@@ -53,6 +53,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   // Overall body extent drives the cross-section plane range.
   const extent=new T.Box3();for(const box of bounds)extent.union(box);
   const clipPlane=new T.Plane(new T.Vector3(-1,0,0),0);
+  const plaqueMarker=new T.Mesh(new T.SphereGeometry(.002,16,12),new T.MeshBasicMaterial({color:0xffd166,depthTest:false}));plaqueMarker.visible=false;plaqueMarker.renderOrder=5;scene.add(plaqueMarker);
   let sliceApplied=false;
   let packingWidth=1,packingHeight=1;
   const markerPositions=new Float32Array(atlas.parts.length*3),markerGeometry=new T.BufferGeometry();markerGeometry.setAttribute('position',new T.BufferAttribute(markerPositions,3));
@@ -184,9 +185,9 @@ void main(){
   const cancel=(e:PointerEvent)=>tap.cancel(e.pointerId);
   const up=(e:PointerEvent)=>{
    const validTap=tap.up(e.pointerId,e.clientX,e.clientY);if(!validTap||!ready)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);
-   let nearest=Infinity,found=-1;const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);
-   pickers.forEach((mesh,i)=>{if(!mesh||data[i*4+3]<.5||(hasSolid&&atlas.parts[i].system==='integumentary'))return;worldBox.copy(bounds[i]).translate(mesh.position);if(!raycaster.ray.intersectBox(worldBox,hitPoint))return;const hits=raycaster.intersectObject(mesh,false);if(hits[0]&&hits[0].distance<nearest){nearest=hits[0].distance;found=i;}});
-   if(found<0&&amount>.45)found=findTarget(e.clientX-rect.left,e.clientY-rect.top,e.pointerType==='touch'?24:16);if(found>=0){hover.hidden=true;select.current(atlas.parts[found].id);}
+   let nearest=Infinity,found=-1,foundPoint:[number,number,number]|undefined;const hasSolid=atlas.parts.some((p,i)=>p.system!=='integumentary'&&data[i*4+3]>.5);
+   pickers.forEach((mesh,i)=>{if(!mesh||data[i*4+3]<.5||(hasSolid&&atlas.parts[i].system==='integumentary'))return;worldBox.copy(bounds[i]).translate(mesh.position);if(!raycaster.ray.intersectBox(worldBox,hitPoint))return;const hits=raycaster.intersectObject(mesh,false);if(hits[0]&&hits[0].distance<nearest){nearest=hits[0].distance;found=i;foundPoint=hits[0].point.clone().sub(mesh.position).toArray() as [number,number,number];}});
+   if(found<0&&amount>.45)found=findTarget(e.clientX-rect.left,e.clientY-rect.top,e.pointerType==='touch'?24:16);if(found>=0){hover.hidden=true;select.current(atlas.parts[found].id,foundPoint);}
   };
   renderer.domElement.addEventListener('pointerdown',down);renderer.domElement.addEventListener('pointermove',move);renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',cancel);
   const clock=new T.Clock();let lastExtent=-1,lastSliceKey='',lastLabelKey='',lastSelected:string[]|null=null,flashStart=-10,lastNameOf:Props['label']|null=null;
@@ -204,7 +205,7 @@ void main(){
     const cut=min+(max-min)*Math.max(0,Math.min(1,state.depth));
     clipPlane.normal.set(axis==='x'?-1:0,0,axis==='z'?-1:0);clipPlane.constant=-cut;
    }
-   if(on!==sliceApplied){[...mats.values(),xray].forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
+   if(on!==sliceApplied){[...mats.values(),xray,plaqueMarker.material].forEach(m=>{m.clippingPlanes=on?[clipPlane]:null;m.needsUpdate=true;});sliceApplied=on;}
   };
   const animate=()=>{
    if(disposed)return;frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),s=latest.current;
@@ -261,6 +262,10 @@ void main(){
      markerPositions.set(data[i*4+3]>.5?[c.x+dx,c.y+dy,c.z+dz]:[10000,10000,10000],i*3);const mesh=pickers[i];if(mesh){mesh.position.set(dx,dy,dz);mesh.updateMatrix();mesh.updateMatrixWorld(true);}
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
+   const plaqueIndex=s.plaque?partIndex.get(s.plaque.id):undefined;
+   const showPlaque=plaqueIndex!==undefined&&!!s.plaque?.point&&s.plaque.narrowing>0&&data[plaqueIndex*4+3]>.5;
+   if(plaqueMarker.visible!==showPlaque){plaqueMarker.visible=showPlaque;dirty=true;}
+   if(showPlaque&&plaqueIndex!==undefined&&s.plaque?.point){plaqueMarker.position.fromArray(s.plaque.point).add(new T.Vector3(data[plaqueIndex*4],data[plaqueIndex*4+1],data[plaqueIndex*4+2]));}
    if(look.current!==lastLook){paint(look.current);lastLook=look.current;}
    if(s.view!==lastView||s.reset!==lastReset){if(aimOffset){camera.clearViewOffset();aimOffset=false;}fit(s.view,amount);lastView=s.view;lastReset=s.reset;}
    if(moving&&!s.isolate)fit(amount>.5?'front':s.view,Math.max(0,(amount-.3)/.7));

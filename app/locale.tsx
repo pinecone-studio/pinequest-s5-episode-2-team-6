@@ -28,23 +28,24 @@ export function useLang() {
 }
 
 /** MN / EN control. The choice is saved and shared by the landing page and the atlas. */
+/** One-tap language switch. The choice is saved and shared by the landing page and the atlas. */
 export function LangSwitch() {
   const {lang, setLang, langs, t} = useLang();
+  const index = langs.findIndex(item => item.id === lang);
+  const current = langs[index] ?? langs[0];
+  const next = langs[(index + 1) % langs.length];
   return (
     <div className="lang-switch" role="group" aria-label={t.language}>
-      {langs.map(item => (
-        <button
-          key={item.id}
-          type="button"
-          lang={item.id}
-          aria-label={item.name}
-          aria-pressed={item.id === lang}
-          className={item.id === lang ? 'is-active' : ''}
-          onClick={() => setLang(item.id)}
-        >
-          {item.label}
-        </button>
-      ))}
+      <button
+        type="button"
+        lang={current.id}
+        aria-label={next.name}
+        title={next.name}
+        className="is-active"
+        onClick={() => setLang(next.id)}
+      >
+        {current.label}
+      </button>
     </div>
   );
 }

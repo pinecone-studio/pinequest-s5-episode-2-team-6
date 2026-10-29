@@ -102,8 +102,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 480px;
-  max-height: calc(100dvh - var(--site-nav-h, 56px) - 220px);
+  /* A fixed height (not max-height) is what lets the message list shrink
+     and scroll while the input row stays pinned to the bottom. */
+  height: clamp(480px, calc(100dvh - var(--site-nav-h, 56px) - 210px), 920px);
   background: rgba(15, 24, 44, 0.72);
   border: 1px solid rgba(150, 180, 255, 0.18);
   border-radius: 16px;
@@ -113,14 +114,18 @@
 
 @media (max-width: 900px) {
   .teacher-chat {
-    min-height: 420px;
-    max-height: none;
+    height: max(420px, calc(100dvh - var(--site-nav-h, 56px) - 90px));
   }
 }
 
 .teacher-messages {
-  flex: 1;
+  flex: 1 1 auto;
+  /* Without min-height: 0 a flex child refuses to shrink below its content,
+     which pushed the input row out of the clipped panel after long answers. */
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 18px 18px 8px;
   display: flex;
   flex-direction: column;
@@ -249,6 +254,7 @@
 
 .teacher-form {
   display: flex;
+  flex: 0 0 auto;
   gap: 8px;
   align-items: flex-end;
   padding: 12px 14px 14px;

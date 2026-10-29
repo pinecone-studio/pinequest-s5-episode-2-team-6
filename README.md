@@ -55,10 +55,10 @@ Open **Fracture Lab** from the bone icon in the navigation (`/fracture`). It loa
 
 This is a geometry teaching demonstration, not impact physics or an injury prediction. Fragment transforms are prescribed, not computed from tissue properties or loading; cut faces remain open mesh sections. It does not model fracture propagation, comminution, soft tissue, healing, or treatment decisions. Orange contours trace source-triangle intersections with the teaching fracture plane. Run `node scripts/validate-fracture.mjs` to check source mapping, midshaft coverage, mirrored transforms, units, neutral states, and invalid inputs.
 
-Open **Plaque lab** from the navigation bar (`/plaque`) for the renal-artery teaching demo: adjust diameter
-narrowing and segment length, compare relative flow, and inspect the selected renal
-artery and its branches in 3D. Run `node scripts/validate-plaque.mjs` for model checks.
-The dimensionless circuit is illustrative and does not predict clinical outcomes.
+Open **Plaque lab** (`/plaque`) to select a narrowing site, length, and mean inlet pressure, then compare the unnarrowed state at the same pressure. The 3D atlas supplies anatomical context, not measured circuit dimensions.
+The synthetic network has one 5 mm × 100 mm parent and three 3 mm × 60 mm outlets; venous pressure is 5 mmHg and each terminal resistance is 0.5 mmHg/(mL/min). Fluid assumptions are μ=0.0035 Pa·s and ρ=1066 kg/m³ ([renal modeling reference](https://pmc.ncbi.nlm.nih.gov/articles/PMC6107783/)). Dimensions, outlet resistance, and ideal expansion coefficient 1 are teaching assumptions, not fitted clinical parameters.
+The solver uses ΔP=RQ+ρ/2·(Q/Athroat−Q/Abase)² with Poiseuille R, enforces total Q=sum(outlet Q), and reports mL/min, mean throat velocity Q/A in m/s, and arterial pressures in mmHg. This steady rigid-tube approximation excludes pulsatility, collateral flow, autoregulation, GFR, oxygenation, and injury prediction; it is not clinically validated.
+Separate English/Mongolian panels explain perfusion, filtration, and compensation. Run `node --experimental-strip-types scripts/validate-plaque-hemodynamics.mjs` for 216 physical-balance/input cases and `node --experimental-strip-types scripts/validate-plaque.mjs` for atlas/site mapping checks.
 
 ```sh
 npm run check

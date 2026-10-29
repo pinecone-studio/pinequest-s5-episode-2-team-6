@@ -9,7 +9,10 @@ else register('./ts-resolver.mjs', import.meta.url);
 const {askAtlas, describeStructure, findConcepts, nervePieces} = await import('../app/ai-assistant.ts');
 const {resolveStructureFact} = await import('../app/structure-facts.ts');
 const {LAYERS, MAX_PEEL, peelSummary, peeledSystems} = await import('../app/layers.ts');
-const {QUIZ, TOURS} = await import('../app/learning-data.ts');
+const {QUIZ, quizFor} = await import('../app/quiz/questions.ts');
+const {BONE_ATLAS, boneOverview} = await import('../app/bone-atlas.ts');
+const {STRUCTURE_ATLAS, structureOverview} = await import('../app/structure-atlas.ts');
+const {EXPLANATIONS, SYSTEMS, explanation} = await import('../app/anatomy.ts');
 
 const atlas = JSON.parse(await readFile(new URL('../public/models/atlas.json', import.meta.url)));
 const empty = {atlas, selection: null};
@@ -34,8 +37,6 @@ assert.equal(reply.actions[0].kind, 'view');
 assert.equal(reply.actions[0].view, 'back');
 reply = askAtlas('Сорил өг', empty);
 assert.equal(reply.actions[0].kind, 'quiz');
-reply = askAtlas('Аялал эхлүүл', empty);
-assert.equal(reply.actions[0].kind, 'tour');
 reply = askAtlas('Шошгыг нуу', empty);
 assert.deepEqual(reply.actions[0], {kind: 'labels', on: false, label: 'Шошго унтраасан'});
 reply = askAtlas('Шошго харуул', empty);
@@ -49,11 +50,9 @@ reply = askAtlas('Turn to the back view', empty);
 assert.equal(reply.actions[0].kind, 'view');
 assert.equal(reply.actions[0].view, 'back');
 
-// Learning modes open the matching panel.
+// A quiz request opens the quiz page.
 reply = askAtlas('Quiz me on hand bones', empty);
 assert.equal(reply.actions[0].kind, 'quiz');
-reply = askAtlas('Take me on a guided tour', empty);
-assert.equal(reply.actions[0].kind, 'tour');
 
 // Labels can be switched on and off.
 reply = askAtlas('Show the floating labels', empty);
@@ -111,17 +110,23 @@ assert.ok(!peeledSystems(MAX_PEEL).has('nervous'));
 assert.equal(peelSummary(0), 'Full body');
 assert.ok(LAYERS.length > 2);
 
-// Every tour stop and quiz answer points at a real concept.
-for (const tour of TOURS) {
-  for (const step of tour.steps) {
-    assert.ok(findConcepts(atlas, step.concept, 1).length > 0, `tour step missing: ${step.concept}`);
-  }
-}
+// Every quiz answer points at a real concept.
 for (const question of QUIZ) {
   assert.ok(findConcepts(atlas, question.concept, 1).length > 0, `quiz concept missing: ${question.concept}`);
   assert.ok(question.options.length >= 3);
   assert.ok(question.answer >= 0 && question.answer < question.options.length);
   assert.ok(question.explain.length > 20);
 }
+// Translated options keep the same count and order as the English ones.
+quizFor('mn').forEach((question, index) => assert.equal(question.options.length, QUIZ[index].options.length, `quiz options mismatch: ${index}`));
 
-console.log('Assistant replies, structure facts, layer peeling and learning content checks passed.');
+// The detail panel has Mongolian text for every reference entry and explanation.
+const mongolian = (english, translated, label) => {
+  assert.match(translated, /[А-Яа-яЁёӨөҮү]/, `missing Mongolian text: ${label}`);
+  assert.notEqual(translated, english, `Mongolian text repeats the English: ${label}`);
+};
+for (const entry of BONE_ATLAS) mongolian(entry.overview, boneOverview(entry, 'mn'), `bone ${entry.id}`);
+for (const entry of STRUCTURE_ATLAS) mongolian(entry.overview, structureOverview(entry, 'mn'), `structure ${entry.id}`);
+for (const [name, text] of Object.entries(EXPLANATIONS)) mongolian(text, explanation(name, SYSTEMS[0].id, 'mn'), `explanation ${name}`);
+
+console.log('Assistant replies, structure facts, layer peeling, quiz content and Mongolian detail text checks passed.');

@@ -13,7 +13,7 @@ An interactive 3D anatomy explorer built with React, Three.js, and shadcn/ui. Ta
 - Isolate a selected structure and read its details.
 - Ask the AI assistant anything and get a detailed Mongolian answer; anatomy questions can also rotate or highlight the model.
 - Peel the body back layer by layer, or cut it open with the cross-section tool.
-- Follow a guided tour, take the quiz, and switch floating labels on.
+- Take the quiz on its own page (`/quiz`), and switch floating labels on.
 - Use compact controls and detail panels on mobile.
 
 ## Run locally
@@ -31,7 +31,7 @@ Open http://localhost:3016. The Vite dev server serves `/api/chat` from `server/
 
 ## Validate
 
-Open **Plaque lab** in the atlas for the renal-artery teaching demo: adjust diameter
+Open **Plaque lab** from the navigation bar (`/plaque`) for the renal-artery teaching demo: adjust diameter
 narrowing and segment length, compare relative flow, and inspect the selected renal
 artery and its branches in 3D. Run `node scripts/validate-plaque.mjs` for model checks.
 The dimensionless circuit is illustrative and does not predict clinical outcomes.
@@ -45,7 +45,7 @@ node scripts/validate-llm.mjs
 npm run build
 ```
 
-Validation covers mesh buffers, names and concept membership, nonoverlapping exploded layouts at desktop and mobile aspect ratios, search and inspection contracts, tap-versus-drag handling, assistant answers and the model actions they return, structure facts and innervation notes, layer peeling, and the tour and quiz content. Browser interaction checks have exercised selection, system controls, search, isolation, rotation, the assistant panel, layer peeling, cross-sections, floating labels, tours and the quiz, and 390×844, 320×568, and 844×390 layouts. Phone controls stay clear of the exploded inventory, and isolated structures fit the space above or beside the detail panel. Physical-device performance and real multitouch hardware have not been tested.
+Validation covers mesh buffers, names and concept membership, nonoverlapping exploded layouts at desktop and mobile aspect ratios, search and inspection contracts, tap-versus-drag handling, assistant answers and the model actions they return, structure facts and innervation notes, layer peeling, and the quiz content. Browser interaction checks have exercised selection, system controls, search, isolation, rotation, the assistant panel, layer peeling, cross-sections, floating labels, the quiz, and 390×844, 320×568, and 844×390 layouts. Phone controls stay clear of the exploded inventory, and isolated structures fit the space above or beside the detail panel. Physical-device performance and real multitouch hardware have not been tested.
 
 ## Anatomy data
 
@@ -77,11 +77,11 @@ When the endpoint answers with totals, the landing page shows those numbers inst
 
 The landing page and the atlas are built for phones, tablets and desktops. The landing page stacks the copy under the body on a phone and on a portrait tablet, keeps the two column hero on a landscape tablet and on a desktop, and scales the big words so they never run off the screen. The atlas switches to the bottom dock and the sheet panels below 768 pixels and keeps the side panels above it. Checked at 320×568, 390×844, 768×1024, 820×1180, 1024×768, 1440×900 and 1920×1200.
 
-## The assistant, tours and quiz
+## The assistant and the quiz
 
 "Ask AI" is an LLM chat backed by a small server-side endpoint, `api/chat.ts`, with the shared implementation in `server/chat.ts`. It accepts any free-form question — anatomy or a general topic — and streams a detailed, structured answer in Mongolian. Medical, scientific and Latin terminology stays in its original form. When a structure is selected and the question matches atlas content, those notes are sent as context so anatomy answers stay grounded in the same reference data the detail panel shows; other questions are answered from the model's general knowledge. The system prompt asks for in-depth answers of roughly 400–900 words with headings, examples and a short conclusion, and the panel works even before the 3D atlas finishes loading. The default Gemini model is `gemini-3.5-flash-lite`, which starts streaming in about a second; set `GEMINI_MODEL=gemini-3.6-flash` if you prefer deeper reasoning over speed.
 
-The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens tours or the quiz. Those actions are shown as chips under the answer.
+The assistant still drives the 3D viewer: a deterministic planner reads the question, highlights named groups such as the rotator cuff, rotates the model, switches floating labels, and opens the quiz page. Those actions are shown as chips under the answer.
 
 ### LLM providers
 
@@ -124,6 +124,63 @@ requires rebuilding from the original source meshes. Source fidelity does not
 establish clinical accuracy, valid vessel lumens, or suitability for flow simulation.
 
 The repository includes browser-ready geometry. Rebuilding it is optional: obtain the official BodyParts3D OBJ archive and English metadata tables, prepare the joined concepts and display-system mappings, run `scripts/convert-anatomy.py`, then `node scripts/optimize-anatomy.mjs` and `node scripts/compress-models.mjs`. Simplification uses a 0.2% relative error limit per structure. Afterwards run `node scripts/fix-systems.mjs` to correct display-system assignments and `node scripts/refine-bones.mjs OBJ_DIRECTORY && node scripts/compress-models.mjs` to restore full-resolution bones, then download the Z-Anatomy FBX files (`NervousSystem100`, `LymphoidOrgans100`, `VisceralSystem100`, `SkeletalSystem100`, `Joints100`) from https://github.com/LluisV/Z-Anatomy/tree/PC-Version/Resources/Models/FBX and run `node --max-old-space-size=8000 scripts/import-zanatomy.mjs FBX_DIRECTORY`.
+
+## Backend (Supabase)
+
+The app has a backend on [Supabase](https://supabase.com) (project: `wckcbyobgpjwiolsdjjd`). The client is set up in [`lib/supabase.ts`](lib/supabase.ts) and the auth hook in [`hooks/use-auth.ts`](hooks/use-auth.ts). It provides:
+
+- **Auth** — the signup (`/signup`) and login (`/login`) pages call `supabase.auth.signUp` / `signInWithPassword`. Email confirmation and password reset come from Supabase Auth for free.
+- **Profiles** — the name typed at signup is stored in `public.profiles` by a database trigger (`supabase/schema.sql`).
+- **Usage stats** — `public.usage_events` with an aggregate `public.usage_totals` view can back the landing-page tally instead of localStorage.
+- **Quiz results** — `public.quiz_results` stores per-user quiz history.
+
+### Setup
+
+The publishable key is meant for the browser; row level security protects the data. Vars are read with the `VITE_` prefix (Vite app; the `NEXT_PUBLIC_` names don't apply here):
+
+```sh
+VITE_SUPABASE_URL=https://wckcbyobgpjwiolsdjjd.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+They live in `.env.local` (gitignored, already filled in locally) and must also be added to the Vercel project's Environment Variables for deployments. The same vars are documented in `.env.example`.
+
+### One-time database setup
+
+Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase Dashboard → **SQL Editor**. It creates `profiles`, `payments`, `subscriptions`, `usage_events`, `usage_totals`, `quiz_results`, enables row level security with sensible policies, and adds triggers that keep profiles in sync with `auth.users`. Running it twice is safe.
+
+### Roles: user, premium, admin
+
+- **User** — every signup. Free access to the whole atlas plus search and the quiz.
+- **Premium** — unlocks ROM Lab (camera motion) and Plaque Lab (renal flow). Bought with an order-based transfer on `/account`: pick a plan (1 month 9,900₮ / 1 year 49,000₮, see `lib/plans.ts`), transfer the amount to the shown bank account, save the transaction reference, and the team's admin confirms it in `/admin`. A database trigger turns the confirmed payment into subscription time automatically. Admins can also grant premium directly by inserting a `subscriptions` row.
+- **Admin** — the `profiles.is_admin` flag. Promote the first admin with SQL (new users can never self-promote; a trigger blocks it):
+
+```sql
+update public.profiles set is_admin = true where email = 'you@example.com';
+```
+
+`/admin` then shows the user list (search, toggle admin) and the payment queue (confirm/reject pending transfers) at `/admin`.
+
+### Data flow of one payment
+
+1. User presses **Төлөх** on `/account` → a `payments` row with status `pending` is created.
+2. User transfers the amount with QPay / SocialPay / bank app and saves the **transaction reference**.
+3. Admin opens `/admin` → **Confirm** → the row becomes `completed`, `confirmed_by`/`confirmed_at` are set, and the `on_payment_confirmed` trigger adds 30/365 days to `subscriptions` (stacked after any remaining time).
+4. `useSubscription()` picks up the change and the premium tools turn on.
+
+### Reading and writing data from a component
+
+```ts
+import {supabase} from '../lib/supabase';
+
+// insert a quiz result for the signed-in user
+const {data,error}=await supabase.from('quiz_results').insert({score:8,total:10});
+
+// read counts
+const {count}=await supabase.from('usage_events').select('*', {count:'exact',head:true});
+```
+
+Hooks: `hooks/use-auth.ts` (session, `signOut`) and `hooks/use-subscription.ts` (`isAdmin`, `premium`, `expiresAt`). If the env vars are missing (`supabaseConfigured === false`), the login and signup pages still render and continue in demo mode so the rest of the atlas keeps working.
 
 ## Deploy
 

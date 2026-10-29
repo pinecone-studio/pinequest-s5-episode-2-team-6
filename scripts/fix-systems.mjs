@@ -15,6 +15,8 @@ const RULES=[
  ['skeletal',/^(inferior nasal concha|lacrimal bone)$/],
  ['connective',/^iliotibial tract$|^flexor retinaculum of wrist$/],
  ['digestive',/^gingiva of (upper|lower) jaw$/],
+ // The liver's segments are its tissue, not veins; they belong with the caudate lobe under digestive.
+ ['digestive',/^hepatovenous segment /],
   // Teeth are anchored in the jaws but are not bones; they form the dental apparatus.
  ['dental',/ tooth$/],
  // Intervertebral disks are fibrocartilaginous joints, not parts of bones.

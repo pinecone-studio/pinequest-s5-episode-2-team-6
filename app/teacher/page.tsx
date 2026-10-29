@@ -213,7 +213,7 @@ export default function TeacherPage() {
               title={chapter.blurb}
               onClick={() => setChapterId(chapter.id)}
             >
-              Ch. {chapter.chapter} <small>{chapter.mn}</small>
+              Бүлэг {chapter.chapter} <small>{chapter.mn}</small>
             </button>
           ))}
         </div>
@@ -230,7 +230,7 @@ export default function TeacherPage() {
                     Бүлэг {activeChapter.chapter} — {activeChapter.mn}. {activeChapter.blurb} Асуултаа бичих эсвэл доорх санал асуултуудаас эхэл.
                   </p>
                 ) : (
-                  <p>Асуултаа бичээд багш түүнийг тохирох бүлэгт өөрөө хуваарилан хариулна. Бүлэг сонгосноор хариулт тэр бүлгийн хүрээнд ятгах болно.</p>
+                  <p>Асуултаа бичээд багш түүнийг тохирох бүлэгт өөрөө хуваарилан хариулна. Бүлэг сонговол хариулт зөвхөн тэр бүлгийн хүрээнд төвлөрнө.</p>
                 )}
                 {health?.configured === false && (
                   <p className="ai-config-hint">
@@ -336,7 +336,7 @@ export default function TeacherPage() {
           <div className="teacher-card">
             <h2 className="teacher-card-title"><History size={13} /> Миний асуултууд</h2>
             {profile.recent.length === 0 ? (
-              <p className="teacher-history-empty">Асуусан асуултууд энд хадгалагдана. Нэвтэрсэн бол дэвсгэрүүдийн дундаас үргэлж харж болно.</p>
+              <p className="teacher-history-empty">Асуусан асуултууд энд хадгалагдана. Нэвтэрсэн бол өөр төхөөрөмжөөс ч харах боломжтой.</p>
             ) : (
               <div className="teacher-history">
                 {profile.recent.slice(0, 15).map((entry, index) => {
@@ -350,7 +350,7 @@ export default function TeacherPage() {
                       title="Асуултыг дахин бичих"
                     >
                       <span className="teacher-history-tag">
-                        <strong>Ch. {chapter?.chapter ?? '—'}</strong> {chapter?.mn ?? entry.chapterId}
+                        <strong>Бүлэг {chapter?.chapter ?? '—'}</strong> {chapter?.mn ?? entry.chapterId}
                       </span>
                       <span>{entry.question}</span>
                     </button>

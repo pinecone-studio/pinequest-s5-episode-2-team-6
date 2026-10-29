@@ -8,13 +8,13 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {Link,useSearchParams} from 'react-router-dom';
 import {Award,Check,CircleCheck,Clock,ListChecks,RotateCcw,Trophy} from 'lucide-react';
 import {Badge} from '@/components/ui/badge';
-import {Button} from '@/components/ui/button';
+import {Button,buttonVariants} from '@/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {useAuth} from '../../hooks/use-auth';
 import {useSubscription} from '../../hooks/use-subscription';
 import {fetchExam,fetchExams,fetchMyAttempts,submitAttempt,claimCheckin,fetchXp,papersByGroup,type Exam,type ExamQuestion,type DbState} from '../../lib/exam-store';
-import {groupColor,groupLabel,partLabel} from '../../lib/anatomy-groups';
+import {EXAM_GROUPS,groupColor,groupLabel,partLabel} from '../../lib/anatomy-groups';
 import {useLang} from '../locale';
 import PageScroll from '../page-scroll';
 import SiteNav from '../site-nav';
@@ -63,6 +63,13 @@ const copy = {
     missingSchema: 'The exam tables are not in this database yet. Run supabase/schema.sql in the Supabase SQL editor to create them.',
     signIn: 'Sign in to take an exam.',
     goSignIn: 'Sign in',
+    signUp: 'Create a free account',
+    guestLead: 'Exams are saved to your account, so you need to sign in first. These are the parts the papers cover:',
+    guestTopics: (n: number) => `${n} structures`,
+    guestPractice: 'Practise without an account',
+    guestPracticeLead: 'The quiz and the 3D spot test work without signing in.',
+    guestQuiz: 'Quiz',
+    guestSpot: '3D spot test',
     checkin: 'Daily attendance',
     checkinDone: 'Attendance already claimed today.',
     checkinClaimed: 'Attendance claimed.',
@@ -116,6 +123,13 @@ const copy = {
     missingSchema: 'Шалгалтын хүснэгтүүд энэ өгөгдлийн санд хийгдээгүй байна. Supabase-ын SQL editor дээр supabase/schema.sql-г ажиллуулна уу.',
     signIn: 'Шалгалт өгөхийн тулд нэвтрээрэй.',
     goSignIn: 'Нэвтрэх',
+    signUp: 'Үнэгүй бүртгүүлэх',
+    guestLead: 'Шалгалтын дүн таны бүртгэлд хадгалагддаг тул эхлээд нэвтэрнэ үү. Шалгалтууд дараах хэсгүүдийг хамарна:',
+    guestTopics: (n: number) => `${n} бүтэц`,
+    guestPractice: 'Бүртгэлгүйгээр дадлага хийх',
+    guestPracticeLead: 'Сорил болон 3D таних сорил нэвтрэхгүйгээр ажиллана.',
+    guestQuiz: 'Сорил',
+    guestSpot: '3D таних сорил',
     checkin: 'Өдрийн ирц',
     checkinDone: 'Өнөөдрийн ирц баталгаажсан байна.',
     checkinClaimed: 'Ирц баталгаажлаа.',
@@ -274,8 +288,28 @@ export default function ExamPage() {
     return (
       <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pt-[calc(var(--site-nav-h)+24px)] pb-8 text-slate-900">
         <SiteNav tone="light" />
-        <p className="mb-4">{t.signIn}</p>
-        <Link to="/login" className="font-medium underline">{t.goSignIn}</Link>
+        <h1 className="mb-2 text-3xl font-semibold">{t.title}</h1>
+        <p className="mb-5 text-slate-600">{t.lead}</p>
+        <p className="mb-3 font-medium">{t.guestLead}</p>
+        <ul className="mb-6 grid gap-2 sm:grid-cols-2">
+          {EXAM_GROUPS.map(group => (
+            <li key={group.id} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{background: groupColor(group.id)}} aria-hidden />
+              <span className="flex-1">{groupLabel(group.id, lang)}</span>
+              <span className="text-sm text-slate-500">{t.guestTopics(group.parts.length)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mb-8 flex flex-wrap gap-3">
+          <Link to="/login" className={`${buttonVariants()} exam-guest-cta`}>{t.goSignIn}</Link>
+          <Link to="/signup" className={buttonVariants({variant: 'outline'})}>{t.signUp}</Link>
+        </div>
+        <h2 className="mb-1 text-lg font-semibold">{t.guestPractice}</h2>
+        <p className="mb-3 text-slate-600">{t.guestPracticeLead}</p>
+        <div className="flex flex-wrap gap-4">
+          <Link to="/quiz" className="font-medium text-blue-700 underline">{t.guestQuiz}</Link>
+          <Link to="/atlas?open=spot" className="font-medium text-blue-700 underline">{t.guestSpot}</Link>
+        </div>
       </main>
     );
 

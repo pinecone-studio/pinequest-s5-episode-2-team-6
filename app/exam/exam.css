@@ -125,3 +125,6 @@
     animation: none;
   }
 }
+
+/* globals.css gives every link color:inherit outside Tailwind's layers, which wins over text-primary-foreground. */
+.exam-guest-cta{color:var(--primary-foreground,#fff)}

@@ -17,7 +17,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
  const host=useRef<HTMLDivElement>(null),latest=useRef(state),look=useRef(appearance),select=useRef(onSelect),latestActivations=useRef(activations??{}),nameOf=useRef(label);
  latest.current=state;look.current=appearance;select.current=onSelect;latestActivations.current=activations??{};nameOf.current=label;
  useEffect(()=>{
-  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',lastFocus='',layoutKey='',amount=0;
+  const el=host.current!;let disposed=false,frame=0,dirty=true,ready=false,lastView='',lastReset=-1,lastIsolate='',lastFocus='',lastAim='',aimOffset=false,layoutKey='',amount=0;
   let lastState:SceneState|null=null,lastLook:Appearance|null=null;let lastActivationKey='';
   // Glass backdrops clear to transparent so the page's gradient shows through, and drop the ground.
   let glass=false;
@@ -175,7 +175,9 @@ void main(){
    const direction=view==='front'?new T.Vector3(0,.02,1):view==='back'?new T.Vector3(0,.02,-1):view==='side'?new T.Vector3(1,.02,0):new T.Vector3(.35,.06,1).normalize();
    controls.target.set(extent>.1&&el.clientWidth>767?-packingWidth*.12:0,extent>.1||mobile?.85:.68,0);camera.position.copy(controls.target).addScaledVector(direction,distance);controls.update();dirty=true;
   };
-  const resize=()=>{layoutKey='';lastState=null;renderer.setPixelRatio(Math.min(devicePixelRatio,el.clientWidth<768||el.clientHeight<600?1.5:2));camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight);fit(latest.current.view,amount);};const observer=new ResizeObserver(resize);observer.observe(el);
+  const resize=()=>{layoutKey='';lastState=null;renderer.setPixelRatio(Math.min(devicePixelRatio,el.clientWidth<768||el.clientHeight<600?1.5:2));camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight);fit(latest.current.view,amount);
+   // A resize re-fits the whole body, so a structure the camera had flown to is flown to again on the next frame.
+   if(aimOffset){camera.clearViewOffset();aimOffset=false;}lastAim='';};const observer=new ResizeObserver(resize);observer.observe(el);
   const raycaster=new T.Raycaster(),pointer=new T.Vector2(),tap=new PointerTap(),worldBox=new T.Box3(),hitPoint=new T.Vector3();
   const down=(e:PointerEvent)=>{hover.hidden=true;tap.down(e.pointerId,e.clientX,e.clientY,e.pointerType==='touch'?12:5);};
   const move=(e:PointerEvent)=>{tap.move(e.pointerId,e.clientX,e.clientY);if(e.buttons||amount<.5||e.pointerType==='touch'){hover.hidden=true;return;}const rect=el.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top,index=findTarget(x,y,12);hover.hidden=index<0;renderer.domElement.style.cursor=index<0?'grab':'pointer';if(index>=0){hover.textContent=nameOf.current?.(atlas.parts[index].name)??atlas.parts[index].name;hover.style.left=`${Math.max(8,Math.min(x+14,el.clientWidth-260))}px`;hover.style.top=`${Math.max(8,Math.min(y+18,el.clientHeight-55))}px`;}};
@@ -260,7 +262,7 @@ void main(){
     });partTexture.needsUpdate=true;selectionTexture.needsUpdate=true;markerGeometry.attributes.position.needsUpdate=true;lastState=s;lastExtent=amount;dirty=true;
    }
    if(look.current!==lastLook){paint(look.current);lastLook=look.current;}
-   if(s.view!==lastView||s.reset!==lastReset){fit(s.view,amount);lastView=s.view;lastReset=s.reset;}
+   if(s.view!==lastView||s.reset!==lastReset){if(aimOffset){camera.clearViewOffset();aimOffset=false;}fit(s.view,amount);lastView=s.view;lastReset=s.reset;}
    if(moving&&!s.isolate)fit(amount>.5?'front':s.view,Math.max(0,(amount-.3)/.7));
    const isolateKey=s.isolate?s.selected.join(',')+':'+s.reset+':'+s.inspectorOpen+':'+camera.aspect:'';
    if(isolateKey!==lastIsolate||(s.isolate&&moving)){
@@ -271,6 +273,21 @@ void main(){
       const availableWidth=Math.max(150,right-left),availableHeight=Math.max(40,bottom-top);camera.setViewOffset(w,h,w/2-(left+right)/2,h/2-(top+bottom)/2,w,h);const distance=Math.max(.07,Math.max(size.y*h/availableHeight,size.x*w/availableWidth/camera.aspect,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.35);controls.maxDistance=Math.max(40,distance*2);controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.2,.1,1).normalize().multiplyScalar(distance));controls.update();dirty=true;}
     }else if(lastIsolate){camera.clearViewOffset();fit(s.view,amount);}
     lastIsolate=isolateKey;
+   }
+   // A structure picked from search or a quiz may be small or deep, so the camera flies to it, keeping the current
+   // viewing direction; the detail panel's side of the screen is left clear on wide screens.
+   const aimKey=!s.isolate&&s.focus&&s.selected.length?`${s.focus}:${s.selected.join(',')}`:'';
+   if(aimKey!==lastAim){
+    lastAim=aimKey;
+    if(aimKey){const box=new T.Box3();atlas.parts.forEach((p,i)=>{if(s.selected.includes(p.id))box.union(bounds[i].clone().translate(new T.Vector3(data[i*4],data[i*4+1],data[i*4+2])));});
+     if(!box.isEmpty()){const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3()),w=el.clientWidth,h=el.clientHeight;
+      const direction=camera.position.clone().sub(controls.target).normalize();
+      const distance=T.MathUtils.clamp(Math.max(size.x,size.y,size.z)/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*2.4,.45,4);
+      controls.target.copy(center);camera.position.copy(center).addScaledVector(direction,distance);
+      if(aimOffset){camera.clearViewOffset();aimOffset=false;}
+      if(w>=768&&s.inspectorOpen){const left=w>1100?285:25,right=w-370;camera.setViewOffset(w,h,w/2-(left+right)/2,0,w,h);aimOffset=true;}
+      controls.update();dirty=true;}
+    }
    }
    // On a phone held upright the details sheet covers the lower screen, so the view slides to put the selection in the space above it.
    const sheet=!s.isolate&&s.inspectorOpen&&s.selected.length&&el.clientWidth<768&&el.clientWidth<el.clientHeight?document.querySelector<HTMLElement>('.detail-sheet'):null;

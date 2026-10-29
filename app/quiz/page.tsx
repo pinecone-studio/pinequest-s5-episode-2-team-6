@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {Link,useSearchParams} from 'react-router-dom';
-import {ArrowRight,BicepsFlexed,Bone,Box,Brain,Check,CircleAlert,Clock,Flame,HeartPulse,Link2,ListChecks,LoaderCircle,RotateCcw,Settings2,Shuffle,Sparkles,Stethoscope,Timer,Trophy,X,type LucideIcon} from 'lucide-react';
+import {ArrowRight,BicepsFlexed,Bone,Box,Brain,CalendarClock,Check,CircleAlert,Clock,Flame,HeartPulse,Link2,ListChecks,LoaderCircle,RotateCcw,Settings2,Shuffle,Sparkles,Stethoscope,Target,Timer,Trophy,X,type LucideIcon} from 'lucide-react';
 import {useAuth} from '../../hooks/use-auth';
 import {saveQuizResult} from '../../lib/quiz-store';
 import {useLang} from '../locale';
@@ -14,7 +14,7 @@ import './quiz.css';
 // next button pinned to the bottom on a phone, and last the score, a per-topic breakdown and a review. Every
 // answer links to its structure in the 3D atlas, and the run is kept for the session so coming back from the
 // atlas lands on the same question.
-const BEST='anatomn-quiz-best-v2',RUN='anatomn-quiz-run-v2',SETUP='anatomn-quiz-setup';
+const BEST='anatomn-quiz-best-v2',RUN='anatomn-quiz-run-v2',SETUP='anatomn-quiz-setup',REVIEW='anatomn-quiz-review';
 const LETTERS=['A','B','C','D','E','F'];
 const SECONDS=30;
 const LENGTHS=[5,10,15,20],AI_LENGTHS=[5,10];
@@ -67,6 +67,22 @@ const session=()=>sessionStorage,local=()=>localStorage;
 const loadRun=():Run=>read<Run>(session,RUN,validRun)??fresh(read<Setup>(local,SETUP,validSetup)??DEFAULT_SETUP);
 const loadBest=():Record<string,number>=>read<Record<string,number>>(local,BEST,v=>typeof v==='object'&&!Array.isArray(v))??{};
 
+// The review deck is a Leitner box: a missed bank question is due again at once, each later right answer moves it
+// up a box and pushes it out by 1, 3, 7 and then 16 days, and a right answer after the last wait retires it.
+type Review=Record<string,{box:number;due:number}>;
+const DAY=86_400_000,INTERVALS=[1,3,7,16];
+const loadReview=():Review=>{const r=read<Review>(local,REVIEW,v=>typeof v==='object'&&!Array.isArray(v))??{};return Object.fromEntries(Object.entries(r).filter(([id,v])=>BY_ID.has(id)&&int(v?.box,1,INTERVALS.length+1)&&num(v?.due)));};
+function reviewAfter(deck:Review,items:{id:string;correct:boolean}[],time:number):Review{
+ const next={...deck};
+ for(const {id,correct} of items){
+  if(!BY_ID.has(id))continue;
+  if(!correct){next[id]={box:1,due:time};continue;}
+  const card=next[id];if(!card)continue;
+  if(card.box>INTERVALS.length)delete next[id];else next[id]={box:card.box+1,due:time+INTERVALS[card.box-1]*DAY};
+ }
+ return next;
+}
+
 const atlasLink=(concept:string)=>`/atlas?focus=${encodeURIComponent(concept)}`;
 const clock=(ms:number)=>{const s=Math.max(0,Math.round(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 /** Longest run of right answers, and the run that is still going at the end. */
@@ -93,6 +109,7 @@ export default function QuizPage(){
  const bank=useMemo(()=>new Map(quizFor(lang).map(q=>[q.id,q])),[lang]);
  const [run,setRun]=useState<Run>(loadRun);
  const [best,setBest]=useState(loadBest);
+ const [review,setReview]=useState(loadReview);
  const [now,setNow]=useState(Date.now);
  const [busy,setBusy]=useState(false);
  const [aiError,setAiError]=useState('');
@@ -111,6 +128,8 @@ export default function QuizPage(){
  const lengths=setup.source==='ai'?AI_LENGTHS:LENGTHS;
  const total=setup.source==='ai'?setup.count:Math.min(setup.count,pool.length);
  const remaining=run.deadline?Math.min(SECONDS*1000,Math.max(0,run.deadline-now)):0;
+ const reviewIds=Object.keys(review),dueIds=reviewIds.filter(id=>review[id].due<=Date.now());
+ const nextDue=reviewIds.length&&!dueIds.length?Math.max(1,Math.ceil((Math.min(...reviewIds.map(id=>review[id].due))-Date.now())/DAY)):0;
 
  useEffect(()=>{write(session,RUN,run);},[run]);
  useEffect(()=>{write(local,SETUP,setup);},[setup]);
@@ -170,6 +189,10 @@ export default function QuizPage(){
   const cards=dealQuiz(matching(QUIZ,base.topic,base.level),base.count);
   if(cards.length)play(cards,[],false,base);
  };
+ const reviewNow=()=>{
+  const due=dueIds.map(id=>BY_ID.get(id)!).sort((a,b)=>review[a.id].due-review[b.id].due).slice(0,20);
+  if(due.length)play(dealQuiz(due,due.length),[],true,setup);
+ };
  const retryWrong=()=>{
   const missed=deck.filter((_,i)=>!right[i]).map(d=>resolve(d.id,run.ai)!);
   play(dealQuiz(missed,missed.length),run.ai,true,setup);
@@ -191,6 +214,7 @@ export default function QuizPage(){
    v:2,topic:setup.topic,level:setup.level,source:run.ai.length?'ai':'bank',retry:run.retry,seconds:Math.round((finished-run.started)/1000),
    items:deck.map((d,i)=>({id:d.id,topic:questions[i].topic,concept:questions[i].concept,correct:right[i]})),
   });
+  const updated=reviewAfter(review,deck.map((d,i)=>({id:d.id,correct:right[i]})),finished);setReview(updated);write(local,REVIEW,updated);
   setRun(r=>({...r,stage:'done',finished,deadline:0,newBest}));
  };
  // Number keys pick an answer and Enter moves on, so the quiz also runs from a keyboard.
@@ -260,6 +284,16 @@ export default function QuizPage(){
     </button>
     {aiError&&pool.length>0&&<button type="button" className="qz-secondary qz-glass qz-wide" onClick={()=>begin({...setup,source:'bank'})}><ListChecks size={17} aria-hidden/>{t.useBank}</button>}
     <p className="qz-note">{user?t.saved:<Link to="/login">{t.guest}</Link>}</p>
+   </section>}
+   {stage==='setup'&&reviewIds.length>0&&<section className="qz-card qz-glass qz-side" aria-labelledby="qz-review-deck">
+    <h2 id="qz-review-deck"><CalendarClock size={18} aria-hidden/>{t.reviewTitle}</h2>
+    <p>{dueIds.length?t.reviewDue(dueIds.length,reviewIds.length):t.reviewLater(reviewIds.length,nextDue)}</p>
+    {dueIds.length>0&&<button type="button" className="qz-primary" disabled={busy} onClick={reviewNow}><RotateCcw size={17} aria-hidden/>{t.reviewStart(Math.min(20,dueIds.length))}</button>}
+   </section>}
+   {stage==='setup'&&<section className="qz-card qz-glass qz-side" aria-labelledby="qz-spot">
+    <h2 id="qz-spot"><Target size={18} aria-hidden/>{t.spotTitle}</h2>
+    <p>{t.spotLead}</p>
+    <Link className="qz-secondary qz-glass qz-wide" to="/atlas?open=spot"><Box size={17} aria-hidden/>{t.spotOpen}</Link>
    </section>}
 
    {stage==='play'&&question&&<>

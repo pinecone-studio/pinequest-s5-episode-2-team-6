@@ -56,7 +56,9 @@ export const COPY:Record<Lang,typeof en>={en,mn};
 
 const KEY='human-atlas-lang';
 export function loadLang():Lang{
-  try{const saved=localStorage.getItem(KEY);if(saved==='en'||saved==='mn')return saved;}catch{/* Storage can be blocked; fall back to the browser language. */}
-  return navigator.language.toLowerCase().startsWith('mn')?'mn':'en';
+  try{const saved=localStorage.getItem(KEY);if(saved==='en'||saved==='mn')return saved;}catch{/* Storage can be blocked; fall back to the default. */}
+  // The site is built for Mongolian medical students, and few of their browsers report Mongolian, so a first visit
+  // opens in Mongolian; EN in the navigation switches and the choice is remembered.
+  return 'mn';
 }
 export function saveLang(lang:Lang){try{localStorage.setItem(KEY,lang);}catch{/* The choice still applies for this visit. */}}

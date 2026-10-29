@@ -162,7 +162,7 @@ export default function FallScene({progress,reset,label,overlays=false,focused=n
    }
    if(!disposed){setStatus('ready');scenarioOptions.current.onReady();}
   }catch{if(!disposed)setStatus('error');}})();
-  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();anatomyOverlay.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;abort.abort();cancelAnimationFrame(frame);observer.disconnect();controls.dispose();anatomyOverlay.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();};
  },[attempt,scenario,fracture?.bone,fracture?.pattern,fracture?.location]);
  return <div className="fall-stage" ref={host} role="region" aria-label={label} data-phase={(scenario?scenarioPose(progress,scenario):fallPose(progress)).phase}>
   {status==='loading'&&<p className="fall-loading" role="status">Loading anatomy / Анатоми ачаалж байна…</p>}

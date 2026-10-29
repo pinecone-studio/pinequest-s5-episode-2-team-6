@@ -46,7 +46,7 @@ export default function FracturePage(){
  return <main className="fracture-page">
   <SiteNav tone="light"/>
   <header className="fracture-heading"><p><Bone size={16}/> ANATOMN · {lang==='mn'?'ХУГАРЛЫН ЛАБ':'FRACTURE LAB'}</p><h1>{lang==='mn'?'Ясны хугарлын лаб':'Fracture lab'}</h1><p>{lang==='mn'?'Бүх араг ясны загвар дээр хугарлын хөдөлгөөнийг судлаарай.':'Explore fracture animations across the entire atlas skeleton. Name a bone, watch the break, and understand each stage.'}</p></header>
-  <SimulationPrompt atlas={atlas} onRun={runSimulation} onBones={request=>{setPlaying(false);setBoneRequest(request);setMode('catalogue');setRequestId(value=>value+1);}}/>
+  <section className="fracture-lab-shell"><SimulationPrompt atlas={atlas} onRun={runSimulation} onBones={request=>{setPlaying(false);setBoneRequest(request);setMode('catalogue');setRequestId(value=>value+1);}}/>
   {catalogueError&&<p role="alert">{lang==='mn'?'Ясны жагсаалтыг ачаалж чадсангүй.':'Could not load the bone catalogue.'} <button onClick={()=>setCatalogueAttempt(value=>value+1)}>Retry / Дахин оролдох</button></p>}
   <div className="fracture-modes" role="group" aria-label={lang==='mn'?'Үзүүлэн сонгох':'Choose demonstration'}><button aria-pressed={mode==='catalogue'} onClick={()=>{setPlaying(false);setMode('catalogue');}}>{lang==='mn'?'Бүх ясны үзүүлэн':'All bones explorer'}</button><button aria-pressed={mode==='fall'} onClick={()=>{setPlaying(false);setMode('fall');}}>{lang==='mn'?'Уналтын жишээ':'Fall scenario'}</button><button aria-pressed={mode==='bone'} onClick={()=>setMode('bone')}>{lang==='mn'?'Эгэмний дэлгэрэнгүй':'Clavicle detail'}</button></div>
   {mode==='catalogue'?(atlas&&boneRequest?<BoneLab key={requestId} atlas={atlas} request={boneRequest}/>:!catalogueError&&<p role="status">Loading bone catalogue / Ясны жагсаалтыг ачаалж байна…</p>):mode==='fall'?<FallLesson key={requestId} autoPlay={requestId>0}/>:<>
@@ -70,5 +70,6 @@ export default function FracturePage(){
   </div>
   <section className="fracture-notes"><h2>{t.notes}</h2><p>{t.explanation}</p><p>{t.pattern}</p><p className="fracture-limits">{t.limits}</p><a href="https://orthoinfo.aaos.org/en/diseases--conditions/clavicle-fracture-broken-collarbone/" target="_blank" rel="noreferrer">{t.source} ↗</a><Link to="/atlas?focus=clavicle">{t.back} →</Link></section>
   </>}
+  </section>
  </main>;
 }

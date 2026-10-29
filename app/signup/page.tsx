@@ -43,7 +43,7 @@ export default function SignupPage(){
           return;
         }
         window.dispatchEvent(new Event('anatomn-auth'));
-        navigate('/account',{state:{notice:t.auth.created}});
+        navigate('/profile',{state:{notice:t.auth.created}});
         return;
       }
       const result=await supabase.auth.signUp({
@@ -60,7 +60,7 @@ export default function SignupPage(){
       // already exists, so the new user goes straight to the account page.
       // With confirmation on, the login page shows the check-your-email note.
       if(result.data.session){
-        navigate('/account',{state:{notice:t.auth.created},replace:true});
+        navigate('/profile',{state:{notice:t.auth.created},replace:true});
       }else{
         navigate('/login',{state:{notice:t.auth.verifyEmail},replace:true});
       }

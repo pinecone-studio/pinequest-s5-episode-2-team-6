@@ -48,7 +48,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   const smoothAct=new Float32Array(atlas.parts.length);
   const contractShaders:{uniforms:Record<string,T.IUniform>}[]=[];
   // Selection highlight shared by every system's program: focus fades the rest of the body, flash pings a new pick.
-  const highlight={uFocus:{value:0},uFlash:{value:0},uFade:{value:new T.Color()}};
+  const highlight={uVesselFocus:{value:0},uFocus:{value:0},uFlash:{value:0},uFade:{value:new T.Color()}};
   const offsets:T.Vector3[]=[],bounds=atlas.parts.map(p=>new T.Box3(new T.Vector3().fromArray(p.bounds[0]),new T.Vector3().fromArray(p.bounds[1])));
   // Overall body extent drives the cross-section plane range.
   const extent=new T.Box3();for(const box of bounds)extent.union(box);
@@ -78,7 +78,7 @@ export default function AnatomyScene({atlas,state,appearance,activations,anchor,
   };
   const materialFor=(system:string)=>{
    const m=new T.MeshStandardMaterial({color:SYSTEMS.find(s=>s.id===system)?.color??'#aebbb8',metalness:.08,roughness:.53,side:T.DoubleSide,transparent:system==='integumentary',opacity:system==='integumentary'?.1:1,depthWrite:system!=='integumentary'});
-   m.customProgramCacheKey=()=>'rom-contract-v2';
+   m.customProgramCacheKey=()=>'rom-contract-vessel-opacity-v3';
    m.onBeforeCompile=shader=>{
     shader.uniforms.partState={value:partTexture};shader.uniforms.selectionState={value:selectionTexture};shader.uniforms.activationState={value:activationTexture};shader.uniforms.partCenter={value:centerTexture};shader.uniforms.stateWidth={value:width};shader.uniforms.uTime={value:0};Object.assign(shader.uniforms,highlight);
     contractShaders.push(shader);
@@ -102,12 +102,13 @@ float shorten = act * 0.055;
 // Belly swell (radial) + slight shortening along body-up for a contraction cue.
 transformed = partOrigin + vec3(delta.x * (1.0 + bulge), delta.y * (1.0 - shorten), delta.z * (1.0 + bulge));
 transformed += state.xyz;`);
-    shader.fragmentShader='uniform float uFocus; uniform float uFlash; uniform vec3 uFade; varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
+    shader.fragmentShader='uniform float uVesselFocus; uniform float uFocus; uniform float uFlash; uniform vec3 uFade; varying float partVisible; varying float partSelected; varying float partActivated; varying vec3 partTint;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (partVisible < 0.5) discard;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
 // A per-part tint replaces the system color first, so tinted parts still recede and heat like the rest.
 diffuseColor.rgb = mix(diffuseColor.rgb, partTint, step(0.001, dot(partTint, partTint)));
 // Selected parts keep their own color; the rest of the body recedes toward the backdrop.
+diffuseColor.a *= mix(1.0, 0.15, uVesselFocus * (1.0 - partSelected));
 float recede = uFocus * (1.0 - partSelected);
 float luma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(luma), uFade, 0.6), recede * 0.75);
@@ -216,6 +217,11 @@ void main(){
    const sliceKey=`${slice.on?1:0}:${slice.depth.toFixed(3)}:${slice.axis}`;
    if(sliceKey!==lastSliceKey){applySlice(slice);lastSliceKey=sliceKey;dirty=true;}
    // Ease the focus fade in and out, and replay the flash whenever a new selection lands.
+   const vesselFocus=!s.isolate&&s.selected.some(id=>{const i=partIndex.get(id);return i!==undefined&&(atlas.parts[i].system==='arterial'||atlas.parts[i].system==='venous');});
+   const vesselTarget=vesselFocus?1:0;
+   if(Math.abs(highlight.uVesselFocus.value-vesselTarget)>.002){highlight.uVesselFocus.value=T.MathUtils.damp(highlight.uVesselFocus.value,vesselTarget,10,dt);dirty=true;}else highlight.uVesselFocus.value=vesselTarget;
+   const translucent=highlight.uVesselFocus.value>.002;
+   mats.forEach((material,system)=>{const transparent=translucent||system==='integumentary',depthWrite=!translucent&&system!=='integumentary';if(material.transparent!==transparent||material.depthWrite!==depthWrite){material.transparent=transparent;material.depthWrite=depthWrite;material.needsUpdate=true;dirty=true;}});
    const focusTarget=s.selected.length&&!s.isolate?1:0;
    if(Math.abs(highlight.uFocus.value-focusTarget)>.002){highlight.uFocus.value=T.MathUtils.damp(highlight.uFocus.value,focusTarget,10,dt);dirty=true;}else highlight.uFocus.value=focusTarget;
    if(s.selected!==lastSelected){if(focusTarget)flashStart=clock.elapsedTime;lastSelected=s.selected;}

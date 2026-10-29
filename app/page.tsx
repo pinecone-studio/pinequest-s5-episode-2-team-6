@@ -21,7 +21,7 @@ import {StandardFigures,useStandardPage} from './standard-figures';
 import RomPanel from './rom/RomPanel';
 import PlaquePanel from './plaque-panel';
 import AtlasPlaquePanel from './atlas-plaque-panel';
-import type {AtlasPlaque} from './atlas-plaque';
+import {createAtlasPlaque,type AtlasPlaque} from './atlas-plaque';
 import type {RenalPreview} from './plaque-model';
 import AiPanel from './ai-panel';
 import SheetResizer from './sheet-resizer';
@@ -56,7 +56,9 @@ export default function Home(){
  const navigate=useNavigate();
  // Both labs are available directly, including without an account.
  const plaqueRoute=useLocation().pathname==='/plaque',plaqueOpen=plaqueRoute;
+ const [placingPlaque,setPlacingPlaque]=useState(false);
  const [plaqueMode,setPlaqueMode]=useState<'body'|'renal'>('body'),[wholePlaque,setWholePlaque]=useState<AtlasPlaque|null>(null);
+ useEffect(()=>setPlacingPlaque(false),[plaqueRoute,plaqueMode]);
  const [perfusion,setPerfusion]=useState<RenalPreview|null>(null);
  const previewPlaque=useCallback((next:RenalPreview|null)=>{setPerfusion(next);if(next){setDetails(false);setPanel(null);setRomOpen(false);setChatOpen(false);}},[]);
  const systemName=(id:SystemId)=>t.systems[id].name;
@@ -247,11 +249,11 @@ export default function Home(){
  return <div className="atlas-page" style={isGlass(appearance.background)?undefined:{background:appearance.background}}>
   <SiteNav tone="glass" highlight={introTarget==='nav'}/>
   <main className={`studio ${perfusion?'plaque-open':''} ${chatOpen?'chat-open':''}`}>
-  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:[...perfusion.ids,...perfusion.contextIds??[]],isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,plaque:plaqueOpen&&plaqueMode==='body'?wholePlaque??undefined:undefined,inspectorOpen:(details&&selectedParts.length>0)||romOpen||panel==='spot'||!!(activeRegion&&state.isolate)}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion||panel==='spot'?()=>{}:choosePart} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
+  {atlas&&<AnatomyScene atlas={atlas} appearance={appearance} state={perfusion?{...state,selected:[...perfusion.ids,...perfusion.contextIds??[]],isolate:true,explode:0,peel:0,slice:DEFAULT_SLICE,view:'front',rotate:false,inspectorOpen:true,perfusion}:{...state,plaque:plaqueOpen&&plaqueMode==='body'?wholePlaque??undefined:undefined,inspectorOpen:(details&&selectedParts.length>0)||romOpen||panel==='spot'||!!(activeRegion&&state.isolate)}} activations={activations} anchor={anchor} label={nameOf} onSelect={perfusion||panel==='spot'?()=>{}:(id,point)=>{choosePart(id);const part=parts.get(id);if(plaqueOpen&&plaqueMode==='body'&&placingPlaque&&part?.system==='arterial'&&point){setWholePlaque(createAtlasPlaque(part,wholePlaque?.narrowing??50,point));setPlacingPlaque(false);setDetails(false);}}} onProgress={n=>{setProgress(n);if(n===100)setError('');}} onError={setError}/>}
   <div className="vignette"/>
   <div className="stage-frame" aria-hidden><i/><i/><i/><i/></div>
   <PlaquePanel atlas={atlas} open={plaqueOpen&&plaqueMode==='renal'} onPreview={previewPlaque} onClose={()=>navigate('/atlas')}/>
-  {plaqueOpen&&plaqueMode==='body'&&!details&&<AtlasPlaquePanel atlas={atlas} selected={selected} plaque={wholePlaque} onSelect={id=>{choosePart(id);setDetails(false);setState(s=>({...s,focus:(s.focus??0)+1}));}} onPlace={setWholePlaque} onInspect={()=>setDetails(true)} onRenal={()=>setPlaqueMode('renal')} onClose={()=>navigate('/atlas')}/>}
+  {plaqueOpen&&plaqueMode==='body'&&!details&&!chatOpen&&!romOpen&&<AtlasPlaquePanel atlas={atlas} selected={selected} plaque={wholePlaque} placing={placingPlaque} onPick={()=>setPlacingPlaque(value=>!value)} onSelect={id=>{choosePart(id);setDetails(false);setState(s=>({...s,focus:(s.focus??0)+1}));}} onPlace={setWholePlaque} onInspect={()=>setDetails(true)} onRenal={()=>setPlaqueMode('renal')} onClose={()=>navigate('/atlas')}/>}
   {plaqueOpen&&plaqueMode==='renal'&&<Button className="atlas-plaque-return" onClick={()=>{setPlaqueMode('body');setPerfusion(null);}}>{lang==='mn'?t.site.plaque:'Whole-atlas plaque'}</Button>}
   {/* No visible title over the model; the heading stays for screen readers. */}
   <h1 className="sr-only">Anatomn</h1>

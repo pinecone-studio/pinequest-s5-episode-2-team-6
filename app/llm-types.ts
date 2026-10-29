@@ -47,7 +47,7 @@ export interface AssistantChatRequest {
   selection?: AssistantSelection | null;
   references?: AssistantReference[];
   /** 'teacher' selects the AI-teacher prompt; the default is the atlas assistant. */
-  mode?: 'assistant' | 'teacher';
+  mode?: 'assistant' | 'teacher' | 'plaque';
   /** Teacher mode: which Gray's chapter the question is anchored to. */
   textbook?: {chapterId?: string};
   /** Teacher mode: the saved learning profile of this student. */

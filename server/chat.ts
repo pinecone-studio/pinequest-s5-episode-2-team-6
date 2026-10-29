@@ -7,6 +7,7 @@
 
 import type {AssistantChatRequest, AssistantHealth, AssistantReference, AssistantSelection, ChatTurn, TeacherStudentContext} from '../app/llm-types';
 import {buildTeacherSystemPrompt} from './teacher';
+import {PLAQUE_SYSTEM} from './plaque-prompt';
 import {CHAPTERS, chapterById} from '../app/teacher/textbook';
 
 export type LlmEnv = Record<string, string | undefined>;
@@ -293,6 +294,7 @@ export function buildMessages(body: AssistantChatRequest): {system: string; mess
       messages,
     };
   }
+  if(body?.mode==='plaque')return {system:PLAQUE_SYSTEM+'\nApp reference data:\n'+JSON.stringify({selection:sanitizeSelection(body.selection),references:sanitizeReferences(body.references)}),messages};
   return {
     system: buildSystemPrompt({
       selection: sanitizeSelection(body?.selection),

@@ -9,8 +9,9 @@
 --
 -- Run supabase/schema.sql and supabase/exam_bank.sql first.
 -- This file is idempotent: it skips a paper whose title is already
--- in the bank. The short papers are archived at the end (their
--- questions now live inside the full papers); an admin can
+-- in the bank, re-archives the short papers and lifts every paper's
+-- pass mark to 80%. The short papers are archived at the end
+-- (their questions now live inside the full papers); an admin can
 -- republish any of them from /admin.
 -- ============================================================
 
@@ -303,3 +304,10 @@ set status = 'archived'
 where status = 'published'
   and part_key <> ''
   and group_key in ('skeletal', 'muscular', 'arterial', 'venous', 'nervous', 'cardiac');
+
+-- Every block above only inserts a paper whose title is still missing, so a
+-- database seeded while the pass mark was 70% keeps those rows forever. Set the
+-- school-wide pass mark on each run instead.
+update public.exams
+set pass_pct = 80
+where pass_pct <> 80;

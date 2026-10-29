@@ -455,7 +455,7 @@ export default function AdminPage(){
           partMn:partTitle(part,'mn'),
           source:'ai',
           timeLimitMin:6,
-          passPct:70,
+          passPct:80,
           questions,
         });
         if(stored.data)made+=1;

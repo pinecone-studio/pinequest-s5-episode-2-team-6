@@ -20,7 +20,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Яс: гуяны яс') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Яс: гуяны яс', 'Bones: femur', 'Яс', 'basic', 6, 70, 'published', 'skeletal', 'femur', 'гуяны яс', 'ai')
+      values ('Яс: гуяны яс', 'Bones: femur', 'Яс', 'basic', 6, 80, 'published', 'skeletal', 'femur', 'гуяны яс', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Гуяны ясны (femur) толгой ямар бүтцийн тусламжтайгаар түүний хүзүү болон их биетэй холбогддог вэ?', 'By what structural feature does the head of the femur connect to its neck and shaft?', '["Бага эргүүлэг (Lesser trochanter)", "Үений гадаргуу (Articular surface)", "Хойд хэсгийн ялтас (Linea aspera)", "Их эргүүлэг (Greater trochanter)"]', 3, 'Гуяны ясны анатомийн бүтцийг зөв тодорхойлох.', 'femur', 2),
@@ -37,7 +37,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Яс: бугалганы яс') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Яс: бугалганы яс', 'Bones: humerus', 'Яс', 'basic', 6, 70, 'published', 'skeletal', 'humerus', 'бугалганы яс', 'ai')
+      values ('Яс: бугалганы яс', 'Bones: humerus', 'Яс', 'basic', 6, 80, 'published', 'skeletal', 'humerus', 'бугалганы яс', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Бугалганы ясны (humerus) толгой хэсэг аль анатомийн бүтцээр дамжин ясны бусад хэсгээс тусгаарлагддаг вэ?', 'Which anatomical structure separates the head of the humerus from the rest of the bone?', '["Мэс заслын хүзүү (Surgical neck)", "Бага товгор (Lesser tubercle)", "Их товгор (Greater tubercle)", "Анатомийн хүзүү (Anatomical neck)"]', 3, 'Бугалганы ясны анатомийн болон мэс заслын хүзүүний ялгааг мэддэг байх.', 'humerus', 2),
@@ -54,7 +54,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Яс: дал') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Яс: дал', 'Bones: scapula', 'Яс', 'basic', 6, 70, 'published', 'skeletal', 'scapula', 'дал', 'ai')
+      values ('Яс: дал', 'Bones: scapula', 'Яс', 'basic', 6, 80, 'published', 'skeletal', 'scapula', 'дал', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Далны (scapula) ясны анатомийн бүтцэд аль нь хамаарах вэ?', 'Which of the following is an anatomical structure of the scapula?', '["Styloid process (Шөвгөр сэртэн)", "Acromion (Мөрний сэртэн)", "Medial epicondyle (Дунд талын булцуу)", "Olecranon (Тохой)"]', 1, 'Acromion нь далны ясны дээд хэсэгт орших бөгөөд эгэмний ястай нийлж үе үүсгэдэг анатомийн бүтцэд хамаарна.', 'scapula', 2),
@@ -71,7 +71,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Булчин: бугалганы хоёр толгойт булчин') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Булчин: бугалганы хоёр толгойт булчин', 'Muscles: biceps brachii', 'Булчин', 'basic', 6, 70, 'published', 'muscular', 'biceps brachii', 'бугалганы хоёр толгойт булчин', 'ai')
+      values ('Булчин: бугалганы хоёр толгойт булчин', 'Muscles: biceps brachii', 'Булчин', 'basic', 6, 80, 'published', 'muscular', 'biceps brachii', 'бугалганы хоёр толгойт булчин', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Бугалганы хоёр толгойт булчин (musculus biceps brachii)-гийн тохой үе нугалах болон шууг гадагш эргүүлэх (supination) үйлдлийг аль мэдрэл хангадаг вэ?', 'Which nerve supplies the innervation for flexion of the elbow and supination of the forearm by the musculus biceps brachii?', '["Musculocutaneous nerve", "Radial nerve", "Median nerve", "Ulnar nerve"]', 0, 'Зөв хариулт: Musculocutaneous nerve. Энэ мэдрэл нь бугалганы хоёр толгойт булчингийн хөдөлгөөний үүргийг хангадаг.', 'biceps brachii', 2),
@@ -88,7 +88,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Булчин: өгзөгний их булчин') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Булчин: өгзөгний их булчин', 'Muscles: gluteus maximus', 'Булчин', 'basic', 6, 70, 'published', 'muscular', 'gluteus maximus', 'өгзөгний их булчин', 'ai')
+      values ('Булчин: өгзөгний их булчин', 'Muscles: gluteus maximus', 'Булчин', 'basic', 6, 80, 'published', 'muscular', 'gluteus maximus', 'өгзөгний их булчин', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Өгзөгний их булчингийн (M. gluteus maximus) үндсэн үйлдэл аль вэ?', 'What is the primary action of the gluteus maximus muscle?', '["Чөээжийг хойшоо гэдийлгэх", "Өвдөгний үеийг тэнийлгэх", "Түнхний үеийг нугалах болон дотогш эргүүлэх", "Түнхний үеийг тэнийлгэх болон гадагш эргүүлэх"]', 3, '', 'gluteus maximus', 2),
@@ -105,7 +105,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Булчин: шилбэний урд булчин') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Булчин: шилбэний урд булчин', 'Muscles: tibialis anterior', 'Булчин', 'basic', 6, 70, 'published', 'muscular', 'tibialis anterior', 'шилбэний урд булчин', 'ai')
+      values ('Булчин: шилбэний урд булчин', 'Muscles: tibialis anterior', 'Булчин', 'basic', 6, 80, 'published', 'muscular', 'tibialis anterior', 'шилбэний урд булчин', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Шилбэний урд булчингийн (Musculus tibialis anterior) үндсэн үйлдэл аль нь вэ?', 'What is the primary action of the tibialis anterior muscle?', '["Тавгийг тэнийлгэх болон гадагш эргүүлэх (Plantarflexion and eversion)", "Хөлийн эрхий хурууг тэнийлгэх (Extension of the hallux)", "Тавгийг нугалах болон дотогшоо эргүүлэх (Dorsiflexion and inversion)", "Тавгийг гадагш эргүүлэх (Eversion only)"]', 2, 'Шилбэний урд булчин нь тавгийг шагайгаар нь нугалах (dorsiflexion) болон дотогшоо эргүүлэх (inversion) үүрэгтэй.', 'tibialis anterior', 2),
@@ -122,7 +122,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Артерийн судас: өгсөх гол судас') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Артерийн судас: өгсөх гол судас', 'Arteries: ascending aorta', 'Артерийн судас', 'basic', 6, 70, 'published', 'arterial', 'ascending aorta', 'өгсөх гол судас', 'ai')
+      values ('Артерийн судас: өгсөх гол судас', 'Arteries: ascending aorta', 'Артерийн судас', 'basic', 6, 80, 'published', 'arterial', 'ascending aorta', 'өгсөх гол судас', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Өгсөх гол судас (ascending aorta) зүрхнээс гарсны дараа ямар бүтцээр үргэлжилдэг вэ?', 'What structure does the ascending aorta continue as after leaving the heart?', '["Бөөрний артери (renal artery)", "Хэвлийн гол судас (abdominal aorta)", "Цээжний гол судас (thoracic aorta)", "Гол судасны нум (aortic arch)"]', 3, 'Өгсөх гол судас нь гол судасны нумаар үргэлжилдэг.', 'ascending aorta', 2),
@@ -139,7 +139,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Артерийн судас: гуяны артери') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Артерийн судас: гуяны артери', 'Arteries: femoral artery', 'Артерийн судас', 'basic', 6, 70, 'published', 'arterial', 'femoral artery', 'гуяны артери', 'ai')
+      values ('Артерийн судас: гуяны артери', 'Arteries: femoral artery', 'Артерийн судас', 'basic', 6, 80, 'published', 'arterial', 'femoral artery', 'гуяны артери', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Гуяны артери (femoral artery) нь анатомийн ямар бүтцээс эхэлж үргэлжилдэг вэ?', 'Which anatomical structure is the direct continuation of the femoral artery?', '["Гадаад цавины артери (External iliac artery)", "Өвдөгний цаад артери (Popliteal artery)", "Дотоод цавины артери (Internal iliac artery)", "Хэвлийн гол судас (Abdominal aorta)"]', 0, '', 'femoral artery', 2),
@@ -156,7 +156,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Артерийн судас: гүрээний дотоод артери') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Артерийн судас: гүрээний дотоод артери', 'Arteries: internal carotid artery', 'Артерийн судас', 'basic', 6, 70, 'published', 'arterial', 'internal carotid artery', 'гүрээний дотоод артери', 'ai')
+      values ('Артерийн судас: гүрээний дотоод артери', 'Arteries: internal carotid artery', 'Артерийн судас', 'basic', 6, 80, 'published', 'arterial', 'internal carotid artery', 'гүрээний дотоод артери', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Дотоод гүрээний артерийн (internal carotid artery) каверноз хэсгээр явах явцдаа аль мэдрэл нь түүнтэй хамгийн ойр хажуу талд нь байрладаг вэ?', 'Which nerve runs most closely lateral to the internal carotid artery within the cavernous sinus?', '["Абдуценс мэдрэл (Abducens nerve - CN VI)", "Блокон мэдрэл (Trochlear nerve - CN IV)", "Гурвалсан мэдрэлийн дээд эрүүний мөчир (Maxillary nerve - V2)", "Гурвалсан мэдрэлийн нүдний мөчир (Ophthalmic nerve - V1)"]', 0, 'Дотоод гүрээний артерийн каверноз хэсэгт абдуценс мэдрэл (CN VI) артерийн шууд хажуугаар явах анатомийн байрлалыг мэддэг байна.', 'internal carotid artery', 2),
@@ -173,7 +173,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Венийн судас: дээд хөндий вен') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Венийн судас: дээд хөндий вен', 'Veins: superior vena cava', 'Венийн судас', 'basic', 6, 70, 'published', 'venous', 'superior vena cava', 'дээд хөндий вен', 'ai')
+      values ('Венийн судас: дээд хөндий вен', 'Veins: superior vena cava', 'Венийн судас', 'basic', 6, 80, 'published', 'venous', 'superior vena cava', 'дээд хөндий вен', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Дээд хөндий вен (superior vena cava) нь хүний биеийн аль хэсгээс цусыг цуглуулж зүрхний аль хөндий рүү цутгадаг вэ?', 'From which parts of the human body does the superior vena cava collect blood, and into which heart chamber does it drain?', '["Толгой, хүзүү, дээд мөч болон цээжний хөндийн зарим хэсгээс цусыг цуглуулж баруун тосгуурт цутгана", "Уушигны эдээс цусыг цуглуулж зүүн тосгуурт цутгана", "Доод мөч болон хэвлийн хөндийн эрхтнүүдээс цусыг цуглуулж баруун ховдолд цутгана", "Зөвхөн толгой, хүзүүний хэсгээс цусыг цуглуулж зүрхний зүүн тосгуурт цутгана"]', 0, '', 'superior vena cava', 2),
@@ -190,7 +190,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Венийн судас: арьсан доорх их вен') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Венийн судас: арьсан доорх их вен', 'Veins: great saphenous vein', 'Венийн судас', 'basic', 6, 70, 'published', 'venous', 'great saphenous vein', 'арьсан доорх их вен', 'ai')
+      values ('Венийн судас: арьсан доорх их вен', 'Veins: great saphenous vein', 'Венийн судас', 'basic', 6, 80, 'published', 'venous', 'great saphenous vein', 'арьсан доорх их вен', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Great saphenous vein (арьсан доорх их вен) нь доод мөчний аль хэсгээр дээш өгсөж, хаана цутгадаг вэ?', 'Which anatomical pathway does the great saphenous vein follow in the lower limb before draining into its terminal vein?', '["Доод мөчний гадна талар өгсөж, суганы венд цутгана", "Доод мөчний урд дотор талар өгсөж, гуяны венд (femoral vein) цутгана", "Доод мөчний ар талар өгсөж, өвдөгний хонхорхойн венд цутгана", "Доод мөчний гүн судлуудын хамт өгсөж, доიд хөндий венд шууд цутгана"]', 1, 'Great saphenous vein нь арьсан доорх өнгэц вен бөгөөд доод мөчний дотор тал болон гуяны урд дотор хэсгээр өгсөж, цавины орчимд гуяны венд (femoral vein) цутгадаг болохыг мэддэг байх.', 'great saphenous vein', 2),
@@ -207,7 +207,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Венийн судас: хаалганы вен') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Венийн судас: хаалганы вен', 'Veins: portal vein', 'Венийн судас', 'basic', 6, 70, 'published', 'venous', 'portal vein', 'хаалганы вен', 'ai')
+      values ('Венийн судас: хаалганы вен', 'Veins: portal vein', 'Венийн судас', 'basic', 6, 80, 'published', 'venous', 'portal vein', 'хаалганы вен', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Хаалганы вен (portal vein) нь ямар хоёр судлуудын нийлж үүсдэг вэ?', 'The portal vein is formed by the union of which two veins?', '["Дээд болон доод цайвар гэдэсний венийн судлууд (Superior and inferior mesenteric veins)", "Элэгний вен болон дэлүүний вен (Hepatic veins and splenic vein)", "Бөөрний вен болон доод хөндий вен (Renal vein and inferior vena cava)", "Дээд цайвар гэдэсний вен болон дэлүүний вен (Superior mesenteric vein and splenic vein)"]', 3, 'Зөв хариулт: Дээд цайвар гэдэсний вен болон дэлүүний вен нийлж хаалганы венийг үүсгэдэг.', 'portal vein', 2),
@@ -224,7 +224,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Мэдрэлийн систем: голч мэдрэл') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Мэдрэлийн систем: голч мэдрэл', 'Nerves: median nerve', 'Мэдрэлийн систем', 'basic', 6, 70, 'published', 'nervous', 'median nerve', 'голч мэдрэл', 'ai')
+      values ('Мэдрэлийн систем: голч мэдрэл', 'Nerves: median nerve', 'Мэдрэлийн систем', 'basic', 6, 80, 'published', 'nervous', 'median nerve', 'голч мэдрэл', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Мөрний бүслүүр ба шуунд голч мэдрэл (median nerve) аль хоёр гарал үүслээс үүсдэг вэ?', 'What are the primary cord contributions that form the median nerve in the brachial plexus?', '["Дээд ба доод багцууд (superior and inferior cords)", "Зөвхөн хэвтээ ба доод багц (posterior and inferior cords)", "Хажуугийн ба голч багцууд (lateral and medial cords)", "Зөвхөн хажуугийн багц (lateral cord only)"]', 2, 'Голч мэдрэл нь мөрний бүслүүрийн хажуугийн болон голч багцуудын ширхэгээс үүсдэг анатомийн мэдлэгийг шалгана.', 'median nerve', 2),
@@ -241,7 +241,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Мэдрэлийн систем: суудлын мэдрэл') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Мэдрэлийн систем: суудлын мэдрэл', 'Nerves: sciatic nerve', 'Мэдрэлийн систем', 'basic', 6, 70, 'published', 'nervous', 'sciatic nerve', 'суудлын мэдрэл', 'ai')
+      values ('Мэдрэлийн систем: суудлын мэдрэл', 'Nerves: sciatic nerve', 'Мэдрэлийн систем', 'basic', 6, 80, 'published', 'nervous', 'sciatic nerve', 'суудлын мэдрэл', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Суудлын мэдрэл (sciatic nerve) нь хүний биеийн аль сүлжээнээс үүсдэг вэ?', 'From which nerve plexus does the sciatic nerve originate?', '["Бүсэлхийн сүлжээ (Lumbar plexus)", "Хэвлийн сүлжээ (Celiac plexus)", "Ууцны сүлжээ (Sacral plexus)", "Богино булчингийн сүлжээ (Pudendal plexus)"]', 2, 'Ууцны сүлжээнээс үүсдэгийг мэддэг байх.', 'sciatic nerve', 2),
@@ -258,7 +258,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Мэдрэлийн систем: харааны мэдрэл') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Мэдрэлийн систем: харааны мэдрэл', 'Nerves: optic nerve', 'Мэдрэлийн систем', 'basic', 6, 70, 'published', 'nervous', 'optic nerve', 'харааны мэдрэл', 'ai')
+      values ('Мэдрэлийн систем: харааны мэдрэл', 'Nerves: optic nerve', 'Мэдрэлийн систем', 'basic', 6, 80, 'published', 'nervous', 'optic nerve', 'харааны мэдрэл', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Харааны мэдрэл (optic nerve) нь тархины аль хэсгээс шууд үүсэн гардаг вэ?', 'From which part of the brain does the optic nerve directly emerge?', '["Уртавтар тархи", "Гүүр", "Завсрын тархи", "Дунд тархи"]', 2, 'Харааны мэдрэл нь завсрын тархины түвшинд үүсдэг.', 'optic nerve', 2),
@@ -275,7 +275,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Зүрх: зүрхний байршил, хангамж') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Зүрх: зүрхний байршил, хангамж', 'Heart: position and supply', 'Зүрх', 'basic', 6, 70, 'published', 'cardiac', 'heart', 'зүрх', 'ai')
+      values ('Зүрх: зүрхний байршил, хангамж', 'Heart: position and supply', 'Зүрх', 'basic', 6, 80, 'published', 'cardiac', 'heart', 'зүрх', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Зүрхний (Cor) анатомийн бүтцийн хувьд уушигны болон том цус эргэлтийн системийг хангадаг хэдэн тасалгаатай булчинлиг шахуурга вэ?', 'From an anatomical perspective, how many chambers does the heart (Cor) have as a muscular pump driving the pulmonary and systemic circuits?', '["Хоёр тасалгаатай", "Таван тасалгаатай", "Дөрвөн тасалгаатай", "Гурван тасалгаатай"]', 2, 'Зүрх нь 4 тасалгаатай (2 тосгуур, 2 ховдол) болохыг зөв сонгосон байна.', 'heart', 2),
@@ -292,7 +292,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Зүрх: зүүн ховдол') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Зүрх: зүүн ховдол', 'Heart: left ventricle', 'Зүрх', 'basic', 6, 70, 'published', 'cardiac', 'left ventricle', 'зүүн ховдол', 'ai')
+      values ('Зүрх: зүүн ховдол', 'Heart: left ventricle', 'Зүрх', 'basic', 6, 80, 'published', 'cardiac', 'left ventricle', 'зүүн ховдол', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Зүүн ховдлын хана баруун ховдлын ханаас ямар анатомийн онцлогоор ялгагддаг вэ?', 'How does the anatomical structure of the left ventricle wall differ from that of the right ventricle, and what is the concept: left ventricle?', '["Баруун ховдлоос 2-3 дахин зузаан байна", "Трабекулууд нь баруун ховдлоос илүү хөгжсөн байна", "Баруун ховдлоос 3 дахин нимгэн байна", "Зөвхөн нэг давхарга бүхий булчинлаг ханатай байна"]', 0, 'Зүүн ховдлын хана нь системчилсэн цусны эргэлтийн өндөр даралтыг үүсгэхийн тулд баруун ховдлоос 2-3 дахин зузаан байдаг.', 'left ventricle', 2),
@@ -309,7 +309,7 @@ declare e_id bigint;
 begin
   if not exists (select 1 from public.exams where title = 'Зүрх: баруун тосгуур') then
     insert into public.exams (title, title_en, topic, level, time_limit_min, pass_pct, status, group_key, part_key, part_mn, source)
-      values ('Зүрх: баруун тосгуур', 'Heart: right atrium', 'Зүрх', 'basic', 6, 70, 'published', 'cardiac', 'right atrium', 'баруун тосгуур', 'ai')
+      values ('Зүрх: баруун тосгуур', 'Heart: right atrium', 'Зүрх', 'basic', 6, 80, 'published', 'cardiac', 'right atrium', 'баруун тосгуур', 'ai')
       returning id into e_id;
     insert into public.exam_questions (exam_id, position, kind, prompt, prompt_en, options, answer, rubric, concept, points) values
       (e_id, 1, 'mcq', 'Баруун тосгуурын дотор гадаргуу дээр харагдах, хөндийг хоёр хэсэгт хуваадаг босоо хэлбэртэй булчинлаг нурууг юу гэж нэрлэдэг вэ?', 'What is the name of the vertical muscular ridge on the internal surface of the right atrium that divides it into two parts?', '["Fossa ovalis", "Crista terminalis", "Sinus venarum", "Pectinate muscles"]', 1, 'Crista terminalis нь баруун тосгуурын дотор хананд байрлах булчинлаг нуруу юм.', 'right atrium', 2),

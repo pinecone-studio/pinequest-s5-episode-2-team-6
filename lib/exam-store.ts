@@ -139,7 +139,7 @@ export async function fetchExams(): Promise<Result<Exam[]>> {
 
 /** A section of the exam list: one anatomy group and the papers inside it. */
 export interface ExamSection {
-  /** Empty for papers written before the bank had groups; the page lists them last. */
+  /** Empty for papers written before the bank had groups; the page hides those. */
   groupKey: string;
   papers: Exam[];
 }

@@ -72,7 +72,6 @@ const copy = {
     cancel: 'Keep working',
     confirmLead: 'You cannot change the answers after handing in.',
     papersInGroup: (n: number) => `${n} ${n === 1 ? 'paper' : 'papers'}`,
-    other: 'Other papers',
     openPart: 'See it in the atlas',
   },
   mn: {
@@ -126,7 +125,6 @@ const copy = {
     cancel: 'Үргэлжлүүлэх',
     confirmLead: 'Дуусгасны дараа хариугаа өөрчлөх боломжгүй.',
     papersInGroup: (n: number) => `${n} шалгалт`,
-    other: 'Бусад шалгалт',
     openPart: 'Атлас дээр харах',
   },
 } as const;

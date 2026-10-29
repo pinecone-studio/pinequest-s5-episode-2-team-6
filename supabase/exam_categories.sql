@@ -9,8 +9,8 @@
 --
 -- Run supabase/schema.sql and supabase/exam_bank.sql first.
 -- This file is idempotent: it skips a paper whose title is already
--- in the bank, re-archives the short papers and re-syncs the pass mark
--- of the six category exams. The short papers are archived at the end
+-- in the bank, re-archives the short papers and lifts every paper's
+-- pass mark to 80%. The short papers are archived at the end
 -- (their questions now live inside the full papers); an admin can
 -- republish any of them from /admin.
 -- ============================================================
@@ -305,17 +305,9 @@ where status = 'published'
   and part_key <> ''
   and group_key in ('skeletal', 'muscular', 'arterial', 'venous', 'nervous', 'cardiac');
 
--- Each block above only inserts a paper whose title is still missing, so a
--- database seeded while the pass mark was 70% keeps that row forever. Lift the
--- six category exams to the current pass mark on every run.
+-- Every block above only inserts a paper whose title is still missing, so a
+-- database seeded while the pass mark was 70% keeps those rows forever. Set the
+-- school-wide pass mark on each run instead.
 update public.exams
 set pass_pct = 80
-where pass_pct <> 80
-  and title in (
-    'Яс: 25 асуулттай шалгалт',
-    'Булчин: 25 асуулттай шалгалт',
-    'Артерийн судас: 25 асуулттай шалгалт',
-    'Венийн судас: 25 асуулттай шалгалт',
-    'Мэдрэлийн систем: 25 асуулттай шалгалт',
-    'Дотор эрхтэн: 25 асуулттай шалгалт'
-  );
+where pass_pct <> 80;

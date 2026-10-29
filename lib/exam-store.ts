@@ -209,7 +209,7 @@ export async function saveDraftPaper(paper: DraftPaper): Promise<Result<number |
       level: 'basic',
       status: 'draft',
       time_limit_min: paper.timeLimitMin ?? 6,
-      pass_pct: paper.passPct ?? 70,
+      pass_pct: paper.passPct ?? 80,
       group_key: paper.groupKey ?? '',
       part_key: paper.partKey ?? '',
       part_mn: paper.partMn ?? '',
